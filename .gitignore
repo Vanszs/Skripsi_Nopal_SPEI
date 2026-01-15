@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environment
+venv/
+env/
+.env
+
+# Project Data (Large files)
+data/
+data/raw/
+data/processed/
+*.parquet
+*.csv
+
+# Logs & Checkpoints
+logs/
+lightning_logs/
+checkpoints/
+*.ckpt
+
+# Output Results
+results/
+*.png
+*.jpg
+
+# Editor / IDE
+.vscode/
+.idea/
+
+# Custom Debug Scripts (Optional, keep if needed)
+debug_*.py
+inspect_results.py
