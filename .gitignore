@@ -15,11 +15,7 @@ data/processed/
 *.parquet
 *.csv
 
-# Logs & Checkpoints
-logs/
-lightning_logs/
-checkpoints/
-*.ckpt
+#
 
 # Output Results
 results/
