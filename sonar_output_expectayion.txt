@@ -1,0 +1,492 @@
+# 📘 OUTPUT YANG DIHARAPKAN DARI PROJECT SKRIPSI TFT-SPEI
+
+Berdasarkan context skripsi Anda dan standar industry, berikut **DELIVERABLES LENGKAP** yang harus dihasilkan: [arxiv](https://arxiv.org/pdf/1912.09363.pdf)
+
+***
+
+## 1️⃣ OUTPUT TEKNIS (WAJIB - UNTUK DOSEN)
+
+### **A. Model Checkpoint & Artifacts**
+```
+📁 artifacts/
+  ├── best_model.ckpt               # PyTorch Lightning checkpoint
+  ├── model_config.yaml             # Hyperparameters (encoder=30, lr=0.0001, etc.)
+  ├── scaler.pkl                    # GroupNormalizer fitted object
+  ├── training_log.csv              # Epoch, train_loss, val_loss, metrics
+  └── feature_importance.json       # Variable Selection Network weights
+```
+
+### **B. Predictions Output**
+```python
+# Format output yang diharapkan:
+predictions.shape = (n_samples, 30, 3)  # 30 days ahead, 3 quantiles
+
+# Structure:
+predictions = {
+    'location': ['Lamongan', 'Ngawi', ...],
+    'date': pd.date_range('2024-01-01', '2025-12-31'),
+    'actual': [actual SPEI values],           # Ground truth
+    'predicted_p10': [10th percentile],       # Pessimistic scenario
+    'predicted_p50': [median forecast],       # Most likely
+    'predicted_p90': [90th percentile],       # Optimistic scenario
+    'lower_bound': predicted_p10,             # Confidence interval
+    'upper_bound': predicted_p90,
+    'prediction_interval_width': p90 - p10    # Uncertainty measure
+}
+
+# Export format:
+predictions.to_csv('results/predictions_2024_2025.csv')
+```
+
+**Contoh Data:**
+| Date | Location | Actual | Pred_P50 | Lower_P10 | Upper_P90 | Alert |
+|------|----------|--------|----------|-----------|-----------|-------|
+| 2024-07-15 | Lamongan | -1.82 | -1.65 | -2.10 | -1.20 | Drought |
+| 2024-07-16 | Lamongan | -1.75 | -1.58 | -2.03 | -1.15 | Drought |
+| 2024-08-10 | Ngawi | 0.45 | 0.52 | 0.10 | 0.95 | Normal |
+
+***
+
+### **C. Quantitative Metrics (WAJIB)**
+```python
+# File: results/evaluation_metrics.json
+{
+  "overall": {
+    "rmse": 0.205,
+    "mae": 0.158,
+    "r2": 0.878,
+    "pearson_r": 0.937,
+    "quantile_loss": 0.147,
+    "bias": -0.023
+  },
+  "per_location": {
+    "Lamongan": {"rmse": 0.198, "mae": 0.152, "r2": 0.885},
+    "Ngawi": {"rmse": 0.212, "mae": 0.165, "r2": 0.871},
+    "Bojonegoro": {"rmse": 0.201, "mae": 0.155, "r2": 0.880},
+    "Tuban": {"rmse": 0.207, "mae": 0.161, "r2": 0.875},
+    "Nganjuk": {"rmse": 0.203, "mae": 0.157, "r2": 0.878}
+  },
+  "per_horizon": {
+    "day_1": {"rmse": 0.120, "mae": 0.095},
+    "day_7": {"rmse": 0.185, "mae": 0.142},
+    "day_14": {"rmse": 0.210, "mae": 0.165},
+    "day_30": {"rmse": 0.265, "mae": 0.210}
+  },
+  "drought_detection": {
+    "sensitivity": 0.892,      # True positive rate
+    "specificity": 0.915,      # True negative rate
+    "precision": 0.845,
+    "f1_score": 0.868,
+    "false_alarm_rate": 0.085
+  }
+}
+```
+
+***
+
+## 2️⃣ VISUALISASI UTAMA (UNTUK PAPER + SIDANG)
+
+### **Plot 1: Actual vs Predicted (Multi-Horizon)** ⭐ **MOST IMPORTANT**
+
+```python
+# File: figures/actual_vs_predicted_multisite.png
+# Format: Time series line plot (seperti yang Anda tanyakan!)
+
+import matplotlib.pyplot as plt
+
+fig, axes = plt.subplots(5, 1, figsize=(16, 20), sharex=True)
+
+locations = ['Lamongan', 'Ngawi', 'Bojonegoro', 'Tuban', 'Nganjuk']
+
+for i, loc in enumerate(locations):
+    ax = axes[i]
+    
+    # Plot actual (ground truth)
+    ax.plot(dates, actual[loc], 
+            label='Actual SPEI', 
+            color='black', 
+            linewidth=2.5, 
+            alpha=0.9)
+    
+    # Plot predicted median (P50)
+    ax.plot(dates, predicted_p50[loc], 
+            label='Predicted (P50)', 
+            color='#2E86AB', 
+            linewidth=2, 
+            linestyle='--')
+    
+    # Plot confidence interval (P10-P90)
+    ax.fill_between(dates, 
+                     predicted_p10[loc], 
+                     predicted_p90[loc],
+                     color='#A23B72', 
+                     alpha=0.25,
+                     label='80% Prediction Interval')
+    
+    # Drought threshold
+    ax.axhline(-1.5, color='red', linestyle=':', linewidth=1.5, 
+               label='Severe Drought Threshold')
+    ax.axhline(0, color='gray', linestyle=':', linewidth=1, alpha=0.5)
+    
+    ax.set_ylabel('SPEI-3', fontsize=12, fontweight='bold')
+    ax.set_title(f'{loc} - SPEI Forecast (2024-2025)', 
+                 fontsize=14, fontweight='bold')
+    ax.legend(loc='upper right', fontsize=10)
+    ax.grid(True, alpha=0.3)
+
+axes[-1].set_xlabel('Date', fontsize=12, fontweight='bold')
+plt.tight_layout()
+plt.savefig('figures/actual_vs_predicted.png', dpi=300, bbox_inches='tight')
+```
+
+**Expected Visual:**
+- **5 subplots** (satu per lokasi)
+- **Black solid line** = Actual SPEI
+- **Blue dashed line** = Predicted median (P50)
+- **Pink shaded area** = Uncertainty (P10-P90)
+- **Red dotted line** = Drought threshold (-1.5)
+
+**Ini yang Anda maksud "actual vs predict"!** [towardsdatascience](https://towardsdatascience.com/temporal-fusion-transformer-googles-model-for-interpretable-time-series-forecasting-5aa17beb621/)
+
+***
+
+### **Plot 2: Scatter Plot (Predicted vs Actual)**
+
+```python
+# File: figures/scatter_predicted_vs_actual.png
+
+fig, axes = plt.subplots(1, 2, figsize=(14, 6))
+
+# All locations combined
+axes[0].scatter(actual_all, predicted_p50_all, 
+                alpha=0.4, s=20, c='#2E86AB')
+axes[0].plot([-3, 3], [-3, 3], 'r--', linewidth=2, label='Perfect Fit')
+axes[0].set_xlabel('Actual SPEI', fontweight='bold')
+axes[0].set_ylabel('Predicted SPEI', fontweight='bold')
+axes[0].set_title(f'Overall Performance (R²={r2:.3f})', fontweight='bold')
+axes[0].grid(True, alpha=0.3)
+axes[0].legend()
+
+# Per-location color-coded
+for loc, color in zip(locations, colors):
+    axes [arxiv](https://arxiv.org/pdf/1912.09363.pdf).scatter(actual[loc], predicted_p50[loc], 
+                    label=loc, alpha=0.6, s=30, c=color)
+axes [arxiv](https://arxiv.org/pdf/1912.09363.pdf).plot([-3, 3], [-3, 3], 'r--', linewidth=2)
+axes [arxiv](https://arxiv.org/pdf/1912.09363.pdf).set_xlabel('Actual SPEI', fontweight='bold')
+axes [arxiv](https://arxiv.org/pdf/1912.09363.pdf).set_ylabel('Predicted SPEI', fontweight='bold')
+axes [arxiv](https://arxiv.org/pdf/1912.09363.pdf).set_title('Per-Location Performance', fontweight='bold')
+axes [arxiv](https://arxiv.org/pdf/1912.09363.pdf).grid(True, alpha=0.3)
+axes [arxiv](https://arxiv.org/pdf/1912.09363.pdf).legend()
+
+plt.tight_layout()
+plt.savefig('figures/scatter_plot.png', dpi=300)
+```
+
+***
+
+### **Plot 3: Variable Importance (INTERPRETABILITY)** ⭐ **NOVELTY SHOWCASE**
+
+```python
+# File: figures/variable_importance.png
+# Ini OUTPUT DARI TFT Variable Selection Network!
+
+import seaborn as sns
+
+# Extract dari model
+importance = model.get_interpretation()['variable_importance']
+
+# Sort by importance
+importance_sorted = importance.sort_values('importance', ascending=False)
+
+fig, ax = plt.subplots(figsize=(10, 8))
+sns.barplot(data=importance_sorted, 
+            x='importance', 
+            y='variable', 
+            palette='viridis',
+            ax=ax)
+
+ax.set_xlabel('Importance Score', fontsize=12, fontweight='bold')
+ax.set_ylabel('Variable', fontsize=12, fontweight='bold')
+ax.set_title('TFT Variable Importance (Automated Feature Selection)', 
+             fontsize=14, fontweight='bold')
+ax.grid(axis='x', alpha=0.3)
+
+plt.tight_layout()
+plt.savefig('figures/variable_importance.png', dpi=300)
+```
+
+**Expected Output:**
+```
+Variable                          | Importance
+----------------------------------|------------
+historical_spei                   | 0.342
+precipitation_sum                 | 0.218
+soil_moisture_0_to_7cm           | 0.165
+et0_fao_evapotranspiration       | 0.127
+temperature_2m_max               | 0.089
+month_of_year (sin)              | 0.059
+```
+
+**Ini BUKTI bahwa TFT punya interpretability!** [arxiv](https://arxiv.org/pdf/1912.09363.pdf)
+
+***
+
+### **Plot 4: Attention Weights (TEMPORAL INTERPRETABILITY)**
+
+```python
+# File: figures/attention_weights.png
+
+# Extract attention dari model
+attention = model.get_interpretation()['attention_weights']
+
+fig, ax = plt.subplots(figsize=(12, 8))
+sns.heatmap(attention, 
+            cmap='RdYlBu_r', 
+            cbar_kws={'label': 'Attention Score'},
+            ax=ax)
+
+ax.set_xlabel('Encoder Time Step (Days Before)', fontsize=12)
+ax.set_ylabel('Decoder Time Step (Days Ahead)', fontsize=12)
+ax.set_title('TFT Multi-Head Attention Weights (30-Day Forecast)', 
+             fontsize=14, fontweight='bold')
+
+plt.tight_layout()
+plt.savefig('figures/attention_weights.png', dpi=300)
+```
+
+**Interpretasi:**
+- **High attention** at specific lags → Model focuses on those time steps
+- **Diagonal pattern** → Sequential dependency
+- **Vertical stripes** → Specific past events influence ALL future steps [towardsdatascience](https://towardsdatascience.com/temporal-fusion-transformer-googles-model-for-interpretable-time-series-forecasting-5aa17beb621/)
+
+***
+
+### **Plot 5: Per-Horizon Degradation**
+
+```python
+# File: figures/forecast_skill_degradation.png
+
+horizons = [1, 3, 7, 14, 21, 30]
+rmse_by_horizon = [0.120, 0.155, 0.185, 0.210, 0.235, 0.265]
+mae_by_horizon = [0.095, 0.125, 0.142, 0.165, 0.188, 0.210]
+
+fig, ax = plt.subplots(figsize=(10, 6))
+ax.plot(horizons, rmse_by_horizon, 
+        marker='o', linewidth=2.5, markersize=8, 
+        label='RMSE', color='#E63946')
+ax.plot(horizons, mae_by_horizon, 
+        marker='s', linewidth=2.5, markersize=8, 
+        label='MAE', color='#2E86AB')
+
+ax.set_xlabel('Forecast Horizon (Days)', fontsize=12, fontweight='bold')
+ax.set_ylabel('Error Metric', fontsize=12, fontweight='bold')
+ax.set_title('Forecast Skill Degradation (Expected Behavior)', 
+             fontsize=14, fontweight='bold')
+ax.legend(fontsize=11)
+ax.grid(True, alpha=0.3)
+
+plt.tight_layout()
+plt.savefig('figures/horizon_degradation.png', dpi=300)
+```
+
+***
+
+### **Plot 6: Drought Event Detection (Confusion Matrix)**
+
+```python
+# File: figures/drought_confusion_matrix.png
+
+from sklearn.metrics import confusion_matrix
+import seaborn as sns
+
+# Binary classification: SPEI < -1.5 = Drought
+actual_drought = (actual < -1.5).astype(int)
+predicted_drought = (predicted_p50 < -1.5).astype(int)
+
+cm = confusion_matrix(actual_drought, predicted_drought)
+
+fig, ax = plt.subplots(figsize=(8, 6))
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', 
+            xticklabels=['Normal', 'Drought'],
+            yticklabels=['Normal', 'Drought'],
+            ax=ax)
+
+ax.set_xlabel('Predicted', fontsize=12, fontweight='bold')
+ax.set_ylabel('Actual', fontsize=12, fontweight='bold')
+ax.set_title('Drought Detection Performance (SPEI < -1.5)', 
+             fontsize=14, fontweight='bold')
+
+plt.tight_layout()
+plt.savefig('figures/confusion_matrix.png', dpi=300)
+```
+
+***
+
+## 3️⃣ OUTPUT INTERPRETABILITY (UNTUK NOVELTY)
+
+### **A. Feature Importance Rankings** [towardsdatascience](https://towardsdatascience.com/temporal-fusion-transformer-googles-model-for-interpretable-time-series-forecasting-5aa17beb621/)
+```json
+// File: results/feature_rankings.json
+{
+  "static_covariates": {
+    "location_id": 0.082,
+    "elevation": 0.031
+  },
+  "past_observed": {
+    "historical_spei": 0.342,
+    "precipitation_sum": 0.218,
+    "soil_moisture": 0.165,
+    "et0": 0.127,
+    "temp_max": 0.089
+  },
+  "known_future": {
+    "month_sin": 0.059,
+    "month_cos": 0.048,
+    "time_idx": 0.024
+  }
+}
+```
+
+### **B. Attention Analysis Report**
+```markdown
+# File: results/attention_analysis.md
+
+## Key Findings from Attention Weights:
+
+1. **Short-term dependencies (1-7 days)**: 
+   - Attention score: 0.65
+   - Interpretation: Model heavily relies on recent SPEI trend
+
+2. **Seasonal patterns (28-30 days)**:
+   - Attention score: 0.22
+   - Interpretation: Monthly cycle detected (monsoon influence)
+
+3. **Mid-range gap (8-20 days)**:
+   - Attention score: 0.13
+   - Interpretation: Transition period, less predictable
+
+4. **Location-specific patterns**:
+   - Lamongan: High attention on soil moisture (coastal)
+   - Nganjuk: High attention on precipitation (inland)
+```
+
+***
+
+## 4️⃣ BENCHMARK COMPARISON (WAJIB)
+
+```python
+# File: results/model_comparison.csv
+
+| Model | RMSE | MAE | R² | Training Time | Interpretability |
+|-------|------|-----|-------|---------------|------------------|
+| **TFT (Proposed)** | **0.205** | **0.158** | **0.878** | 3.2 hours | ✅ High |
+| LSTM | 0.247 | 0.192 | 0.821 | 1.8 hours | ❌ Black-box |
+| GRU | 0.241 | 0.186 | 0.829 | 1.6 hours | ❌ Black-box |
+| XGBoost | 0.268 | 0.211 | 0.792 | 0.5 hours | 🟡 Medium |
+| ARIMA | 0.314 | 0.259 | 0.715 | 0.2 hours | ✅ High |
+| Prophet | 0.291 | 0.237 | 0.748 | 0.3 hours | 🟡 Medium |
+```
+
+**Narrative:**
+```
+TFT outperforms all baselines by 17-35% in RMSE.
+Unlike LSTM/GRU, TFT provides interpretability.
+Unlike ARIMA/Prophet, TFT handles multivariate inputs and non-linear patterns.
+```
+
+***
+
+## 5️⃣ DOKUMENTASI CODE (UNTUK AUDIT DOSEN)
+
+```
+📁 src/
+  ├── 01_data_ingestion.py          # Open-Meteo API scraping
+  ├── 02_preprocessing.py           # SPEI calculation, scaling
+  ├── 03_dataset_construction.py    # TimeSeriesDataSet creation
+  ├── 04_model_training.py          # TFT training loop
+  ├── 05_evaluation.py              # Metrics calculation
+  ├── 06_interpretation.py          # Variable importance, attention
+  └── 07_visualization.py           # All plots generation
+
+📁 notebooks/
+  ├── EDA.ipynb                     # Exploratory Data Analysis
+  ├── Model_Development.ipynb       # Hyperparameter tuning
+  └── Results_Analysis.ipynb        # Final evaluation
+
+📁 config/
+  ├── data_config.yaml              # Locations, date ranges
+  ├── model_config.yaml             # TFT hyperparameters
+  └── training_config.yaml          # Optimizer, learning rate
+
+📁 tests/
+  ├── test_data_pipeline.py         # Unit tests
+  └── test_model_outputs.py         # Output validation
+```
+
+***
+
+## 6️⃣ LAPORAN SKRIPSI (BAB-BAB)
+
+### **BAB 4: HASIL DAN PEMBAHASAN**
+
+**4.1 Hasil Prediksi Multi-Horizon**
+- **Gambar 4.1**: Actual vs Predicted (5 lokasi) ← **INI YANG ANDA TANYAKAN!**
+- **Tabel 4.1**: Quantitative Metrics (RMSE, MAE, R²)
+
+**4.2 Evaluasi Performa Model**
+- **Gambar 4.2**: Scatter Plot (Predicted vs Actual)
+- **Gambar 4.3**: Per-Horizon Degradation
+- **Tabel 4.2**: Benchmark Comparison
+
+**4.3 Interpretabilitas Model (NOVELTY)**
+- **Gambar 4.4**: Variable Importance ← **BUKTI TFT ≠ LSTM**
+- **Gambar 4.5**: Attention Weights ← **BUKTI TEMPORAL AWARENESS**
+- **Tabel 4.3**: Feature Rankings per Location
+
+**4.4 Aplikasi untuk Mitigasi Kekeringan**
+- **Gambar 4.6**: Drought Alert System (Early Warning)
+- **Tabel 4.4**: False Alarm Rate Analysis
+
+***
+
+## 7️⃣ FINAL ANSWER: **"Hasil Output yang Diharapkan"**
+
+### **✅ YES, OUTPUT UTAMA ADALAH ACTUAL VS PREDICTED!**
+
+**Format Standard:**
+```
+Plot Time Series dengan:
+1. Actual SPEI (black line) - Ground truth dari data historis
+2. Predicted SPEI (blue dashed) - Output model (median/P50)
+3. Confidence Interval (shaded area) - Uncertainty (P10-P90)
+4. Drought Threshold (red line) - SPEI = -1.5
+
+Ini harus ada untuk SEMUA 5 lokasi (Lamongan, Ngawi, Bojonegoro, Tuban, Nganjuk)
+```
+
+**Plus Supporting Outputs:**
+- Scatter plot (correlation visual)
+- Variable importance (interpretability)
+- Attention weights (temporal insight)
+- Metrics table (quantitative evidence)
+- Benchmark comparison (superiority proof)
+
+***
+
+## 🎯 TEMPLATE CAPTION (UNTUK SKRIPSI)
+
+```
+Gambar 4.1: Perbandingan SPEI-3 Aktual dan Prediksi TFT untuk Lima Sentra Padi 
+Jawa Timur (Periode Uji: 2024-2025). Garis hitam solid menunjukkan nilai SPEI 
+aktual dari observasi historis, garis biru putus-putus menunjukkan prediksi 
+median model (P50), dan area merah muda menunjukkan interval kepercayaan 80% 
+(P10-P90). Garis merah putus-putus horizontal menandai ambang kekeringan parah 
+(SPEI < -1.5). Model menunjukkan kemampuan menangkap tren musiman dan 
+mengidentifikasi onset kekeringan dengan lead time 7-14 hari.
+```
+
+***
+
+**KESIMPULAN: Output project ini = TIME SERIES PLOT (Actual vs Predicted) + INTERPRETABILITY ANALYSIS + QUANTITATIVE METRICS** [aihorizonforecast.substack](https://aihorizonforecast.substack.com/p/temporal-fusion-transformer-time)
+
+Apakah ini menjawab pertanyaan Anda? 🎯
