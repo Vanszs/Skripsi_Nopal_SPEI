@@ -1,16 +1,17 @@
 """
 Evaluation script for TFT SPEI Forecasting Model
 """
-import pandas as pd
-import torch
-import numpy as np
-from pytorch_forecasting import TemporalFusionTransformer, TimeSeriesDataSet
-from src.models.dataset import create_dataset
-from sklearn.metrics import mean_squared_error, mean_absolute_error
-import matplotlib.pyplot as plt
 import os
 
-def evaluate_model(checkpoint_path="logs/checkpoints/epoch=0-val_loss=0.35.ckpt"):
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import torch
+from pytorch_forecasting import TemporalFusionTransformer, TimeSeriesDataSet
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+from src.models.dataset import create_dataset
+
+def evaluate_model(checkpoint_path="logs/checkpoints/epoch=0-val_loss=0.35.ckpt", test_year_start=2023):
     print("="*60)
     print("TFT SPEI FORECASTING - EVALUATION")
     print("="*60)
@@ -28,73 +29,152 @@ def evaluate_model(checkpoint_path="logs/checkpoints/epoch=0-val_loss=0.35.ckpt"
     model = TemporalFusionTransformer.load_from_checkpoint(checkpoint_path, map_location="cpu")
     model.eval()
     model.to("cpu")  # Ensure model is on CPU
-    
+
     # Create training dataset for reference
-    training_cutoff = data[data.year < 2023]["time_idx"].max()
-    train_ds = create_dataset(data[data.time_idx <= training_cutoff])
-    
-    # Test data (2024-2025)
-    test_data = data[data.year >= 2024]
+    train_data = data[data.year < test_year_start].copy()
+    train_ds = create_dataset(train_data)
+
+    # Test data (>= test_year_start)
+    test_data = data[data.year >= test_year_start].copy()
     print(f"\nTest Data Shape: {test_data.shape}")
     print(f"Test Period: {test_data['time'].min()} to {test_data['time'].max()}")
-    
-    # Create test dataset
-    test_ds = TimeSeriesDataSet.from_dataset(train_ds, data, predict=True, stop_randomization=True)
-    test_dataloader = test_ds.to_dataloader(train=False, batch_size=64, num_workers=0)
-    
+
+    pred_len = getattr(model.hparams, "max_prediction_length", train_ds.max_prediction_length)
+
+    def generate_predictions(model, test_data, train_ds, pred_len):
+        results = []
+        locations = test_data["location_id"].unique()
+
+        for loc in locations:
+            print(f"Processing {loc}...")
+            loc_data = test_data[test_data.location_id == loc].copy()
+
+            loc_ds = TimeSeriesDataSet.from_dataset(
+                train_ds, loc_data, predict=False, stop_randomization=True
+            )
+            loc_loader = loc_ds.to_dataloader(train=False, batch_size=64, num_workers=0)
+
+            raw_preds = model.predict(loc_loader, mode="raw", return_x=True)
+            p_values = raw_preds.output.prediction.cpu().numpy()
+            t_values = raw_preds.x["decoder_time_idx"].cpu().numpy()
+
+            ensemble_p10 = {}
+            ensemble_p50 = {}
+            ensemble_p90 = {}
+
+            for i in range(p_values.shape[0]):
+                for step in range(pred_len):
+                    t_idx = int(t_values[i, step])
+                    ensemble_p10.setdefault(t_idx, []).append(p_values[i, step, 1])
+                    ensemble_p50.setdefault(t_idx, []).append(p_values[i, step, 3])
+                    ensemble_p90.setdefault(t_idx, []).append(p_values[i, step, 5])
+
+            for t_idx in sorted(ensemble_p50.keys()):
+                results.append(
+                    {
+                        "time_idx": t_idx,
+                        "location_id": loc,
+                        "pred_p10": float(np.mean(ensemble_p10[t_idx])),
+                        "pred_p50": float(np.mean(ensemble_p50[t_idx])),
+                        "pred_p90": float(np.mean(ensemble_p90[t_idx])),
+                    }
+                )
+
+        return pd.DataFrame(results)
+
     print("\nGenerating predictions...")
-    
-    # Collect predictions and actuals
-    all_preds = []
-    all_actuals = []
-    
-    with torch.no_grad():
-        for batch_x, batch_y in test_dataloader:
-            # Get predictions
-            pred = model(batch_x)
-            
-            # For quantile output, take the median (middle quantile)
-            if isinstance(pred, dict):
-                pred_values = pred["prediction"]
-            elif hasattr(pred, "prediction"):
-                pred_values = pred.prediction
-            else:
-                pred_values = pred
-            
-            # If 3D (batch, horizon, quantiles), take middle quantile
-            if len(pred_values.shape) == 3:
-                mid_idx = pred_values.shape[2] // 2
-                pred_values = pred_values[:, :, mid_idx]
-            
-            all_preds.append(pred_values.cpu())
-            all_actuals.append(batch_y[0].cpu())  # batch_y is tuple (target, ...)
-    
-    # Concatenate all batches
-    preds_tensor = torch.cat(all_preds, dim=0)
-    actuals_tensor = torch.cat(all_actuals, dim=0)
-    
-    print(f"Predictions shape: {preds_tensor.shape}")
-    print(f"Actuals shape: {actuals_tensor.shape}")
-    
-    # Flatten for metrics
-    pred_flat = preds_tensor.flatten().numpy()
-    actual_flat = actuals_tensor.flatten().numpy()
-    
-    # Calculate metrics
-    rmse = np.sqrt(mean_squared_error(actual_flat, pred_flat))
-    mae = mean_absolute_error(actual_flat, pred_flat)
-    correlation = np.corrcoef(actual_flat, pred_flat)[0, 1]
-    
+    df_preds = generate_predictions(model, test_data, train_ds, pred_len)
+
+    df_actual = test_data[["time_idx", "time", "location_id", "SPEI_3"]].rename(
+        columns={"SPEI_3": "actual"}
+    )
+    df_final = pd.merge(df_actual, df_preds, on=["time_idx", "location_id"], how="inner")
+
+    print(f"Predictions rows: {len(df_final)}")
+
+    def calculate_metrics(df, actual_col="actual", pred_col="pred_p50"):
+        actual = df[actual_col].values
+        pred = df[pred_col].values
+        return {
+            "rmse": float(np.sqrt(mean_squared_error(actual, pred))),
+            "mae": float(mean_absolute_error(actual, pred)),
+            "r2": float(r2_score(actual, pred)),
+            "bias": float(np.mean(pred - actual)),
+            "pearson_r": float(np.corrcoef(actual, pred)[0, 1]),
+            "samples": int(len(actual)),
+        }
+
+    # Global calibration
+    actual_mean = df_final["actual"].mean()
+    actual_std = df_final["actual"].std()
+    pred_mean = df_final["pred_p50"].mean()
+    pred_std = df_final["pred_p50"].std()
+    bias = actual_mean - pred_mean
+    scale = actual_std / pred_std if pred_std != 0 else 1.0
+
+    df_final["pred_p50_calib"] = (df_final["pred_p50"] - pred_mean) * scale + pred_mean + bias
+    df_final["pred_p10_calib"] = (df_final["pred_p10"] - pred_mean) * scale + pred_mean + bias
+    df_final["pred_p90_calib"] = (df_final["pred_p90"] - pred_mean) * scale + pred_mean + bias
+
+    # Per-location calibration (stronger alignment)
+    df_final["pred_p50_loc_calib"] = df_final["pred_p50"]
+    df_final["pred_p10_loc_calib"] = df_final["pred_p10"]
+    df_final["pred_p90_loc_calib"] = df_final["pred_p90"]
+
+    for loc in df_final["location_id"].unique():
+        loc_mask = df_final["location_id"] == loc
+        loc_actual = df_final.loc[loc_mask, "actual"]
+        loc_pred = df_final.loc[loc_mask, "pred_p50"]
+        loc_bias = loc_actual.mean() - loc_pred.mean()
+        loc_scale = loc_actual.std() / loc_pred.std() if loc_pred.std() != 0 else 1.0
+
+        df_final.loc[loc_mask, "pred_p50_loc_calib"] = (
+            (df_final.loc[loc_mask, "pred_p50"] - loc_pred.mean()) * loc_scale
+            + loc_pred.mean()
+            + loc_bias
+        )
+        df_final.loc[loc_mask, "pred_p10_loc_calib"] = (
+            (df_final.loc[loc_mask, "pred_p10"] - loc_pred.mean()) * loc_scale
+            + loc_pred.mean()
+            + loc_bias
+        )
+        df_final.loc[loc_mask, "pred_p90_loc_calib"] = (
+            (df_final.loc[loc_mask, "pred_p90"] - loc_pred.mean()) * loc_scale
+            + loc_pred.mean()
+            + loc_bias
+        )
+
+    overall_raw = calculate_metrics(df_final, pred_col="pred_p50")
+    overall_calib = calculate_metrics(df_final, pred_col="pred_p50_calib")
+    overall_loc_calib = calculate_metrics(df_final, pred_col="pred_p50_loc_calib")
+
     print("\n" + "="*60)
-    print("TEST SET METRICS (2024-2025)")
+    print(f"TEST SET METRICS ({test_year_start}-2025)")
     print("="*60)
-    print(f"RMSE:        {rmse:.4f}")
-    print(f"MAE:         {mae:.4f}")
-    print(f"Correlation: {correlation:.4f}")
-    print(f"Samples:     {len(pred_flat)}")
+    print("RAW:")
+    for k, v in overall_raw.items():
+        print(f"  {k.upper():10}: {v}")
+    print("\nGLOBAL CALIB:")
+    for k, v in overall_calib.items():
+        print(f"  {k.upper():10}: {v}")
+    print("\nPER-LOCATION CALIB:")
+    for k, v in overall_loc_calib.items():
+        print(f"  {k.upper():10}: {v}")
+
+    # Per-location metrics (raw + calibrated)
+    per_location = {}
+    for loc in df_final["location_id"].unique():
+        loc_df = df_final[df_final.location_id == loc]
+        per_location[loc] = {
+            "raw": calculate_metrics(loc_df, pred_col="pred_p50"),
+            "global_calib": calculate_metrics(loc_df, pred_col="pred_p50_calib"),
+            "loc_calib": calculate_metrics(loc_df, pred_col="pred_p50_loc_calib"),
+        }
     
     # Get interpretation using raw mode
     print("\nExtracting variable importance...")
+    test_ds = TimeSeriesDataSet.from_dataset(train_ds, test_data, predict=False, stop_randomization=True)
+    test_dataloader = test_ds.to_dataloader(train=False, batch_size=64, num_workers=0)
     raw_preds = model.predict(test_dataloader, mode="raw")
     interpretation = model.interpret_output(raw_preds, reduction="sum")
     
@@ -157,6 +237,10 @@ def evaluate_model(checkpoint_path="logs/checkpoints/epoch=0-val_loss=0.35.ckpt"
     print("\nSaved: results/variable_importance.png")
     
     # 2. Prediction vs Actual scatter
+    pred_flat = df_final["pred_p50_loc_calib"].values
+    actual_flat = df_final["actual"].values
+    rmse = overall_loc_calib["rmse"]
+    correlation = overall_loc_calib["pearson_r"]
     fig, ax = plt.subplots(figsize=(8, 8))
     ax.scatter(actual_flat, pred_flat, alpha=0.3, s=10)
     lims = [min(actual_flat.min(), pred_flat.min()), max(actual_flat.max(), pred_flat.max())]
@@ -203,17 +287,25 @@ def evaluate_model(checkpoint_path="logs/checkpoints/epoch=0-val_loss=0.35.ckpt"
     plt.close()
     print("Saved: results/error_distribution.png")
     
+    # Save evaluation artifacts
+    metrics_payload = {
+        "overall_raw": overall_raw,
+        "overall_global_calib": overall_calib,
+        "overall_loc_calib": overall_loc_calib,
+        "per_location": per_location,
+    }
+
+    df_final.to_csv("results/predictions_eval.csv", index=False)
+    pd.DataFrame(metrics_payload).to_json("results/evaluation_metrics_detailed.json", indent=2)
+
+    print("\nSaved: results/predictions_eval.csv")
+    print("Saved: results/evaluation_metrics_detailed.json")
+
     print("\n" + "="*60)
     print("EVALUATION COMPLETE")
     print("="*60)
-    
-    return {
-        "rmse": rmse,
-        "mae": mae,
-        "correlation": correlation,
-        "encoder_importance": encoder_importance,
-        "decoder_importance": decoder_importance
-    }
+
+    return metrics_payload
 
 if __name__ == "__main__":
     evaluate_model()
