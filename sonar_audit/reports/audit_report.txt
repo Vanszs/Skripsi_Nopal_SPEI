@@ -1,0 +1,202 @@
+======================================================================
+TFT SPEI MODEL - COMPREHENSIVE AUDIT REPORT
+======================================================================
+Generated: 2026-01-19T11:49:37.749660
+Model: epoch=0-val_loss=0.38.ckpt
+
+----------------------------------------------------------------------
+Section 1: Model Configuration
+Status: FAIL
+----------------------------------------------------------------------
+Metrics:
+  max_encoder_length: 90
+  max_prediction_length: 30
+  learning_rate: 0.0010
+  dropout: 0.3000
+  hidden_size: 128
+  attention_head_size: 4
+  loss_function: QuantileLoss
+  best_epoch: 0
+  best_val_loss: 0.3800
+Notes:
+  - CRITICAL: Best epoch = 0 indicates model may not have learned!
+
+----------------------------------------------------------------------
+Section 2: Data Shape & Availability
+Status: PASS
+----------------------------------------------------------------------
+Metrics:
+  actual_shape: (150,)
+  predicted_shape: (150,)
+  actual_nan_count: 0
+  predicted_nan_count: 0
+  actual_mean: 0.7847
+  actual_std: 0.5717
+  predicted_mean: 0.6087
+  predicted_std: 0.4219
+  actual_min: -0.6190
+  actual_max: 1.9122
+  predicted_min: -0.4561
+  predicted_max: 1.2889
+
+----------------------------------------------------------------------
+Section 3: Bias & RMSE Deep Dive
+Status: WARN
+----------------------------------------------------------------------
+Metrics:
+  rmse: 0.2908
+  mae: 0.2176
+  r2: 0.7413
+  pearson_r: 0.9355
+  bias_mean_error: -0.1760
+  error_std: 0.2315
+  error_min: -0.9039
+  error_max: 0.3902
+  error_p25: 0.0746
+  error_p50: 0.1491
+  error_p75: 0.2945
+  error_p95: 0.6012
+Notes:
+  - WARNING: High bias detected (-0.1760)
+
+----------------------------------------------------------------------
+Section 4: Lag Detection
+Status: PASS
+----------------------------------------------------------------------
+Metrics:
+  optimal_lag_days: 0
+  correlation_at_lag_0: 0.9355
+  correlation_at_optimal_lag: 0.9355
+  lag_improvement: 0.0000
+
+----------------------------------------------------------------------
+Section 5: Variance Ratio
+Status: WARN
+----------------------------------------------------------------------
+Metrics:
+  actual_std: 0.5717
+  predicted_std: 0.4219
+  variance_ratio: 0.7379
+  p1_diff: 0.1340
+  p5_diff: 0.1160
+  p25_diff: -0.0956
+  p50_diff: -0.0871
+  p75_diff: -0.2959
+  p95_diff: -0.4225
+  p99_diff: -0.5186
+Notes:
+  - SLIGHTLY DAMPENED (Acceptable)
+
+----------------------------------------------------------------------
+Section 6: Shock Detection & False Alarms
+Status: PASS
+----------------------------------------------------------------------
+Metrics:
+  total_actual_shocks: 8
+  total_predicted_shocks: 6
+  matched_shocks: 8
+  shock_detection_rate: 1.0000
+  shock_false_alarm_rate: -0.3333
+  actual_drought_days: 0
+  predicted_drought_days: 0
+  drought_true_positives: 0
+  drought_false_positives: 0
+  drought_false_negatives: 0
+  drought_sensitivity: 0.0000
+  drought_false_alarm_rate: 0.0000
+
+----------------------------------------------------------------------
+Section 7: Smoothness vs Reactivity
+Status: WARN
+----------------------------------------------------------------------
+Metrics:
+  avg_actual_volatility_7d: 0.2106
+  avg_predicted_volatility_7d: 0.1495
+  volatility_ratio: 0.7099
+  error_acf_lag1: 0.8145
+  error_acf_lag2: 0.6942
+  error_acf_lag5: 0.5094
+Notes:
+  - SLIGHTLY SMOOTH (Acceptable for stability)
+  - High error autocorrelation - Model misses temporal patterns
+
+----------------------------------------------------------------------
+Section 8: Visual Diagnostics
+Status: PASS
+----------------------------------------------------------------------
+Metrics:
+  plots_generated: 2
+  timeseries_plot: D:\SKRIPSI\Skripsi_Nopal\sonar_audit\plots\audit_timeseries_150.png
+  residuals_plot: D:\SKRIPSI\Skripsi_Nopal\sonar_audit\plots\audit_residuals.png
+Notes:
+  - Plots generated successfully
+
+----------------------------------------------------------------------
+Section 9: Production Readiness Scorecard
+Status: WARN
+----------------------------------------------------------------------
+Metrics:
+  training_convergence: 0
+  bias_control: 5
+  rmse: 6
+  correlation: 8
+  lag: 10
+  variance_ratio: 6
+  shock_detection: 10
+  false_alarm: 10
+  residual_quality: 1
+  stability: 10
+  total_score: 66
+  classification: CONCERNS (Significant issues)
+Notes:
+  - CONCERNS (Significant issues)
+
+----------------------------------------------------------------------
+Section 10: Regression Check
+Status: PASS
+----------------------------------------------------------------------
+Metrics:
+  best_epoch_status: STABLE
+  best_epoch_v1: 0
+  best_epoch_current: 0
+  rmse_status: STABLE
+  rmse_v1: 0.2900
+  rmse_current: 0.2908
+  bias_status: IMPROVED
+  bias_v1: -0.1760
+  bias_current: -0.1760
+  optimal_lag_status: IMPROVED
+  optimal_lag_v1: 4
+  optimal_lag_current: 0
+  variance_ratio_status: IMPROVED
+  variance_ratio_v1: 0.5450
+  variance_ratio_current: 0.7379
+  correlation_status: IMPROVED
+  correlation_v1: 0.9350
+  correlation_current: 0.9355
+  regressions_detected: False
+  regressed_metrics: []
+  improved_metrics: ['bias', 'optimal_lag', 'variance_ratio', 'correlation']
+Notes:
+  - Improvements in: bias, optimal_lag, variance_ratio, correlation
+
+----------------------------------------------------------------------
+Section 11: Final Recommendations
+Status: FAIL
+----------------------------------------------------------------------
+Metrics:
+  priority_1_count: 1
+  priority_2_count: 1
+  priority_3_count: 1
+  go_decision: RE-TRAIN
+  go_reasoning: Significant issues require model retraining
+Notes:
+  - Significant issues require model retraining
+
+======================================================================
+EXECUTIVE SUMMARY
+======================================================================
+Production Readiness Score: 66 / 100
+Classification: CONCERNS (Significant issues)
+Go/No-Go Decision: RE-TRAIN
+Reasoning: Significant issues require model retraining
