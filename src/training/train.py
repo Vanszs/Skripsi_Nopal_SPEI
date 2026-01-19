@@ -12,14 +12,6 @@ def train_pipeline(data_path="data/processed/spei_dataset.parquet",
                    max_epochs=60, 
                    batch_size=32):
     
-    # ... (loading logic unchanged) ...
-    # This replacement targets the function def line only if possible, but I need to include context.
-    # Actually I will just target the EarlyStopping line first as it's separate.
-
-    # I'll do two chunks or one if close. They are far apart (line 12 vs 59).
-    # I'll use separate calls or `multi_replace`.
-# Wait, let's use replace_file_content for the function sig.
-
     
     print("Loading data for training...")
     if not os.path.exists(data_path):

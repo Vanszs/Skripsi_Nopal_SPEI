@@ -2,7 +2,7 @@ from pytorch_forecasting import TimeSeriesDataSet, GroupNormalizer
 from pytorch_forecasting.data.encoders import NaNLabelEncoder
 import pandas as pd
 
-MAX_ENCODER_LENGTH = 90  # 90 days history
+MAX_ENCODER_LENGTH = 30  # 30 days history (optimized for SPEI-3 prediction)
 MAX_PREDICTION_LENGTH = 30 # 30 days forecast
 
 def create_dataset(data: pd.DataFrame):

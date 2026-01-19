@@ -9,10 +9,10 @@ def build_tft_model(training_dataset, **kwargs):
     """
     model = TemporalFusionTransformer.from_dataset(
         training_dataset,
-        learning_rate=0.001,  # Lower LR for stability
+        learning_rate=0.0001,  # Optimized LR for stable convergence
         hidden_size=128,      # Increased capacity
         attention_head_size=4,
-        dropout=0.3,         # Increased dropout to 0.3 to fix overfitting
+        dropout=0.15,        # Optimized dropout for balanced regularization
         hidden_continuous_size=16,
         output_size=7,  # 7 quantiles by default for QuantileLoss
         loss=QuantileLoss(),

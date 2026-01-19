@@ -1,0 +1,195 @@
+================================================================================
+INVESTIGASI ANOMALI PREDIKSI MODEL TFT
+Waktu: 2026-01-18 23:14:37
+================================================================================
+
+========================================
+1. LOADING DATA
+========================================
+Data Shape: (35635, 16)
+Columns: ['time', 'precipitation_sum', 'et0_fao_evapotranspiration', 'soil_moisture', 'temperature_2m_max', 'temperature_2m_min', 'location_id', 'elevation', 'water_deficit', 'SPEI_3', 'SPEI_6', 'time_idx', 'month', 'month_sin', 'month_cos', 'precipitation_log']
+Date Range: 2005-06-29 00:00:00 to 2025-01-01 00:00:00
+Locations: ['Bojonegoro', 'Lamongan', 'Nganjuk', 'Ngawi', 'Tuban']
+
+========================================
+2. ANALISIS TARGET VARIABLE (SPEI_3)
+========================================
+SPEI_3 Statistics:
+  - Min: -4.1074
+  - Max: 3.3298
+  - Mean: 0.0085
+  - Std: 1.0013
+  - NaN count: 0
+
+========================================
+3. CEK DATA AKTUAL PER LOKASI
+========================================
+
+Location: Bojonegoro
+  Data points: 7127
+  SPEI range: [-3.649, 2.625]
+  Diff stats - Mean: 0.0858, Max: 2.5374
+
+Location: Lamongan
+  Data points: 7127
+  SPEI range: [-3.662, 2.486]
+  Diff stats - Mean: 0.0724, Max: 2.1027
+
+Location: Nganjuk
+  Data points: 7127
+  SPEI range: [-2.793, 3.330]
+  Diff stats - Mean: 0.0725, Max: 2.5495
+
+Location: Ngawi
+  Data points: 7127
+  SPEI range: [-3.216, 2.796]
+  Diff stats - Mean: 0.0738, Max: 1.9792
+
+Location: Tuban
+  Data points: 7127
+  SPEI range: [-4.107, 3.041]
+  Diff stats - Mean: 0.0827, Max: 2.8224
+
+========================================
+4. LOADING MODEL & GENERATING PREDICTIONS
+========================================
+Using checkpoint: D:\SKRIPSI\Skripsi_Nopal\logs/checkpoints\epoch=0-val_loss=0.30.ckpt
+Test Start Index: 6939
+Subset Data Shape: (1985, 16)
+Test Dataset Samples: 2130
+Model loaded successfully
+
+========================================
+5. ANALISIS PREDIKSI
+========================================
+Prediction Shape: torch.Size([2130, 30, 3])
+  - Batch size: 2130
+  - Horizon: 30
+  - Quantiles: 3
+Actual Shape: torch.Size([2130, 30])
+
+Prediction (P50) Statistics:
+  - Min: -2.4332
+  - Max: 2.0382
+  - Mean: -0.0826
+  - Std: 0.9024
+
+Actual Statistics (Test):
+  - Min: -2.7560
+  - Max: 1.9869
+  - Mean: -0.1726
+  - Std: 0.8553
+
+========================================
+6. ANALISIS POLA PER BATCH (FIRST 10)
+========================================
+Batch   0: PredRange=1.530, TrueRange=1.401, PredMean=-0.710, TrueMean=-1.391
+Batch   1: PredRange=1.551, TrueRange=1.414, PredMean=-0.634, TrueMean=-1.342
+Batch   2: PredRange=1.558, TrueRange=1.396, PredMean=-0.623, TrueMean=-1.341
+Batch   3: PredRange=1.567, TrueRange=1.396, PredMean=-0.629, TrueMean=-1.341
+Batch   4: PredRange=1.550, TrueRange=1.396, PredMean=-0.639, TrueMean=-1.339
+Batch   5: PredRange=1.554, TrueRange=1.396, PredMean=-0.642, TrueMean=-1.334
+Batch   6: PredRange=1.583, TrueRange=1.396, PredMean=-0.595, TrueMean=-1.329
+Batch   7: PredRange=1.578, TrueRange=1.396, PredMean=-0.544, TrueMean=-1.324
+Batch   8: PredRange=1.550, TrueRange=1.396, PredMean=-0.470, TrueMean=-1.319
+Batch   9: PredRange=1.565, TrueRange=1.396, PredMean=-0.519, TrueMean=-1.312
+
+========================================
+7. ERROR PER HORIZON STEP
+========================================
+  H= 1: RMSE=0.3719, Bias=+0.0814
+  H= 2: RMSE=0.3715, Bias=+0.0637
+  H= 3: RMSE=0.3726, Bias=+0.0611
+  H= 4: RMSE=0.3737, Bias=+0.0640
+  H= 5: RMSE=0.3786, Bias=+0.0723
+  H= 6: RMSE=0.3827, Bias=+0.0806
+  H= 7: RMSE=0.3883, Bias=+0.0905
+  H= 8: RMSE=0.3933, Bias=+0.0982
+  H= 9: RMSE=0.3987, Bias=+0.1049
+  H=10: RMSE=0.4061, Bias=+0.1125
+  H=11: RMSE=0.4145, Bias=+0.1196
+  H=12: RMSE=0.4199, Bias=+0.1231
+  H=13: RMSE=0.4268, Bias=+0.1261
+  H=14: RMSE=0.4303, Bias=+0.1270
+  H=15: RMSE=0.4347, Bias=+0.1277
+  H=16: RMSE=0.4531, Bias=+0.1380
+  H=17: RMSE=0.4520, Bias=+0.1367
+  H=18: RMSE=0.4512, Bias=+0.1338
+  H=19: RMSE=0.4494, Bias=+0.1300
+  H=20: RMSE=0.4485, Bias=+0.1267
+  H=21: RMSE=0.4473, Bias=+0.1229
+  H=22: RMSE=0.4471, Bias=+0.1179
+  H=23: RMSE=0.4465, Bias=+0.1152
+  H=24: RMSE=0.4457, Bias=+0.1094
+  H=25: RMSE=0.4439, Bias=+0.1035
+  H=26: RMSE=0.4424, Bias=+0.0965
+  H=27: RMSE=0.4422, Bias=+0.0899
+  H=28: RMSE=0.4430, Bias=+0.0802
+  H=29: RMSE=0.4429, Bias=+0.0715
+  H=30: RMSE=0.4457, Bias=+0.0612
+
+========================================
+8. CEK SYSTEMATIC BIAS
+========================================
+Valid predictions: 59550
+
+Bias per SPEI Range:
+  SPEI [-3.0, -1.5): Bias=+0.1626, n=5940
+  SPEI [-1.5, -0.5): Bias=+0.1674, n=14055
+  SPEI [-0.5, +0.5): Bias=+0.1128, n=27465
+  SPEI [+0.5, +1.5): Bias=-0.0024, n=10965
+  SPEI [+1.5, +3.0): Bias=-0.2477, n=1125
+
+========================================
+9. SAMPLE RAW VALUES (Batch 0)
+========================================
+H  | Predicted | Actual    | Error
+---|-----------|-----------|----------
+ 1 | -1.6895   | -2.0992   | +0.4097
+ 2 | -1.6716   | -2.0480   | +0.3764
+ 3 | -1.6195   | -1.9954   | +0.3759
+ 4 | -1.5515   | -1.9567   | +0.4052
+ 5 | -1.4750   | -1.9096   | +0.4346
+ 6 | -1.3926   | -1.8146   | +0.4220
+ 7 | -1.3053   | -1.7437   | +0.4384
+ 8 | -1.2130   | -1.6629   | +0.4499
+ 9 | -1.1155   | -1.6199   | +0.5044
+10 | -1.0133   | -1.5071   | +0.4938
+11 | -0.9081   | -1.4548   | +0.5467
+12 | -0.8030   | -1.4480   | +0.6451
+13 | -0.7020   | -1.4355   | +0.7335
+14 | -0.6089   | -1.4124   | +0.8035
+15 | -0.5261   | -1.3901   | +0.8639
+16 | -0.4551   | -1.3643   | +0.9092
+17 | -0.3957   | -1.3130   | +0.9173
+18 | -0.3470   | -1.2749   | +0.9279
+19 | -0.3077   | -1.2044   | +0.8967
+20 | -0.2761   | -1.1790   | +0.9029
+21 | -0.2508   | -1.1639   | +0.9131
+22 | -0.2305   | -1.1759   | +0.9454
+23 | -0.2143   | -1.1655   | +0.9512
+24 | -0.2012   | -1.1382   | +0.9370
+25 | -0.1906   | -1.0546   | +0.8640
+26 | -0.1819   | -0.9687   | +0.7868
+27 | -0.1748   | -0.8940   | +0.7193
+28 | -0.1689   | -0.8359   | +0.6670
+29 | -0.1640   | -0.7917   | +0.6276
+30 | -0.1599   | -0.6978   | +0.5380
+
+========================================
+10. RINGKASAN
+========================================
+Overall RMSE: 0.4221
+Overall MAE: 0.3346
+Overall Bias: +0.1026
+Correlation: 0.8952
+Variance Ratio (Pred/True): 1.0200
+
+========================================
+11. DIAGNOSIS
+========================================
+- Model cenderung OVERESTIMATE (prediksi lebih tinggi)
+- Varians prediksi mendekati varians aktual
+- Korelasi BAIK
+
+Investigation complete!
