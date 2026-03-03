@@ -6,9 +6,12 @@ One-shot comprehensive evaluation script for TFT SPEI Forecasting Model.
 Outputs (saved to results/full_eval_<TIMESTAMP>/):
   Metrics:
     - metrics_summary.json       : Overall + per-location + per-horizon metrics
+                                   + PICP (interval coverage) + naive baseline
     - metrics_report.txt         : Human-readable full report
     - horizon_metrics.csv        : RMSE/MAE/Bias/Corr per forecast day (1-30)
     - classification_report.csv  : SPEI drought-class accuracy per location
+    - classification_summary.csv : 3-class broad accuracy summary
+    - predictions_full.csv       : Aligned actual/pred table with in_interval flag
 
   Plots:
     01_scatter_overall.png       : Actual vs Predicted scatter (all locations)
@@ -18,9 +21,10 @@ Outputs (saved to results/full_eval_<TIMESTAMP>/):
     05_variable_importance.png   : VSN encoder & decoder importance
     06_horizon_metrics.png       : RMSE / MAE / Bias / Corr vs forecast horizon
     07_location_comparison.png   : Grouped bar: metrics across locations
-    08_quantile_fan.png          : P10/P50/P90 fan chart (Bojonegoro sample)
+    08_quantile_fan.png          : P10/P50/P90 fan chart per location
     09_spei_classification.png   : Confusion heatmap (actual class vs pred class)
     10_bias_over_time.png        : Monthly rolling bias per location
+    11_model_vs_naive_picp.png   : Model vs Naive RMSE comparison + PICP coverage
 
 Run:
     python full_evaluation.py
@@ -198,35 +202,68 @@ def run(checkpoint_path: str, out_dir: Path, log_fp):
         loader = loc_ds.to_dataloader(train=False, batch_size=64, num_workers=0)
 
         raw = model.predict(loader, mode="raw", return_x=True)
-        pv  = raw.output.prediction.cpu().numpy()      # (B, T, 7 quantiles)
-        tv  = raw.x["decoder_time_idx"].cpu().numpy()  # (B, T)
+        pv_norm = raw.output.prediction.cpu().numpy()      # (B, T, 7)  normalized
+        tv  = raw.x["decoder_time_idx"].cpu().numpy()      # (B, T)
 
-        # Actual target values in decoder window — used for true horizon metrics
+        # Denormalise predictions: GroupNormalizer computes
+        #   norm = (x - center) / scale  so  raw = norm * scale + center
+        # target_scale shape: (B, 2)  [:, 0]=center  [:, 1]=scale_factor
+        if "target_scale" in raw.x:
+            ts      = raw.x["target_scale"].cpu().numpy()  # (B, 2)
+            _center = ts[:, 0].reshape(-1, 1, 1)           # (B, 1, 1)
+            _scale  = ts[:, 1].reshape(-1, 1, 1)           # (B, 1, 1)
+            pv = pv_norm * _scale + _center                # (B, T, 7) in SPEI units
+        else:
+            pv = pv_norm  # fallback: assume already in raw scale
+
+        # Actual target values in decoder window (for horizon metrics)
         av = None
         if "decoder_target" in raw.x:
-            av = raw.x["decoder_target"].cpu().numpy()  # (B, T)
+            av_norm = raw.x["decoder_target"].cpu().numpy()  # (B, T) normalized
+            if "target_scale" in raw.x:
+                ts2     = raw.x["target_scale"].cpu().numpy()  # (B, 2)
+                _center2 = ts2[:, 0].reshape(-1, 1)             # (B, 1)
+                _scale2  = ts2[:, 1].reshape(-1, 1)             # (B, 1)
+                av = av_norm * _scale2 + _center2               # (B, T) in SPEI units
+            else:
+                av = av_norm
+            # Diagnostic: verify decoder_target and actual SPEI are on same scale
+            _log(f"    decoder_target  [{loc}]: "
+                 f"mean={av.mean():.3f}  std={av.std():.3f}", log_fp)
+            _log(f"    SPEI_3 actual   [{loc}]: "
+                 f"mean={loc_data.SPEI_3.mean():.3f}  std={loc_data.SPEI_3.std():.3f}",
+                 log_fp)
 
-        # Ensemble aggregation per time_idx
-        agg = {k: {} for k in ("p10", "p50", "p90")}
+        # ── Step-0-only predictions (no ensemble averaging) ────────────────────
+        # For each window i, tv[i, 0] is the time_idx at step=0.
+        # Using step-0 only ensures each timestep is predicted from the
+        # freshest encoder context, eliminating the smoothing bias introduced
+        # by averaging predictions where the same timestep is at step 1..29.
+        step0_preds: dict = {}          # time_idx -> {p10, p50, p90}
+        for i in range(pv.shape[0]):
+            t = int(tv[i, 0])           # time_idx of the first decoder step
+            if t not in step0_preds:    # deduplicate (safety)
+                step0_preds[t] = {
+                    "pred_p10": float(pv[i, 0, 1]),
+                    "pred_p50": float(pv[i, 0, 3]),
+                    "pred_p90": float(pv[i, 0, 5]),
+                }
+
+        # ── Horizon bank: collect every (step, actual, pred) for horizon metrics ─
+        # This uses ALL steps and ALL windows — each (i, step) pair represents
+        # a forecasting event at a specific horizon depth.  Still uses
+        # denormalized values so horizon metrics are in SPEI units.
         for i in range(pv.shape[0]):
             for step in range(pred_len):
-                t = int(tv[i, step])
-                agg["p10"].setdefault(t, []).append(pv[i, step, 1])
-                agg["p50"].setdefault(t, []).append(pv[i, step, 3])
-                agg["p90"].setdefault(t, []).append(pv[i, step, 5])
-
-                # Collect true per-step actual/pred pairs for horizon metrics
                 if av is not None:
                     horizon_bank[step]["actual"].append(float(av[i, step]))
                     horizon_bank[step]["pred"].append(float(pv[i, step, 3]))
 
-        for t in sorted(agg["p50"]):
+        for t in sorted(step0_preds):
             ensemble_rows.append({
                 "time_idx":    t,
                 "location_id": loc,
-                "pred_p10":    float(np.mean(agg["p10"][t])),
-                "pred_p50":    float(np.mean(agg["p50"][t])),
-                "pred_p90":    float(np.mean(agg["p90"][t])),
+                **step0_preds[t],
             })
 
     df_preds = pd.DataFrame(ensemble_rows)
@@ -237,6 +274,12 @@ def run(checkpoint_path: str, out_dir: Path, log_fp):
     df["month"] = pd.to_datetime(df["time"]).dt.to_period("M").astype(str)
     df["actual_class"] = df["actual"].apply(classify_spei)
     df["pred_class"]   = df["pred_p50"].apply(classify_spei)
+    # PICP: 1 if actual falls inside the P10–P90 prediction interval, else 0
+    # Nominal coverage for P10–P90 = 80%.
+    df["in_interval"] = (
+        (df["actual"] >= df["pred_p10"]) &
+        (df["actual"] <= df["pred_p90"])
+    ).astype(int)
 
     _log(f"  Merged prediction rows: {len(df):,}", log_fp)
 
@@ -262,6 +305,36 @@ def run(checkpoint_path: str, out_dir: Path, log_fp):
         horizon_agg.append(m)
 
     df_horizon = pd.DataFrame(horizon_agg)
+
+    # ── PICP (Prediction Interval Coverage Probability) ────────────────────
+    picp_overall = float(df["in_interval"].mean())
+    picp_per_loc = {
+        loc: float(df[df.location_id == loc]["in_interval"].mean())
+        for loc in locations
+    }
+
+    # ── Naive persistence baseline ──────────────────────────────────────
+    # Predict SPEI(t) = SPEI(t-1).  If the model cannot beat this,
+    # the training configuration is fundamentally flawed.
+    test_sorted_naive = (
+        test_data.sort_values(["location_id", "time_idx"])
+        .assign(naive_pred=lambda x:
+                x.groupby("location_id")["SPEI_3"].transform(lambda s: s.shift(1)))
+        [["time_idx", "location_id", "naive_pred"]]
+        .dropna()
+    )
+    df_naive = pd.merge(
+        df[["time_idx", "location_id", "actual"]],
+        test_sorted_naive, on=["time_idx", "location_id"], how="inner"
+    )
+    naive_overall = _metrics(df_naive["actual"].values, df_naive["naive_pred"].values)
+    naive_per_loc = {
+        loc: _metrics(
+            df_naive[df_naive.location_id == loc]["actual"].values,
+            df_naive[df_naive.location_id == loc]["naive_pred"].values,
+        )
+        for loc in locations
+    }
 
     # Classification — per-class stats (9 canonical SPEI classes)
     all_classes = [
@@ -308,11 +381,21 @@ def run(checkpoint_path: str, out_dir: Path, log_fp):
             _log(f"    {k.upper():<12}: N/A", log_fp)
         else:
             _log(f"    {k.upper():<12}: {v:.4f}", log_fp)
+    _log(f"    {'PICP':<12}: {picp_overall:.4f}  (nominal 0.80 for P10–P90)", log_fp)
+
+    _log("\n  ─── NAIVE PERSISTENCE BASELINE ───", log_fp)
+    for k, v in naive_overall.items():
+        if v is None:
+            _log(f"    {k.upper():<12}: N/A", log_fp)
+        else:
+            _log(f"    {k.upper():<12}: {v:.4f}", log_fp)
+    _log("  (model must beat naive RMSE to demonstrate predictive skill)", log_fp)
 
     _log("\n  ─── PER-LOCATION METRICS ───", log_fp)
     for loc, m in per_loc.items():
         _log(f"    {loc:<15} RMSE={m['rmse']:.4f}  MAE={m['mae']:.4f}"
-             f"  R²={m['r2']:.4f}  Bias={m['bias']:.4f}  r={m['pearson_r']:.4f}", log_fp)
+             f"  R²={m['r2']:.4f}  Bias={m['bias']:.4f}  r={m['pearson_r']:.4f}"
+             f"  PICP={picp_per_loc.get(loc, float('nan')):.4f}", log_fp)
 
     _log("\n  ─── HORIZON METRICS (first and last 5 days) ───", log_fp)
     for row in horizon_agg:
@@ -330,7 +413,7 @@ def run(checkpoint_path: str, out_dir: Path, log_fp):
     df_clf_summary.to_csv(out_dir / "classification_summary.csv", index=False) # 3-class summary
     df.to_csv(out_dir / "predictions_full.csv", index=False)
 
-    # JSON — now includes per_horizon
+    # JSON — now includes per_horizon, picp, naive baseline
     metrics_payload = {
         "generated": datetime.now().isoformat(),
         "checkpoint": str(checkpoint_path),
@@ -339,7 +422,13 @@ def run(checkpoint_path: str, out_dir: Path, log_fp):
         "test_period": "year >= 2024",
         "train_period": "year < 2023",
         "val_period": "year == 2023",
+        "aggregation": "step-0-only (no ensemble averaging)",
         "overall": overall,
+        "picp_overall": round(picp_overall, 6),
+        "picp_nominal": 0.80,
+        "picp_per_location": {k: round(v, 6) for k, v in picp_per_loc.items()},
+        "naive_persistence": naive_overall,
+        "naive_per_location": naive_per_loc,
         "per_location": per_loc,
         "per_horizon": [
             {k: (round(v, 6) if isinstance(v, float) else v) for k, v in row.items()}
@@ -605,7 +694,47 @@ def run(checkpoint_path: str, out_dir: Path, log_fp):
     fig.savefig(out_dir / "10_bias_over_time.png", dpi=150, bbox_inches="tight")
     plt.close(fig)
     _log("  10_bias_over_time.png", log_fp)
+    # ── Plot 11: Model vs Naive baseline RMSE + PICP per location ──────────
+    fig, axes = plt.subplots(1, 2, figsize=(14, 6))
 
+    # Left panel: RMSE comparison (model vs naive) per location
+    x      = np.arange(len(locations))
+    width  = 0.35
+    rmse_model = [per_loc[loc]["rmse"] or 0.0 for loc in locations]
+    rmse_naive = [naive_per_loc[loc]["rmse"] or 0.0 for loc in locations]
+    axes[0].bar(x - width / 2, rmse_model, width, label="TFT Model",
+                color="steelblue", alpha=0.85)
+    axes[0].bar(x + width / 2, rmse_naive, width, label="Naive Persistence",
+                color="tomato",    alpha=0.85)
+    axes[0].set_xticks(x)
+    axes[0].set_xticklabels(locations, rotation=15, ha="right")
+    axes[0].set_ylabel("RMSE")
+    axes[0].set_title("RMSE: TFT Model vs Naive Persistence Baseline")
+    axes[0].legend()
+    axes[0].grid(True, alpha=0.3, axis="y")
+
+    # Right panel: PICP per location (bar) with nominal 80% line
+    picp_vals = [picp_per_loc.get(loc, 0.0) for loc in locations]
+    bar_colors = [
+        "seagreen" if v >= 0.75 else "darkorange" for v in picp_vals
+    ]
+    axes[1].bar(x, picp_vals, color=bar_colors, alpha=0.85)
+    axes[1].axhline(0.80, color="black", lw=1.5, ls="--",
+                    label="Nominal 80% (P10–P90)")
+    axes[1].set_xticks(x)
+    axes[1].set_xticklabels(locations, rotation=15, ha="right")
+    axes[1].set_ylim([0, 1.05])
+    axes[1].set_ylabel("Coverage Probability")
+    axes[1].set_title("PICP — P10–P90 Interval Coverage per Location")
+    axes[1].legend(fontsize=9)
+    axes[1].grid(True, alpha=0.3, axis="y")
+
+    fig.suptitle("Model Skill vs Naive Baseline and Prediction Interval Coverage",
+                 fontsize=13)
+    fig.tight_layout()
+    fig.savefig(out_dir / "11_model_vs_naive_picp.png", dpi=150, bbox_inches="tight")
+    plt.close(fig)
+    _log("  11_model_vs_naive_picp.png", log_fp)
     # ── Final summary ─────────────────────────────────────────────────────
     _log("\n" + "=" * 72, log_fp)
     _log("  ALL OUTPUTS SAVED", log_fp)
@@ -621,6 +750,19 @@ def run(checkpoint_path: str, out_dir: Path, log_fp):
     for _, row in df_clf_summary.iterrows():
         _log(f"    {row['location']:<15}  exact={row['exact_acc']*100:.1f}%"
              f"  broad={row['broad_acc']*100:.1f}%", log_fp)
+
+    _log("\n  PICP — P10–P90 Interval Coverage (nominal = 80%):", log_fp)
+    for loc in locations:
+        _log(f"    {loc:<15}  PICP={picp_per_loc.get(loc, float('nan')):.4f}", log_fp)
+    _log(f"    {'OVERALL':<15}  PICP={picp_overall:.4f}", log_fp)
+
+    _log("\n  MODEL vs NAIVE PERSISTENCE (overall):", log_fp)
+    m_rmse = overall.get("rmse") or float("nan")
+    n_rmse = naive_overall.get("rmse") or float("nan")
+    skill  = (1.0 - m_rmse / n_rmse) * 100 if n_rmse > 0 else float("nan")
+    _log(f"    Model  RMSE = {m_rmse:.4f}", log_fp)
+    _log(f"    Naive  RMSE = {n_rmse:.4f}", log_fp)
+    _log(f"    Skill Score = {skill:.1f}%  (positive = model beats naive)", log_fp)
 
 
 # ---------------------------------------------------------------------------

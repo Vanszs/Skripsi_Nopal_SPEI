@@ -12,8 +12,23 @@ def create_dataset(data: pd.DataFrame,
     Creates a TimeSeriesDataSet from the processed dataframe.
 
     Args:
-        max_encoder_length: override encoder window (useful to match trained checkpoints)
-        max_prediction_length: override prediction horizon
+        max_encoder_length: encoder context window in days.
+            MUST be >= 90 so SPEI-3 (90-day rolling) is fully observable.
+            Passed from checkpoint hparams so train/eval are always consistent.
+        max_prediction_length: forecast horizon in days.
+
+    Design notes:
+        min_encoder_length = max_encoder_length   → no short-context samples;
+            every sample sees exactly 'max_encoder_length' past days.
+            Allowing fewer days (e.g. // 2 = 45) would train the model on
+            incomplete SPEI-3 windows and hurt generalisation.
+        min_prediction_length = max_prediction_length → full 30-day horizon
+            on every sample; prevents the model learning on partial horizons.
+        allow_missing_timesteps=True is kept intentionally to handle any
+            minor calendar gaps in the source data; the DataLoader fills
+            gaps with last-known-value before passing to the model.
+        GroupNormalizer(transformation=None): SPEI is already a Z-score so
+            only per-location mean/std centering is applied (no Box-Cox).
     """
     # Ensure no NaN in critical columns
     data = data.replace([float('inf'), float('-inf')], float('nan')).dropna()
@@ -29,9 +44,13 @@ def create_dataset(data: pd.DataFrame,
         time_idx="time_idx",
         target="SPEI_3",
         group_ids=["location_id"],
-        min_encoder_length=max_encoder_length // 2,
+        # Enforce full context: every sample must have exactly max_encoder_length
+        # past days so the model always sees a complete SPEI-3 rolling window.
+        min_encoder_length=max_encoder_length,
         max_encoder_length=max_encoder_length,
-        min_prediction_length=1,
+        # Enforce full forecast window: every sample predicts exactly
+        # max_prediction_length steps (no partial-horizon samples).
+        min_prediction_length=max_prediction_length,
         max_prediction_length=max_prediction_length,
         
         static_categoricals=["location_id"],

@@ -2,6 +2,7 @@
 Evaluation script for TFT SPEI Forecasting Model
 """
 import os
+import json
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -42,8 +43,11 @@ def evaluate_model(checkpoint_path="logs/checkpoints/epoch=0-val_loss=0.35.ckpt"
     print(f"  Checkpoint encoder length : {ckpt_encoder_len}")
     print(f"  Checkpoint prediction len : {ckpt_pred_len}")
 
-    # Create training dataset using the checkpoint's encoder window
-    train_data = data[data.year < test_year_start].copy()
+    # Create training dataset using the TRAINING split: year < 2023.
+    # IMPORTANT: this must NOT use test_year_start (2024) because the scaler
+    # is fit on train_data — using year < 2024 would include the 2023 val set
+    # and produce a scaler that does not match the one used during training.
+    train_data = data[data.year < 2023].copy()
     train_ds = create_dataset(train_data,
                               max_encoder_length=ckpt_encoder_len,
                               max_prediction_length=ckpt_pred_len)
@@ -56,6 +60,17 @@ def evaluate_model(checkpoint_path="logs/checkpoints/epoch=0-val_loss=0.35.ckpt"
     pred_len = ckpt_pred_len
 
     def generate_predictions(model, test_data, train_ds, pred_len):
+        """
+        Generate predictions using STEP-0-ONLY aggregation.
+
+        Rationale: for each time_idx T, many overlapping windows contain T at
+        different forecast steps (s=0, 1, ..., pred_len-1).  Averaging all of
+        them introduces systematic smoothing bias — predictions from windows
+        where T is at step 29 carry stale encoder context and compress towards
+        the mean.  Instead we use ONLY the window that predicts T at step s=0
+        (the freshest encoder context), which gives the least-biased estimate
+        and eliminates the averaging-induced systematic offset.
+        """
         results = []
         locations = test_data["location_id"].unique()
 
@@ -69,30 +84,27 @@ def evaluate_model(checkpoint_path="logs/checkpoints/epoch=0-val_loss=0.35.ckpt"
             loc_loader = loc_ds.to_dataloader(train=False, batch_size=64, num_workers=0)
 
             raw_preds = model.predict(loc_loader, mode="raw", return_x=True)
-            p_values = raw_preds.output.prediction.cpu().numpy()
-            t_values = raw_preds.x["decoder_time_idx"].cpu().numpy()
+            p_values = raw_preds.output.prediction.cpu().numpy()  # (B, T, 7)
+            t_values = raw_preds.x["decoder_time_idx"].cpu().numpy()  # (B, T)
 
-            ensemble_p10 = {}
-            ensemble_p50 = {}
-            ensemble_p90 = {}
-
+            # Step-0-only: take each window's first-step prediction only.
+            # tv[i, 0] is the time_idx that window i predicts at step 0.
+            step0_preds = {}   # time_idx -> {p10, p50, p90}
             for i in range(p_values.shape[0]):
-                for step in range(pred_len):
-                    t_idx = int(t_values[i, step])
-                    ensemble_p10.setdefault(t_idx, []).append(p_values[i, step, 1])
-                    ensemble_p50.setdefault(t_idx, []).append(p_values[i, step, 3])
-                    ensemble_p90.setdefault(t_idx, []).append(p_values[i, step, 5])
-
-            for t_idx in sorted(ensemble_p50.keys()):
-                results.append(
-                    {
-                        "time_idx": t_idx,
-                        "location_id": loc,
-                        "pred_p10": float(np.mean(ensemble_p10[t_idx])),
-                        "pred_p50": float(np.mean(ensemble_p50[t_idx])),
-                        "pred_p90": float(np.mean(ensemble_p90[t_idx])),
+                t_idx = int(t_values[i, 0])   # step = 0
+                if t_idx not in step0_preds:  # deduplicate (safety)
+                    step0_preds[t_idx] = {
+                        "pred_p10": float(p_values[i, 0, 1]),
+                        "pred_p50": float(p_values[i, 0, 3]),
+                        "pred_p90": float(p_values[i, 0, 5]),
                     }
-                )
+
+            for t_idx in sorted(step0_preds):
+                results.append({
+                    "time_idx":    t_idx,
+                    "location_id": loc,
+                    **step0_preds[t_idx],
+                })
 
         return pd.DataFrame(results)
 
@@ -127,19 +139,54 @@ def evaluate_model(checkpoint_path="logs/checkpoints/epoch=0-val_loss=0.35.ckpt"
 
     overall_raw = calculate_metrics(df_final, pred_col="pred_p50")
 
+    # ── PICP: Prediction Interval Coverage Probability ───────────────────
+    # Nominal coverage for a P10–P90 interval = 80%.
+    # Values well below 0.80 signal under-coverage (interval too narrow);
+    # values above 0.80 signal over-coverage (interval too wide / conservative).
+    df_final["in_interval"] = (
+        (df_final["actual"] >= df_final["pred_p10"]) &
+        (df_final["actual"] <= df_final["pred_p90"])
+    )
+    picp_overall = float(df_final["in_interval"].mean())
+    picp_per_loc = {
+        loc: float(df_final[df_final.location_id == loc]["in_interval"].mean())
+        for loc in df_final["location_id"].unique()
+    }
+
+    # ── Naive persistence baseline ────────────────────────────────────────
+    # Naive: predict SPEI(t) = SPEI(t-1)  (yesterday's value = today's forecast).
+    # If the model cannot beat naive RMSE, the training configuration is suspect.
+    test_sorted = test_data.sort_values(["location_id", "time_idx"]).copy()
+    test_sorted["naive_pred"] = (
+        test_sorted.groupby("location_id")["SPEI_3"].shift(1)
+    )
+    df_naive = test_sorted[["time_idx", "location_id", "naive_pred"]].dropna()
+    df_naive_merged = pd.merge(
+        df_final[["time_idx", "location_id", "actual"]],
+        df_naive, on=["time_idx", "location_id"], how="inner"
+    )
+    naive_raw = calculate_metrics(df_naive_merged, actual_col="actual", pred_col="naive_pred")
+
     print("\n" + "="*60)
     print(f"TEST SET METRICS ({test_year_start}-2025)")
     print("="*60)
-    print("RAW (unbiased):")
+    print("RAW MODEL (unbiased, step-0-only predictions):")
     for k, v in overall_raw.items():
+        print(f"  {k.upper():10}: {v}")
+    print(f"  {'PICP':10}: {picp_overall:.4f}  (nominal 0.80 for P10-P90)")
+    print("\nNAIVE PERSISTENCE BASELINE:")
+    for k, v in naive_raw.items():
         print(f"  {k.upper():10}: {v}")
 
     # Per-location metrics (raw only — no leaky calibration)
     per_location = {}
     for loc in df_final["location_id"].unique():
         loc_df = df_final[df_final.location_id == loc]
+        naive_loc = df_naive_merged[df_naive_merged.location_id == loc]
         per_location[loc] = {
-            "raw": calculate_metrics(loc_df, pred_col="pred_p50"),
+            "raw":     calculate_metrics(loc_df, pred_col="pred_p50"),
+            "naive":   calculate_metrics(naive_loc, actual_col="actual", pred_col="naive_pred"),
+            "picp":    picp_per_loc.get(loc, None),
         }
     
     # Get interpretation using raw mode
@@ -260,12 +307,22 @@ def evaluate_model(checkpoint_path="logs/checkpoints/epoch=0-val_loss=0.35.ckpt"
     
     # Save evaluation artifacts
     metrics_payload = {
-        "overall_raw": overall_raw,
-        "per_location": per_location,
+        "overall_raw":    overall_raw,
+        "overall_picp":   picp_overall,
+        "overall_naive":  naive_raw,
+        "per_location":   per_location,
+        "notes": {
+            "train_split":   "year < 2023",
+            "val_split":     "year == 2023",
+            "test_split":    f"year >= {test_year_start}",
+            "aggregation":   "step-0-only (no ensemble averaging)",
+            "picp_nominal":  "0.80 for P10-P90 interval",
+        },
     }
 
     df_final.to_csv("results/predictions_eval.csv", index=False)
-    pd.DataFrame(metrics_payload).to_json("results/evaluation_metrics_detailed.json", indent=2)
+    with open("results/evaluation_metrics_detailed.json", "w") as _f:
+        json.dump(metrics_payload, _f, indent=2)
 
     print("\nSaved: results/predictions_eval.csv")
     print("Saved: results/evaluation_metrics_detailed.json")
