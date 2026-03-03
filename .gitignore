@@ -31,3 +31,4 @@ debug_*.py
 inspect_results.py
 
 /lightning_logs/
+/logs

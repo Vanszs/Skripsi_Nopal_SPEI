@@ -8,9 +8,10 @@ import pandas as pd
 from src.models.dataset import create_dataset
 from src.models.tft import build_tft_model
 
-def train_pipeline(data_path="data/processed/spei_dataset.parquet", 
-                   max_epochs=60, 
-                   batch_size=32):
+def train_pipeline(data_path="data/processed/spei_dataset.parquet",
+                   max_epochs=60,
+                   batch_size=32,
+                   max_encoder_length: int = 90):
     
     
     print("Loading data for training...")
@@ -34,11 +35,13 @@ def train_pipeline(data_path="data/processed/spei_dataset.parquet",
     validation_cutoff = data[data.year == 2023]["time_idx"].max()
     
     print(f"Training Cutoff Index: {training_cutoff}")
-    
+    print(f"Encoder Length       : {max_encoder_length}")
+
     # Create Dataset
     # Filter only relevant data to avoid confusing the dataset creator
     # train_cutoff covers all history up to end of training
-    train_ds = create_dataset(data[data.time_idx <= training_cutoff])
+    train_ds = create_dataset(data[data.time_idx <= training_cutoff],
+                              max_encoder_length=max_encoder_length)
     
     # Validation Dataset (Rolling origin from training)
     # We validate on 2023 data using history from Train
@@ -60,8 +63,8 @@ def train_pipeline(data_path="data/processed/spei_dataset.parquet",
     early_stop_callback = EarlyStopping(monitor="val_loss", min_delta=1e-4, patience=25, verbose=False, mode="min")
     lr_logger = LearningRateMonitor()
     checkpoint_callback = ModelCheckpoint(
-        dirpath="logs/checkpoints", 
-        filename="{epoch}-{val_loss:.2f}", 
+        dirpath="logs/checkpoints",
+        filename=f"enc{max_encoder_length}" + "-{epoch}-{val_loss:.4f}",
         monitor="val_loss",
         save_top_k=1
     )
