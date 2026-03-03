@@ -7,7 +7,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.stats import pearsonr
-import pytorch_lightning as pl
 from pytorch_forecasting import TemporalFusionTransformer, TimeSeriesDataSet
 
 # Add project root to path
@@ -17,7 +16,7 @@ from src.models.dataset import create_dataset
 
 # Configuration
 DATA_PATH = "data/processed/spei_dataset.parquet"
-CHECKPOINT_PATH = "logs/checkpoints/epoch=0-val_loss=0.30.ckpt"
+CHECKPOINT_DIR = "logs/checkpoints"
 RESULTS_DIR = "results"
 FIG_SIZE = (12, 6)
 sns.set_style("whitegrid")
@@ -36,25 +35,23 @@ def load_data():
     return pd.read_parquet(DATA_PATH)
 
 def find_checkpoint():
-    if os.path.exists(CHECKPOINT_PATH):
-        return CHECKPOINT_PATH
-    
-    # Try alternate relative path
-    alt_path = os.path.join("..", "..", CHECKPOINT_PATH)
-    if os.path.exists(alt_path):
-        return alt_path
-        
-    # Check directory for any checkpoint
-    dirname = os.path.dirname(CHECKPOINT_PATH)
-    if not os.path.exists(dirname):
-        dirname = os.path.dirname(alt_path)
-    
-    if os.path.exists(dirname):
-        checkpoints = [f for f in os.listdir(dirname) if f.endswith(".ckpt")]
-        if checkpoints:
-            return os.path.join(dirname, checkpoints[-1])
-            
-    raise FileNotFoundError(f"Checkpoint not found at {CHECKPOINT_PATH}")
+    """Dynamically find the best checkpoint (lowest val_loss) in CHECKPOINT_DIR."""
+    if not os.path.exists(CHECKPOINT_DIR):
+        raise FileNotFoundError(f"Checkpoint directory not found: {CHECKPOINT_DIR}")
+
+    checkpoints = [f for f in os.listdir(CHECKPOINT_DIR) if f.endswith(".ckpt")]
+    if not checkpoints:
+        raise FileNotFoundError(f"No .ckpt files found in {CHECKPOINT_DIR}")
+
+    # Sort by val_loss value parsed from filename (format: epoch=N-val_loss=X.XX.ckpt)
+    def parse_val_loss(fname):
+        try:
+            return float(fname.split("val_loss=")[1].replace(".ckpt", ""))
+        except (IndexError, ValueError):
+            return float("inf")
+
+    best = min(checkpoints, key=parse_val_loss)
+    return os.path.join(CHECKPOINT_DIR, best)
 
 def generate_visualizations():
     ensure_dir(RESULTS_DIR)
@@ -64,7 +61,8 @@ def generate_visualizations():
     print(f"Data Loaded. Shape: {data.shape}")
     
     # Define Test Period (2024-2025)
-    MAX_ENCODER = 30
+    # MAX_ENCODER_LENGTH imported from dataset.py (90 days) to stay consistent
+    from src.models.dataset import MAX_ENCODER_LENGTH as MAX_ENCODER
     data_2024 = data[data["time"].dt.year >= 2024]
     
     if len(data_2024) == 0:

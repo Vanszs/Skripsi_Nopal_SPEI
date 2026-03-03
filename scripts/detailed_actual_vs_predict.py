@@ -20,6 +20,7 @@ from datetime import datetime
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from pytorch_forecasting import TemporalFusionTransformer, TimeSeriesDataSet
 from src.models.dataset import create_dataset, MAX_ENCODER_LENGTH, MAX_PREDICTION_LENGTH
+from src.data.spei import classify_spei as _classify_spei_canonical
 
 # Configuration
 OUTPUT_DIR = "results/actual_vs_predict_analysis"
@@ -27,7 +28,7 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 TIMESTAMP = datetime.now().strftime('%Y%m%d_%H%M%S')
 OUTPUT_FILE = os.path.join(OUTPUT_DIR, f"detailed_analysis_{TIMESTAMP}.txt")
 
-def log(message:""):
+def log(message: str = ""):
     """Print and save to file"""
     print(message)
     with open(OUTPUT_FILE, "a", encoding="utf-8") as f:
@@ -103,41 +104,23 @@ def calculate_metrics_per_horizon(actuals, predictions, horizons):
 
 def analyze_drought_classification(actuals, predictions):
     """
-    Analyze drought event classification accuracy
-    SPEI < -1.5 -> Kekeringan Parah
-    SPEI > 1.5 -> Basah Ekstrem
+    Analyze drought event classification accuracy using canonical SPEI thresholds
+    from src.data.spei (McKee et al., 1993 / WMO standard).
     """
     p50 = predictions[:, :, 3].cpu().numpy().flatten()
     actual = actuals.cpu().numpy().flatten()
-    
-    # Drought classification
-    def classify_spei(value):
-        if value < -1.5:
-            return "Kekeringan Parah"
-        elif value < -1.0:
-            return "Kekeringan Sedang"
-        elif value < -0.5:
-            return "Kekeringan Ringan"
-        elif value < 0.5:
-            return "Normal"
-        elif value < 1.0:
-            return "Basah Ringan"
-        elif value < 1.5:
-            return "Basah Sedang"
-        else:
-            return "Basah Ekstrem"
-    
-    actual_class = np.array([classify_spei(v) for v in actual])
-    pred_class = np.array([classify_spei(v) for v in p50])
+
+    actual_class = np.array([_classify_spei_canonical(v) for v in actual])
+    pred_class = np.array([_classify_spei_canonical(v) for v in p50])
     
     # Confusion analysis
     correct = (actual_class == pred_class).sum()
     total = len(actual_class)
     accuracy = correct / total
-    
-    # Per-class analysis
-    classes = ["Kekeringan Parah", "Kekeringan Sedang", "Kekeringan Ringan", 
-               "Normal", "Basah Ringan", "Basah Sedang", "Basah Ekstrem"]
+
+    # Per-class analysis — align with canonical classify_spei classes
+    classes = ["Kekeringan Ekstrem", "Kekeringan Parah", "Kekeringan Sedang", "Kekeringan Ringan",
+               "Normal", "Basah Ringan", "Basah Sedang", "Basah Parah", "Basah Ekstrem"]
     
     class_stats = {}
     for cls in classes:
@@ -193,12 +176,13 @@ def main():
     log("STEP 2: CREATING TEST DATASET")
     log("=" * 70)
     
-    # Split: Train < 2023, Test >= 2023
+    # Split: Train < 2023, Val = 2023, Test >= 2024
+    # Consistent with train.py and evaluate.py splits
     train_data = data[data.year < 2023].copy()
-    test_data = data[data.year >= 2023].copy()
-    
+    test_data = data[data.year >= 2024].copy()
+
     log(f"Train Period: {train_data['time'].min()} to {train_data['time'].max()}")
-    log(f"Test Period: {test_data['time'].min()} to {test_data['time'].max()}")
+    log(f"Test Period (2024+): {test_data['time'].min()} to {test_data['time'].max()}")
     log(f"Train Samples: {len(train_data)}")
     log(f"Test Samples: {len(test_data)}")
     
@@ -228,12 +212,15 @@ def main():
     if not checkpoints:
         log("ERROR: No checkpoints found!")
         return
-    
-    # Get best model (lowest val_loss)
-    best_ckpt = checkpoints[0]
-    for ckpt in checkpoints:
-        if "val_loss" in ckpt:
-            best_ckpt = ckpt  # Last one is typically the best
+
+    # Select checkpoint with lowest val_loss from filename
+    def parse_val_loss(fname):
+        try:
+            return float(fname.split("val_loss=")[1].replace(".ckpt", ""))
+        except (IndexError, ValueError):
+            return float("inf")
+
+    best_ckpt = min(checkpoints, key=parse_val_loss)
     
     model_path = os.path.join(checkpoint_dir, best_ckpt)
     log(f"Loading: {model_path}")

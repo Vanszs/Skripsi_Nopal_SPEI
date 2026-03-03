@@ -11,7 +11,12 @@ from pytorch_forecasting import TemporalFusionTransformer, TimeSeriesDataSet
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from src.models.dataset import create_dataset
 
-def evaluate_model(checkpoint_path="logs/checkpoints/epoch=0-val_loss=0.35.ckpt", test_year_start=2023):
+def evaluate_model(checkpoint_path="logs/checkpoints/epoch=0-val_loss=0.35.ckpt", test_year_start=2024):
+    """
+    Evaluate model on test set.
+    NOTE: test_year_start=2024 to avoid overlap with validation (2023).
+    Train: <2023, Val: 2023, Test: >=2024
+    """
     print("="*60)
     print("TFT SPEI FORECASTING - EVALUATION")
     print("="*60)
@@ -104,71 +109,28 @@ def evaluate_model(checkpoint_path="logs/checkpoints/epoch=0-val_loss=0.35.ckpt"
             "samples": int(len(actual)),
         }
 
-    # Global calibration
-    actual_mean = df_final["actual"].mean()
-    actual_std = df_final["actual"].std()
-    pred_mean = df_final["pred_p50"].mean()
-    pred_std = df_final["pred_p50"].std()
-    bias = actual_mean - pred_mean
-    scale = actual_std / pred_std if pred_std != 0 else 1.0
-
-    df_final["pred_p50_calib"] = (df_final["pred_p50"] - pred_mean) * scale + pred_mean + bias
-    df_final["pred_p10_calib"] = (df_final["pred_p10"] - pred_mean) * scale + pred_mean + bias
-    df_final["pred_p90_calib"] = (df_final["pred_p90"] - pred_mean) * scale + pred_mean + bias
-
-    # Per-location calibration (stronger alignment)
-    df_final["pred_p50_loc_calib"] = df_final["pred_p50"]
-    df_final["pred_p10_loc_calib"] = df_final["pred_p10"]
-    df_final["pred_p90_loc_calib"] = df_final["pred_p90"]
-
-    for loc in df_final["location_id"].unique():
-        loc_mask = df_final["location_id"] == loc
-        loc_actual = df_final.loc[loc_mask, "actual"]
-        loc_pred = df_final.loc[loc_mask, "pred_p50"]
-        loc_bias = loc_actual.mean() - loc_pred.mean()
-        loc_scale = loc_actual.std() / loc_pred.std() if loc_pred.std() != 0 else 1.0
-
-        df_final.loc[loc_mask, "pred_p50_loc_calib"] = (
-            (df_final.loc[loc_mask, "pred_p50"] - loc_pred.mean()) * loc_scale
-            + loc_pred.mean()
-            + loc_bias
-        )
-        df_final.loc[loc_mask, "pred_p10_loc_calib"] = (
-            (df_final.loc[loc_mask, "pred_p10"] - loc_pred.mean()) * loc_scale
-            + loc_pred.mean()
-            + loc_bias
-        )
-        df_final.loc[loc_mask, "pred_p90_loc_calib"] = (
-            (df_final.loc[loc_mask, "pred_p90"] - loc_pred.mean()) * loc_scale
-            + loc_pred.mean()
-            + loc_bias
-        )
+    # ========================================================================
+    # NOTE: Post-hoc calibration removed to prevent data leakage.
+    # Previously, bias/scale were computed FROM test-set statistics and
+    # applied back TO the same test set — this inflates metrics artificially.
+    # Only RAW model predictions are used for fair evaluation.
+    # ========================================================================
 
     overall_raw = calculate_metrics(df_final, pred_col="pred_p50")
-    overall_calib = calculate_metrics(df_final, pred_col="pred_p50_calib")
-    overall_loc_calib = calculate_metrics(df_final, pred_col="pred_p50_loc_calib")
 
     print("\n" + "="*60)
     print(f"TEST SET METRICS ({test_year_start}-2025)")
     print("="*60)
-    print("RAW:")
+    print("RAW (unbiased):")
     for k, v in overall_raw.items():
         print(f"  {k.upper():10}: {v}")
-    print("\nGLOBAL CALIB:")
-    for k, v in overall_calib.items():
-        print(f"  {k.upper():10}: {v}")
-    print("\nPER-LOCATION CALIB:")
-    for k, v in overall_loc_calib.items():
-        print(f"  {k.upper():10}: {v}")
 
-    # Per-location metrics (raw + calibrated)
+    # Per-location metrics (raw only — no leaky calibration)
     per_location = {}
     for loc in df_final["location_id"].unique():
         loc_df = df_final[df_final.location_id == loc]
         per_location[loc] = {
             "raw": calculate_metrics(loc_df, pred_col="pred_p50"),
-            "global_calib": calculate_metrics(loc_df, pred_col="pred_p50_calib"),
-            "loc_calib": calculate_metrics(loc_df, pred_col="pred_p50_loc_calib"),
         }
     
     # Get interpretation using raw mode
@@ -237,10 +199,10 @@ def evaluate_model(checkpoint_path="logs/checkpoints/epoch=0-val_loss=0.35.ckpt"
     print("\nSaved: results/variable_importance.png")
     
     # 2. Prediction vs Actual scatter
-    pred_flat = df_final["pred_p50_loc_calib"].values
+    pred_flat = df_final["pred_p50"].values
     actual_flat = df_final["actual"].values
-    rmse = overall_loc_calib["rmse"]
-    correlation = overall_loc_calib["pearson_r"]
+    rmse = overall_raw["rmse"]
+    correlation = overall_raw["pearson_r"]
     fig, ax = plt.subplots(figsize=(8, 8))
     ax.scatter(actual_flat, pred_flat, alpha=0.3, s=10)
     lims = [min(actual_flat.min(), pred_flat.min()), max(actual_flat.max(), pred_flat.max())]
@@ -290,8 +252,6 @@ def evaluate_model(checkpoint_path="logs/checkpoints/epoch=0-val_loss=0.35.ckpt"
     # Save evaluation artifacts
     metrics_payload = {
         "overall_raw": overall_raw,
-        "overall_global_calib": overall_calib,
-        "overall_loc_calib": overall_loc_calib,
         "per_location": per_location,
     }
 

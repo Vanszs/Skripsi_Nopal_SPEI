@@ -2,8 +2,8 @@ from pytorch_forecasting import TimeSeriesDataSet, GroupNormalizer
 from pytorch_forecasting.data.encoders import NaNLabelEncoder
 import pandas as pd
 
-MAX_ENCODER_LENGTH = 30  # 30 days history (optimized for SPEI-3 prediction)
-MAX_PREDICTION_LENGTH = 30 # 30 days forecast
+MAX_ENCODER_LENGTH = 90   # 90 days history (matches SPEI-3 = 3×30 day window)
+MAX_PREDICTION_LENGTH = 30  # 30 days forecast
 
 def create_dataset(data: pd.DataFrame):
     """
@@ -19,7 +19,7 @@ def create_dataset(data: pd.DataFrame):
         print(data.isna().sum())
     
     training = TimeSeriesDataSet(
-        data[lambda x: x.time_idx < x.time_idx.max() - MAX_PREDICTION_LENGTH], # Reserve last window for validation logic if needed
+        data[lambda x: x.time_idx < x.time_idx.max() - MAX_PREDICTION_LENGTH],
         time_idx="time_idx",
         target="SPEI_3",
         group_ids=["location_id"],
@@ -29,16 +29,18 @@ def create_dataset(data: pd.DataFrame):
         max_prediction_length=MAX_PREDICTION_LENGTH,
         
         static_categoricals=["location_id"],
+        static_reals=["elevation"],
         
         time_varying_known_reals=[
             "time_idx", 
             "month_sin", 
             "month_cos",
-            "elevation" # Static but real
         ],
         
         time_varying_unknown_reals=[
             "SPEI_3",
+            "SPEI_6",
+            "water_deficit",
             "precipitation_log",
             "et0_fao_evapotranspiration",
             "soil_moisture",
@@ -47,7 +49,7 @@ def create_dataset(data: pd.DataFrame):
         ],
         
         target_normalizer=GroupNormalizer(
-            groups=["location_id"], transformation=None # SPEI is already Z-score (Normal) and contains negative values.
+            groups=["location_id"], transformation=None  # SPEI is already Z-score
         ),
             
         add_relative_time_idx=True,

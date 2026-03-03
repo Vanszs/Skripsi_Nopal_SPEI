@@ -13,12 +13,12 @@ def load_model(checkpoint_path):
 def calculate_metrics(actuals, predictions):
     """
     Calculate RMSE and MAE.
-    predictions: Tensor of shape (batch, horizons, quantiles) -> We typically use P50 (index 3 or 4) for point metrics.
+    predictions: Tensor of shape (batch, horizons, quantiles)
+    Default QuantileLoss quantiles: [0.02, 0.1, 0.25, 0.5, 0.75, 0.9, 0.98]
+    P50 (median) is at index 3.
     """
-    # Assuming P50 is at index 3 (0.1, 0.25, 0.4, 0.5, 0.6, 0.75, 0.9) - Check config!
-    # Default quantiles: [0.02, 0.1, 0.25, 0.5, 0.75, 0.9, 0.98] -> Index 3 is 0.5
-    
-    p50_pred = predictions[:, :, 3] 
+    # P50 (median) at index 3 of default QuantileLoss: [0.02, 0.1, 0.25, 0.5, 0.75, 0.9, 0.98]
+    p50_pred = predictions[:, :, 3]
     
     mse = torch.mean((actuals - p50_pred) ** 2)
     rmse = torch.sqrt(mse)
@@ -33,10 +33,9 @@ def get_variable_importance(model, dataset):
     """
     Extracts variable importance using the model's interpretation hooks.
     """
-    interpretation = model.interpret_output(
-        dataset.to_dataloader(train=False, batch_size=128).next(), # Get one batch
-        reduction="sum"
-    )
+    dataloader = dataset.to_dataloader(train=False, batch_size=128)
+    batch = next(iter(dataloader))  # Python 3 iterator protocol
+    interpretation = model.interpret_output(batch, reduction="sum")
     return interpretation["encoder_variables"], interpretation["decoder_variables"]
 
 

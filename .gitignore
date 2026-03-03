@@ -8,17 +8,17 @@ venv/
 env/
 .env
 
-# Project Data (Large files)
-data/
-data/raw/
-data/processed/
+# Project Data (Large files — top-level only)
+/data/
+/data/raw/
+/data/processed/
 *.parquet
 *.csv
 
 
 
-# Output Results
-results/
+# Output Results (top-level only)
+/results/
 *.png
 *.jpg
 
