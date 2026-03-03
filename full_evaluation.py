@@ -114,7 +114,7 @@ def _best_checkpoint(ckpt_dir: Path) -> Path:
         raise FileNotFoundError(f"No .ckpt files found in {ckpt_dir}")
     scored = []
     for p in ckpts:
-        m = re.search(r"val_loss=([\d.]+)", p.name)
+        m = re.search(r"val_loss=(\d+\.\d+)", p.name)
         if m:
             scored.append((float(m.group(1)), p))
     if scored:

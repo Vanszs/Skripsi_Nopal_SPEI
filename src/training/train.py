@@ -1,17 +1,41 @@
 import os
+import time
 import torch
 import lightning as L
-from lightning.pytorch.callbacks import EarlyStopping, LearningRateMonitor, ModelCheckpoint
+from lightning.pytorch.callbacks import Callback, EarlyStopping, LearningRateMonitor, ModelCheckpoint
 from lightning.pytorch.loggers import TensorBoardLogger
 from pytorch_forecasting import TimeSeriesDataSet
 import pandas as pd
 from src.models.dataset import create_dataset
 from src.models.tft import build_tft_model
 
+
+class EpochSummaryCallback(Callback):
+    """Print one clean line per epoch instead of thousands of batch progress bars."""
+
+    def on_train_epoch_start(self, trainer, pl_module):
+        self._t0 = time.time()
+
+    def on_validation_epoch_end(self, trainer, pl_module):
+        metrics = trainer.callback_metrics
+        epoch    = trainer.current_epoch
+        val_loss = metrics.get("val_loss",  float("nan"))
+        trn_loss = metrics.get("train_loss_epoch", float("nan"))
+        elapsed  = time.time() - getattr(self, "_t0", time.time())
+        # Format as a single readable line
+        lr = trainer.optimizers[0].param_groups[0]["lr"] if trainer.optimizers else float("nan")
+        print(
+            f"  Epoch {epoch:>3}  "
+            f"train={float(trn_loss):.4f}  "
+            f"val={float(val_loss):.4f}  "
+            f"lr={lr:.2e}  "
+            f"({elapsed:.0f}s)"
+        )
+
 def train_pipeline(data_path="data/processed/spei_dataset.parquet",
                    max_epochs=60,
                    batch_size=32,
-                   max_encoder_length: int = 90):
+                   max_encoder_length=90):
     
     
     print("Loading data for training...")
@@ -40,8 +64,10 @@ def train_pipeline(data_path="data/processed/spei_dataset.parquet",
     # Create Dataset
     # Filter only relevant data to avoid confusing the dataset creator
     # train_cutoff covers all history up to end of training
-    train_ds = create_dataset(data[data.time_idx <= training_cutoff],
-                              max_encoder_length=max_encoder_length)
+    train_ds = create_dataset(
+        data[data.time_idx <= training_cutoff],
+        max_encoder_length=max_encoder_length
+    )
     
     # Validation Dataset (Rolling origin from training)
     # We validate on 2023 data using history from Train
@@ -68,16 +94,20 @@ def train_pipeline(data_path="data/processed/spei_dataset.parquet",
         monitor="val_loss",
         save_top_k=1
     )
-    
+    epoch_summary = EpochSummaryCallback()
+
     # Trainer - Optimized for RTX 3050 GPU
+    # enable_progress_bar=False suppresses the per-batch tqdm lines that
+    # produce hundreds of MB of log noise; EpochSummaryCallback replaces them.
     trainer = L.Trainer(
         max_epochs=max_epochs,
-        accelerator="gpu",  # Force GPU
+        accelerator="gpu",
         devices=1,
-        precision=32,  # Full precision - more stable for TFT
+        precision=32,
         enable_model_summary=True,
+        enable_progress_bar=False,
         gradient_clip_val=0.1,
-        callbacks=[early_stop_callback, lr_logger, checkpoint_callback],
+        callbacks=[early_stop_callback, lr_logger, checkpoint_callback, epoch_summary],
         logger=TensorBoardLogger("logs/lightning_logs")
     )
     

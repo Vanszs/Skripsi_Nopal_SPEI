@@ -44,15 +44,16 @@ def _run(cmd: list, label: str):
     start = time.time()
     proc = subprocess.Popen(
         cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-        text=True, cwd=str(ROOT)
+        text=True, encoding="utf-8", errors="replace", cwd=str(ROOT)
     )
     lines = []
     for line in proc.stdout:
-        print(line, end="")
+        print(line, end="", flush=True)
         lines.append(line)
     proc.wait()
     elapsed = time.time() - start
-    print(f"\n[{'OK' if proc.returncode == 0 else 'FAILED'}] {label} ? {elapsed:.0f}s")
+    status = "OK" if proc.returncode == 0 else "FAILED"
+    print(f"\n[{status}] {label} -> {elapsed:.0f}s")
     if proc.returncode != 0:
         raise RuntimeError(f"{label} exited with code {proc.returncode}")
     return "".join(lines)
@@ -69,7 +70,7 @@ def _best_checkpoint(enc: int) -> Path:
     # lowest val_loss wins
     scored = []
     for p in ckpts:
-        m = re.search(r"val_loss=([\d.]+)", p.name)
+        m = re.search(r"val_loss=(\d+\.\d+)", p.name)
         if m:
             scored.append((float(m.group(1)), p))
     if scored:
@@ -286,35 +287,39 @@ def main():
     # -- 2. Train -----------------------------------------------------------
     t_train_start = time.time()
     if not args.skip_train:
-        _run(
-            [PYTHON, "-c",
-             f"import sys, os; sys.path.insert(0, os.getcwd()); "
-             f"import torch; torch.set_float32_matmul_precision('medium'); "
-             f"from src.training.train import train_pipeline; "
-             f"print(train_pipeline(max_epochs={args.epochs}, "
-             f"batch_size={args.batch}, max_encoder_length={enc}))"],
-            f"STEP 2 ? Training  (encoder={enc}, max_epochs={args.epochs})"
+        _banner(f"STEP 2 - Training (encoder={enc}, max_epochs={args.epochs})")
+        from src.training.train import train_pipeline
+        best_ckpt = train_pipeline(
+            max_epochs=args.epochs,
+            batch_size=args.batch,
+            max_encoder_length=enc,
         )
+        print(f"\n  Best checkpoint: {best_ckpt}", flush=True)
     else:
+        _banner("STEP 2 - Skipped (--skip-train)")
         print("  --skip-train: skipping training step.")
     elapsed_train = time.time() - t_train_start
 
     # -- 3. Resolve best checkpoint -----------------------------------------
-    _banner("STEP 3 ? Resolving best checkpoint")
+    _banner("STEP 3 - Resolving best checkpoint")
     ckpt = _best_checkpoint(enc)
     print(f"  Checkpoint : {ckpt}")
 
-    # -- 4. Run full_evaluation.py ------------------------------------------
-    _run(
-        [PYTHON, "full_evaluation.py", "--checkpoint", str(ckpt)],
-        f"STEP 4 ? Full evaluation"
-    )
+    # -- 4. Run full_evaluation (in-process, no subprocess) -----------------
+    _banner("STEP 4 - Full Evaluation")
+    from full_evaluation import run as run_eval
+    ts_eval  = datetime.now().strftime("%Y%m%d_%H%M%S")
+    eval_dir_direct = RESULTS_DIR / f"full_eval_{ts_eval}"
+    eval_dir_direct.mkdir(parents=True, exist_ok=True)
+    log_path = eval_dir_direct / "metrics_report.txt"
+    with open(log_path, "w", encoding="utf-8") as log_fp:
+        run_eval(str(ckpt), eval_dir_direct, log_fp)
+    print(f"\n  Eval outputs -> {eval_dir_direct}", flush=True)
 
     # -- 5. Build MD report ------------------------------------------------
-    _banner("STEP 5 ? Generating Markdown report")
-    eval_dir = _latest_eval_dir()
-    metrics  = _load_metrics(eval_dir)
-    report   = _write_md_report(metrics, eval_dir, enc, elapsed_train)
+    _banner("STEP 5 - Generating Markdown report")
+    metrics  = _load_metrics(eval_dir_direct)
+    report   = _write_md_report(metrics, eval_dir_direct, enc, elapsed_train)
 
     # -- 6. Print summary ---------------------------------------------------
     _banner("EXPERIMENT COMPLETE")
@@ -323,7 +328,7 @@ def main():
     picp  = metrics.get("picp_overall", None)
     print(f"\n  Encoder length : {enc}")
     print(f"  Checkpoint     : {ckpt.name}")
-    print(f"  Eval dir       : {eval_dir.name}")
+    print(f"  Eval dir       : {eval_dir_direct.name}")
     print(f"  Train time     : {elapsed_train:.0f}s")
     print()
     print("  --- MODEL METRICS ---")
@@ -341,8 +346,10 @@ def main():
     m_rmse = ov.get("rmse"); n_rmse = naive.get("rmse")
     if m_rmse and n_rmse and n_rmse > 0:
         skill = (1.0 - m_rmse / n_rmse) * 100
-        verdict = "BEATS naive OK" if skill > 0 else "DOES NOT beat naive ?"
-        print(f"\n  Skill Score  : {skill:.1f}%  ? Model {verdict}")
+        verdict = "BEATS naive" if skill > 0 else "DOES NOT beat naive"
+        print(f"\n  Skill Score  : {skill:.1f}%  -- Model {verdict}")
+
+    print(f"\n  MD report    : {report}")
 
     print(f"\n  MD report    : {report}")
 
