@@ -5,9 +5,15 @@ import pandas as pd
 MAX_ENCODER_LENGTH = 90   # 90 days history (matches SPEI-3 = 3×30 day window)
 MAX_PREDICTION_LENGTH = 30  # 30 days forecast
 
-def create_dataset(data: pd.DataFrame):
+def create_dataset(data: pd.DataFrame,
+                   max_encoder_length: int = MAX_ENCODER_LENGTH,
+                   max_prediction_length: int = MAX_PREDICTION_LENGTH):
     """
     Creates a TimeSeriesDataSet from the processed dataframe.
+
+    Args:
+        max_encoder_length: override encoder window (useful to match trained checkpoints)
+        max_prediction_length: override prediction horizon
     """
     # Ensure no NaN in critical columns
     data = data.replace([float('inf'), float('-inf')], float('nan')).dropna()
@@ -19,14 +25,14 @@ def create_dataset(data: pd.DataFrame):
         print(data.isna().sum())
     
     training = TimeSeriesDataSet(
-        data[lambda x: x.time_idx < x.time_idx.max() - MAX_PREDICTION_LENGTH],
+        data[lambda x: x.time_idx < x.time_idx.max() - max_prediction_length],
         time_idx="time_idx",
         target="SPEI_3",
         group_ids=["location_id"],
-        min_encoder_length=MAX_ENCODER_LENGTH // 2,
-        max_encoder_length=MAX_ENCODER_LENGTH,
+        min_encoder_length=max_encoder_length // 2,
+        max_encoder_length=max_encoder_length,
         min_prediction_length=1,
-        max_prediction_length=MAX_PREDICTION_LENGTH,
+        max_prediction_length=max_prediction_length,
         
         static_categoricals=["location_id"],
         static_reals=["elevation"],

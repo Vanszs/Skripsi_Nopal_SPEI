@@ -24,27 +24,36 @@ def evaluate_model(checkpoint_path="logs/checkpoints/epoch=0-val_loss=0.35.ckpt"
     # Load data
     data = pd.read_parquet("data/processed/spei_dataset.parquet")
     data["year"] = data["time"].dt.year
-    
+
     print(f"\nTotal Dataset Shape: {data.shape}")
     print(f"Locations: {sorted(data['location_id'].unique())}")
     print(f"Date Range: {data['time'].min()} to {data['time'].max()}")
-    
-    # Load best model
+
+    # ── Load model FIRST so we can read its trained hparams ──────────────
     print(f"\nLoading model: {checkpoint_path}")
     model = TemporalFusionTransformer.load_from_checkpoint(checkpoint_path, map_location="cpu")
     model.eval()
-    model.to("cpu")  # Ensure model is on CPU
+    model.to("cpu")
 
-    # Create training dataset for reference
+    # Read encoder/prediction lengths from the checkpoint — critical for
+    # interpret_output() to not crash with a size mismatch.
+    ckpt_encoder_len = int(getattr(model.hparams, "max_encoder_length", 90))
+    ckpt_pred_len    = int(getattr(model.hparams, "max_prediction_length", 30))
+    print(f"  Checkpoint encoder length : {ckpt_encoder_len}")
+    print(f"  Checkpoint prediction len : {ckpt_pred_len}")
+
+    # Create training dataset using the checkpoint's encoder window
     train_data = data[data.year < test_year_start].copy()
-    train_ds = create_dataset(train_data)
+    train_ds = create_dataset(train_data,
+                              max_encoder_length=ckpt_encoder_len,
+                              max_prediction_length=ckpt_pred_len)
 
     # Test data (>= test_year_start)
     test_data = data[data.year >= test_year_start].copy()
     print(f"\nTest Data Shape: {test_data.shape}")
     print(f"Test Period: {test_data['time'].min()} to {test_data['time'].max()}")
 
-    pred_len = getattr(model.hparams, "max_prediction_length", train_ds.max_prediction_length)
+    pred_len = ckpt_pred_len
 
     def generate_predictions(model, test_data, train_ds, pred_len):
         results = []

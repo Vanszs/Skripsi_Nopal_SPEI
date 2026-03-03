@@ -29,3 +29,5 @@ env/
 # Custom Debug Scripts (Optional, keep if needed)
 debug_*.py
 inspect_results.py
+
+/lightning_logs/
