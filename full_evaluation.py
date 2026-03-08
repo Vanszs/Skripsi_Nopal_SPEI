@@ -202,37 +202,25 @@ def run(checkpoint_path: str, out_dir: Path, log_fp):
         loader = loc_ds.to_dataloader(train=False, batch_size=64, num_workers=0)
 
         raw = model.predict(loader, mode="raw", return_x=True)
-        pv_norm = raw.output.prediction.cpu().numpy()      # (B, T, 7)  normalized
-        tv  = raw.x["decoder_time_idx"].cpu().numpy()      # (B, T)
+        # TFT.forward() already calls transform_output() which denormalizes
+        # predictions via the output_transformer (inverse of GroupNormalizer).
+        # Do NOT apply manual denormalization — that would be double-denorm.
+        pv = raw.output.prediction.cpu().numpy()            # (B, T, 7) already in SPEI units
+        tv = raw.x["decoder_time_idx"].cpu().numpy()        # (B, T)
 
-        # Denormalise predictions: GroupNormalizer computes
-        #   norm = (x - center) / scale  so  raw = norm * scale + center
-        # target_scale shape: (B, 2)  [:, 0]=center  [:, 1]=scale_factor
-        if "target_scale" in raw.x:
-            ts      = raw.x["target_scale"].cpu().numpy()  # (B, 2)
-            _center = ts[:, 0].reshape(-1, 1, 1)           # (B, 1, 1)
-            _scale  = ts[:, 1].reshape(-1, 1, 1)           # (B, 1, 1)
-            pv = pv_norm * _scale + _center                # (B, T, 7) in SPEI units
-        else:
-            pv = pv_norm  # fallback: assume already in raw scale
-
-        # Actual target values in decoder window (for horizon metrics)
+        # Actual target values in decoder window (for horizon metrics).
+        # decoder_target in raw.x IS normalized (model input), so we must
+        # denormalize it using target_scale to get original SPEI units.
         av = None
         if "decoder_target" in raw.x:
             av_norm = raw.x["decoder_target"].cpu().numpy()  # (B, T) normalized
             if "target_scale" in raw.x:
-                ts2     = raw.x["target_scale"].cpu().numpy()  # (B, 2)
-                _center2 = ts2[:, 0].reshape(-1, 1)             # (B, 1)
-                _scale2  = ts2[:, 1].reshape(-1, 1)             # (B, 1)
-                av = av_norm * _scale2 + _center2               # (B, T) in SPEI units
+                ts2      = raw.x["target_scale"].cpu().numpy()  # (B, 2)
+                _center2 = ts2[:, 0].reshape(-1, 1)              # (B, 1)
+                _scale2  = ts2[:, 1].reshape(-1, 1)              # (B, 1)
+                av = av_norm * _scale2 + _center2                # (B, T) in SPEI units
             else:
                 av = av_norm
-            # Diagnostic: verify decoder_target and actual SPEI are on same scale
-            _log(f"    decoder_target  [{loc}]: "
-                 f"mean={av.mean():.3f}  std={av.std():.3f}", log_fp)
-            _log(f"    SPEI_3 actual   [{loc}]: "
-                 f"mean={loc_data.SPEI_3.mean():.3f}  std={loc_data.SPEI_3.std():.3f}",
-                 log_fp)
 
         # ── Step-0-only predictions (no ensemble averaging) ────────────────────
         # For each window i, tv[i, 0] is the time_idx at step=0.

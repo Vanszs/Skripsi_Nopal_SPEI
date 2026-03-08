@@ -78,7 +78,7 @@ try:
     # Required columns
     required_cols = [
         "time", "time_idx", "location_id", "elevation",
-        "SPEI_3", "SPEI_6", "water_deficit",
+        "SPEI_3", "SPEI_6", "SPEI_3_diff", "water_deficit",
         "precipitation_log", "et0_fao_evapotranspiration",
         "soil_moisture", "temperature_2m_max", "temperature_2m_min",
         "month_sin", "month_cos",
@@ -161,7 +161,7 @@ try:
     print(f"  {tag}  elevation NOT in time_varying_known")
 
     # key features present
-    for feat in ["SPEI_6", "water_deficit", "SPEI_3"]:
+    for feat in ["SPEI_6", "water_deficit", "SPEI_3", "SPEI_3_diff"]:
         tag = PASS if feat in train_ds.time_varying_unknown_reals else FAIL
         print(f"  {tag}  {feat} in time_varying_unknown_reals")
 

@@ -33,9 +33,16 @@ class EpochSummaryCallback(Callback):
         )
 
 def train_pipeline(data_path="data/processed/spei_dataset.parquet",
-                   max_epochs=60,
+                   max_epochs=80,
                    batch_size=32,
-                   max_encoder_length=90):
+                   max_encoder_length=90,
+                   hidden_size=48,
+                   dropout=0.35,
+                   attention_head_size=1,
+                   hidden_continuous_size=8,
+                   learning_rate=3e-4,
+                   weight_decay=1e-4,
+                   gradient_clip_val=0.5):
     
     
     print("Loading data for training...")
@@ -68,14 +75,28 @@ def train_pipeline(data_path="data/processed/spei_dataset.parquet",
         data[data.time_idx <= training_cutoff],
         max_encoder_length=max_encoder_length
     )
-    
-    # Validation Dataset (Rolling origin from training)
-    # We validate on 2023 data using history from Train
+
+    # Validation Dataset (only 2023 windows, with enough encoder history)
+    # ─────────────────────────────────────────────────────────────────────
+    # BUG FIXED: previous code used data[time_idx <= validation_cutoff]
+    # which included ALL training years → validation loss was partially
+    # computed on already-seen data (leakage) AND with predict=True on
+    # only 5 groups it produced as few as 5–60 samples (1-2 val batches)
+    # causing huge run-to-run variance (0.18 ↔ 0.40 at epoch=1).
+    #
+    # Fix: restrict to 2023 data + encoder_length rows of history so the
+    # val windows only cover unseen 2023 timestamps.  predict=False gives
+    # full rolling windows (~1 600 samples, ~25 stable batches).
+    val_start_idx = data[data.year == 2023]["time_idx"].min() - max_encoder_length
+    val_data = data[
+        (data.time_idx >= val_start_idx) &
+        (data.time_idx <= validation_cutoff)
+    ]
     val_ds = TimeSeriesDataSet.from_dataset(
-        train_ds, 
-        data[data.time_idx <= validation_cutoff], 
-        predict=True, 
-        stop_randomization=True
+        train_ds,
+        val_data,
+        predict=False,       # full rolling windows → stable val metric
+        stop_randomization=True,
     )
     
     # Dataloaders - Optimized for GPU (RTX 3050)
@@ -83,10 +104,18 @@ def train_pipeline(data_path="data/processed/spei_dataset.parquet",
     val_dataloader = val_ds.to_dataloader(train=False, batch_size=batch_size * 2, num_workers=0, pin_memory=True)
     
     # Build Model
-    model = build_tft_model(train_ds)
+    model = build_tft_model(
+        train_ds,
+        hidden_size=hidden_size,
+        dropout=dropout,
+        attention_head_size=attention_head_size,
+        hidden_continuous_size=hidden_continuous_size,
+        learning_rate=learning_rate,
+        weight_decay=weight_decay,
+    )
     
     # Callbacks
-    early_stop_callback = EarlyStopping(monitor="val_loss", min_delta=1e-4, patience=25, verbose=False, mode="min")
+    early_stop_callback = EarlyStopping(monitor="val_loss", min_delta=1e-4, patience=30, verbose=False, mode="min")
     lr_logger = LearningRateMonitor()
     checkpoint_callback = ModelCheckpoint(
         dirpath="logs/checkpoints",
@@ -106,7 +135,7 @@ def train_pipeline(data_path="data/processed/spei_dataset.parquet",
         precision=32,
         enable_model_summary=True,
         enable_progress_bar=False,
-        gradient_clip_val=0.1,
+        gradient_clip_val=gradient_clip_val,
         callbacks=[early_stop_callback, lr_logger, checkpoint_callback, epoch_summary],
         logger=TensorBoardLogger("logs/lightning_logs")
     )

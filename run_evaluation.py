@@ -34,7 +34,13 @@ def main():
     if not checkpoints:
         raise FileNotFoundError(f"No checkpoints found in {checkpoint_dir}")
 
-    best_ckpt = checkpoints[-1]
+    def parse_val_loss(fname):
+        try:
+            return float(fname.split("val_loss=")[1].replace(".ckpt", ""))
+        except (IndexError, ValueError):
+            return float("inf")
+
+    best_ckpt = min(checkpoints, key=parse_val_loss)
     checkpoint_path = os.path.join(checkpoint_dir, best_ckpt)
 
     with open(output_path, "w", encoding="utf-8") as f:

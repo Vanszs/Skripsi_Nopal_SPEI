@@ -65,6 +65,7 @@ def create_dataset(data: pd.DataFrame,
         time_varying_unknown_reals=[
             "SPEI_3",
             "SPEI_6",
+            "SPEI_3_diff",
             "water_deficit",
             "precipitation_log",
             "et0_fao_evapotranspiration",

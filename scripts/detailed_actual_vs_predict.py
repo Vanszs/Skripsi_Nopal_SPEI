@@ -171,39 +171,9 @@ def main():
     log(f"  - Max: {data['SPEI_3'].max():.4f}")
     log("")
     
-    # 2. Create Test Dataset with proper splitting
+    # 2. Load Model FIRST to get encoder/prediction lengths from checkpoint
     log("=" * 70)
-    log("STEP 2: CREATING TEST DATASET")
-    log("=" * 70)
-    
-    # Split: Train < 2023, Val = 2023, Test >= 2024
-    # Consistent with train.py and evaluate.py splits
-    train_data = data[data.year < 2023].copy()
-    test_data = data[data.year >= 2024].copy()
-
-    log(f"Train Period: {train_data['time'].min()} to {train_data['time'].max()}")
-    log(f"Test Period (2024+): {test_data['time'].min()} to {test_data['time'].max()}")
-    log(f"Train Samples: {len(train_data)}")
-    log(f"Test Samples: {len(test_data)}")
-    
-    train_ds = create_dataset(train_data)
-    # Use all data for test to get proper test sequences
-    test_ds = TimeSeriesDataSet.from_dataset(
-        train_ds, 
-        data,  # Use full data to create test sequences
-        predict=True,  # Use only sequences starting in test period
-        stop_randomization=True
-    )
-    test_dataloader = test_ds.to_dataloader(train=False, batch_size=64, num_workers=0)
-    
-    log(f"Test Dataset Size: {len(test_ds)} sequences")
-    log(f"Encoder Length: {MAX_ENCODER_LENGTH} days")
-    log(f"Prediction Length: {MAX_PREDICTION_LENGTH} days")
-    log("")
-    
-    # 3. Load Model
-    log("=" * 70)
-    log("STEP 3: LOADING MODEL")
+    log("STEP 2: LOADING MODEL")
     log("=" * 70)
     
     checkpoint_dir = "logs/checkpoints"
@@ -225,9 +195,44 @@ def main():
     model_path = os.path.join(checkpoint_dir, best_ckpt)
     log(f"Loading: {model_path}")
     
-    model = TemporalFusionTransformer.load_from_checkpoint(model_path)
+    model = TemporalFusionTransformer.load_from_checkpoint(model_path, map_location="cpu")
     model.eval()
-    log("Model loaded successfully.")
+    
+    ckpt_enc_len = int(getattr(model.hparams, "max_encoder_length", MAX_ENCODER_LENGTH))
+    ckpt_pred_len = int(getattr(model.hparams, "max_prediction_length", MAX_PREDICTION_LENGTH))
+    log(f"Checkpoint encoder length : {ckpt_enc_len}")
+    log(f"Checkpoint prediction len : {ckpt_pred_len}")
+    log("")
+    
+    # 3. Create Test Dataset with proper splitting
+    log("=" * 70)
+    log("STEP 3: CREATING TEST DATASET")
+    log("=" * 70)
+    
+    # Split: Train < 2023, Val = 2023, Test >= 2024
+    # Consistent with train.py and evaluate.py splits
+    train_data = data[data.year < 2023].copy()
+    test_data = data[data.year >= 2024].copy()
+
+    log(f"Train Period: {train_data['time'].min()} to {train_data['time'].max()}")
+    log(f"Test Period (2024+): {test_data['time'].min()} to {test_data['time'].max()}")
+    log(f"Train Samples: {len(train_data)}")
+    log(f"Test Samples: {len(test_data)}")
+    
+    train_ds = create_dataset(train_data,
+                              max_encoder_length=ckpt_enc_len,
+                              max_prediction_length=ckpt_pred_len)
+    test_ds = TimeSeriesDataSet.from_dataset(
+        train_ds, 
+        test_data,
+        predict=False,
+        stop_randomization=True
+    )
+    test_dataloader = test_ds.to_dataloader(train=False, batch_size=64, num_workers=0)
+    
+    log(f"Test Dataset Size: {len(test_ds)} sequences")
+    log(f"Encoder Length: {ckpt_enc_len} days")
+    log(f"Prediction Length: {ckpt_pred_len} days")
     log("")
     
     # 4. Run Predictions

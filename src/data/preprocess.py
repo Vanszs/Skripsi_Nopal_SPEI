@@ -38,6 +38,11 @@ def preprocess_pipeline(input_path="data/raw/weather_history_east_java.parquet",
         group["SPEI_3"] = calculate_spei(group_indexed["water_deficit"], scale=3).values
         group["SPEI_6"] = calculate_spei(group_indexed["water_deficit"], scale=6).values
         
+        # SPEI-3 first-difference: direction of change (trend).
+        # High autocorrelation (ρ≈0.97) means the model benefits from knowing
+        # whether SPEI is rising or falling, not just its level.
+        group["SPEI_3_diff"] = group["SPEI_3"].diff().fillna(0)
+        
         processed_dfs.append(group)
         
     df_processed = pd.concat(processed_dfs, ignore_index=True)

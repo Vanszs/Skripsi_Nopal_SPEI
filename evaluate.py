@@ -12,7 +12,7 @@ from pytorch_forecasting import TemporalFusionTransformer, TimeSeriesDataSet
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from src.models.dataset import create_dataset
 
-def evaluate_model(checkpoint_path="logs/checkpoints/epoch=0-val_loss=0.35.ckpt", test_year_start=2024):
+def evaluate_model(checkpoint_path="logs/checkpoints/enc30-epoch=1-val_loss=0.2892.ckpt", test_year_start=2024):
     """
     Evaluate model on test set.
     NOTE: test_year_start=2024 to avoid overlap with validation (2023).
