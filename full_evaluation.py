@@ -189,9 +189,15 @@ def run(checkpoint_path: str, out_dir: Path, log_fp):
     # ── 4. GENERATE PREDICTIONS (single pass — ensemble + horizon) ─────────
     _log("\n[4/6] Generating predictions …", log_fp)
 
+    # Build ground-truth lookup: (time_idx, location_id) -> SPEI_3
+    actual_lookup: dict = {}
+    for _, row in test_data.iterrows():
+        actual_lookup[(int(row["time_idx"]), row["location_id"])] = float(row["SPEI_3"])
+
     ensemble_rows = []
-    # True per-horizon storage: keys 0..pred_len-1
-    horizon_bank = {h: {"actual": [], "pred": []} for h in range(pred_len)}
+    # Step-h-only horizon storage: h -> {(time_idx, loc) -> pred_p50}
+    # Keeps only the first occurrence per (time_idx, loc, h) = freshest encoder context
+    horizon_preds = {h: {} for h in range(pred_len)}
 
     for loc in locations:
         _log(f"  Processing {loc} …", log_fp)
@@ -203,24 +209,10 @@ def run(checkpoint_path: str, out_dir: Path, log_fp):
 
         raw = model.predict(loader, mode="raw", return_x=True)
         # TFT.forward() already calls transform_output() which denormalizes
-        # predictions via the output_transformer (inverse of GroupNormalizer).
+        # predictions via the output_transformer (inverse of EncoderNormalizer).
         # Do NOT apply manual denormalization — that would be double-denorm.
         pv = raw.output.prediction.cpu().numpy()            # (B, T, 7) already in SPEI units
         tv = raw.x["decoder_time_idx"].cpu().numpy()        # (B, T)
-
-        # Actual target values in decoder window (for horizon metrics).
-        # decoder_target in raw.x IS normalized (model input), so we must
-        # denormalize it using target_scale to get original SPEI units.
-        av = None
-        if "decoder_target" in raw.x:
-            av_norm = raw.x["decoder_target"].cpu().numpy()  # (B, T) normalized
-            if "target_scale" in raw.x:
-                ts2      = raw.x["target_scale"].cpu().numpy()  # (B, 2)
-                _center2 = ts2[:, 0].reshape(-1, 1)              # (B, 1)
-                _scale2  = ts2[:, 1].reshape(-1, 1)              # (B, 1)
-                av = av_norm * _scale2 + _center2                # (B, T) in SPEI units
-            else:
-                av = av_norm
 
         # ── Step-0-only predictions (no ensemble averaging) ────────────────────
         # For each window i, tv[i, 0] is the time_idx at step=0.
@@ -237,15 +229,16 @@ def run(checkpoint_path: str, out_dir: Path, log_fp):
                     "pred_p90": float(pv[i, 0, 5]),
                 }
 
-        # ── Horizon bank: collect every (step, actual, pred) for horizon metrics ─
-        # This uses ALL steps and ALL windows — each (i, step) pair represents
-        # a forecasting event at a specific horizon depth.  Still uses
-        # denormalized values so horizon metrics are in SPEI units.
+        # ── Step-h-only horizon collection ─────────────────────────────────────
+        # For each horizon h, store the prediction from the FRESHEST encoder
+        # context (first occurrence per time_idx+loc key). Uses ground-truth
+        # actuals from test_data instead of denormalized decoder_target.
         for i in range(pv.shape[0]):
-            for step in range(pred_len):
-                if av is not None:
-                    horizon_bank[step]["actual"].append(float(av[i, step]))
-                    horizon_bank[step]["pred"].append(float(pv[i, step, 3]))
+            for h in range(pred_len):
+                t_idx = int(tv[i, h])
+                key = (t_idx, loc)
+                if key not in horizon_preds[h]:
+                    horizon_preds[h][key] = float(pv[i, h, 3])  # P50
 
         for t in sorted(step0_preds):
             ensemble_rows.append({
@@ -281,15 +274,40 @@ def run(checkpoint_path: str, out_dir: Path, log_fp):
         sub = df[df.location_id == loc]
         per_loc[loc] = _metrics(sub["actual"].values, sub["pred_p50"].values)
 
-    # True per-horizon metrics — from horizon_bank collected in prediction loop
+    # True per-horizon metrics — step-h-only using ground-truth actuals
+    # Build per-horizon naive baselines: naive(h) predicts SPEI(t) = SPEI(t - h - 1)
+    test_sorted_h = test_data.sort_values(["location_id", "time_idx"]).copy()
+    naive_by_h = {}
+    for h_offset in range(1, pred_len + 1):
+        test_sorted_h[f"_nh{h_offset}"] = (
+            test_sorted_h.groupby("location_id")["SPEI_3"].shift(h_offset))
+        valid_h = test_sorted_h.dropna(subset=[f"_nh{h_offset}"])
+        if len(valid_h) >= 2:
+            naive_by_h[h_offset] = float(np.sqrt(
+                mean_squared_error(valid_h["SPEI_3"], valid_h[f"_nh{h_offset}"])))
+        else:
+            naive_by_h[h_offset] = None
+    # Drop temp columns
+    test_sorted_h = test_sorted_h[[c for c in test_sorted_h.columns if not c.startswith("_nh")]]
+
     horizon_agg = []
     for h in range(pred_len):
-        hd = horizon_bank[h]
-        if len(hd["actual"]) >= 2:
-            m = _metrics(np.array(hd["actual"]), np.array(hd["pred"]))
+        actuals_h, preds_h = [], []
+        for key, pred_val in horizon_preds[h].items():
+            actual_val = actual_lookup.get(key)
+            if actual_val is not None:
+                actuals_h.append(actual_val)
+                preds_h.append(pred_val)
+
+        if len(actuals_h) >= 2:
+            m = _metrics(np.array(actuals_h), np.array(preds_h))
         else:
             m = dict(rmse=None, mae=None, r2=None, bias=None, pearson_r=None, n=0)
         m["horizon"] = h + 1
+        m["naive_rmse"] = naive_by_h.get(h + 1)
+        m["beats_naive"] = (m["rmse"] < m["naive_rmse"]
+                            if m["rmse"] is not None and m["naive_rmse"] is not None
+                            else None)
         horizon_agg.append(m)
 
     df_horizon = pd.DataFrame(horizon_agg)
@@ -385,13 +403,22 @@ def run(checkpoint_path: str, out_dir: Path, log_fp):
              f"  R²={m['r2']:.4f}  Bias={m['bias']:.4f}  r={m['pearson_r']:.4f}"
              f"  PICP={picp_per_loc.get(loc, float('nan')):.4f}", log_fp)
 
-    _log("\n  ─── HORIZON METRICS (first and last 5 days) ───", log_fp)
+    _log("\n  ─── HORIZON METRICS (step-h-only with naive comparison) ───", log_fp)
+    beat_count = sum(1 for row in horizon_agg if row.get("beats_naive"))
+    _log(f"    Model beats naive at {beat_count}/{pred_len} horizons", log_fp)
     for row in horizon_agg:
         h = int(row["horizon"])
         if h <= 5 or h >= pred_len - 4:
             rmse = row['rmse']; bias = row['bias']; r = row['pearson_r']
-            _log(f"    Day {h:>2}  RMSE={rmse:.4f}  Bias={bias:.4f}  r={r:.4f}"
-                 if rmse is not None else f"    Day {h:>2}  (no data)", log_fp)
+            naive_r = row.get('naive_rmse')
+            beats = row.get('beats_naive')
+            if rmse is not None:
+                ratio_str = f"  ratio={rmse/naive_r:.2f}x" if naive_r else ""
+                beats_str = "  BEATS!" if beats else ""
+                _log(f"    Day {h:>2}  RMSE={rmse:.4f}  Naive={naive_r:.4f}{ratio_str}{beats_str}"
+                     f"  Bias={bias:.4f}  r={r:.4f}", log_fp)
+            else:
+                _log(f"    Day {h:>2}  (no data)", log_fp)
         elif h == 6:
             _log("    ...   (days 6–25 omitted)", log_fp)
 
@@ -419,9 +446,15 @@ def run(checkpoint_path: str, out_dir: Path, log_fp):
         "naive_per_location": naive_per_loc,
         "per_location": per_loc,
         "per_horizon": [
-            {k: (round(v, 6) if isinstance(v, float) else v) for k, v in row.items()}
+            {k: (round(v, 6) if isinstance(v, float) else v) for k, v in row.items()
+             if k != "beats_naive"}
+            | ({"beats_naive": row.get("beats_naive")} if "beats_naive" in row else {})
             for row in horizon_agg
         ],
+        "multi_horizon_summary": {
+            "beats_naive_count": sum(1 for r in horizon_agg if r.get("beats_naive")),
+            "total_horizons": pred_len,
+        },
     }
     with open(out_dir / "metrics_summary.json", "w") as f:
         json.dump(metrics_payload, f, indent=2)
@@ -566,7 +599,7 @@ def run(checkpoint_path: str, out_dir: Path, log_fp):
     except Exception as e:
         _log(f"  05_variable_importance.png SKIPPED: {e}", log_fp)
 
-    # ── Plot 06: Metrics per horizon ──────────────────────────────────────
+    # ── Plot 06: Metrics per horizon (TFT vs Naive) ─────────────────────
     fig, axes = plt.subplots(2, 2, figsize=(14, 10))
     metrics_to_plot = [
         ("rmse",      "RMSE",             "steelblue"),
@@ -576,13 +609,20 @@ def run(checkpoint_path: str, out_dir: Path, log_fp):
     ]
     for ax, (col, label, color) in zip(axes.flatten(), metrics_to_plot):
         valid = df_horizon.dropna(subset=[col])
-        ax.bar(valid["horizon"], valid[col], color=color, alpha=0.75, edgecolor="white")
+        ax.bar(valid["horizon"], valid[col], color=color, alpha=0.75, edgecolor="white",
+               label="TFT Model")
+        # Overlay naive RMSE on the RMSE subplot
+        if col == "rmse" and "naive_rmse" in df_horizon.columns:
+            naive_valid = df_horizon.dropna(subset=["naive_rmse"])
+            ax.plot(naive_valid["horizon"], naive_valid["naive_rmse"],
+                    "k--", lw=2.0, marker="s", markersize=3, label="Naive Persistence")
+            ax.legend(fontsize=9)
         ax.axhline(0, color="black", lw=0.8, ls="--")
         ax.set_xlabel("Forecast Horizon (days)")
         ax.set_ylabel(label)
         ax.set_title(f"{label} vs Forecast Horizon")
         ax.grid(True, alpha=0.3, axis="y")
-    fig.suptitle("Metric Degradation — True Per-Step Horizon (test 2024+)", fontsize=12)
+    fig.suptitle("Step-h-Only Horizon Metrics — TFT vs Naive (test 2024+)", fontsize=12)
     fig.tight_layout()
     fig.savefig(out_dir / "06_horizon_metrics.png", dpi=150, bbox_inches="tight")
     plt.close(fig)
@@ -744,13 +784,26 @@ def run(checkpoint_path: str, out_dir: Path, log_fp):
         _log(f"    {loc:<15}  PICP={picp_per_loc.get(loc, float('nan')):.4f}", log_fp)
     _log(f"    {'OVERALL':<15}  PICP={picp_overall:.4f}", log_fp)
 
-    _log("\n  MODEL vs NAIVE PERSISTENCE (overall):", log_fp)
+    _log("\n  MODEL vs NAIVE PERSISTENCE (overall step-0):", log_fp)
     m_rmse = overall.get("rmse") or float("nan")
     n_rmse = naive_overall.get("rmse") or float("nan")
     skill  = (1.0 - m_rmse / n_rmse) * 100 if n_rmse > 0 else float("nan")
     _log(f"    Model  RMSE = {m_rmse:.4f}", log_fp)
     _log(f"    Naive  RMSE = {n_rmse:.4f}", log_fp)
     _log(f"    Skill Score = {skill:.1f}%  (positive = model beats naive)", log_fp)
+
+    _log(f"\n  MULTI-HORIZON SUMMARY (step-h-only):", log_fp)
+    beat_count = sum(1 for row in horizon_agg if row.get("beats_naive"))
+    _log(f"    Model beats naive at {beat_count}/{pred_len} horizons", log_fp)
+    for h_day in [1, 2, 7, 14, 30]:
+        row = horizon_agg[h_day - 1] if h_day <= len(horizon_agg) else None
+        if row and row["rmse"] is not None and row.get("naive_rmse") is not None:
+            ratio = row["rmse"] / row["naive_rmse"]
+            improvement = (1.0 - ratio) * 100
+            _log(f"    Day {h_day:>2}: TFT RMSE={row['rmse']:.4f}  "
+                 f"Naive={row['naive_rmse']:.4f}  "
+                 f"Ratio={ratio:.2f}x  "
+                 f"{'↑' if improvement > 0 else '↓'}{abs(improvement):.1f}%", log_fp)
 
 
 # ---------------------------------------------------------------------------

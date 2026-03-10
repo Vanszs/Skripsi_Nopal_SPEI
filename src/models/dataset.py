@@ -1,5 +1,5 @@
 from pytorch_forecasting import TimeSeriesDataSet, GroupNormalizer
-from pytorch_forecasting.data.encoders import NaNLabelEncoder
+from pytorch_forecasting.data.encoders import EncoderNormalizer, NaNLabelEncoder
 import pandas as pd
 
 MAX_ENCODER_LENGTH = 90   # 90 days history (matches SPEI-3 = 3×30 day window)
@@ -20,15 +20,15 @@ def create_dataset(data: pd.DataFrame,
     Design notes:
         min_encoder_length = max_encoder_length   → no short-context samples;
             every sample sees exactly 'max_encoder_length' past days.
-            Allowing fewer days (e.g. // 2 = 45) would train the model on
-            incomplete SPEI-3 windows and hurt generalisation.
         min_prediction_length = max_prediction_length → full 30-day horizon
             on every sample; prevents the model learning on partial horizons.
-        allow_missing_timesteps=True is kept intentionally to handle any
-            minor calendar gaps in the source data; the DataLoader fills
-            gaps with last-known-value before passing to the model.
-        GroupNormalizer(transformation=None): SPEI is already a Z-score so
-            only per-location mean/std centering is applied (no Box-Cox).
+        allow_missing_timesteps=True handles minor calendar gaps.
+        EncoderNormalizer: normalises each sample using its own encoder
+            window statistics (mean / std).  This makes the model predict
+            *deviations from recent SPEI* instead of absolute levels,
+            automatically adapting to distribution shifts between train
+            (pre-2023) and test (2024+) periods.  Critical because SPEI-3
+            means can shift by >1 σ across periods (e.g. Nganjuk drought).
     """
     # Ensure no NaN in critical columns
     data = data.replace([float('inf'), float('-inf')], float('nan')).dropna()
@@ -74,8 +74,8 @@ def create_dataset(data: pd.DataFrame,
             "temperature_2m_min"
         ],
         
-        target_normalizer=GroupNormalizer(
-            groups=["location_id"], transformation=None  # SPEI is already Z-score
+        target_normalizer=EncoderNormalizer(
+            transformation=None,   # SPEI already Z-score, no Box-Cox needed
         ),
             
         add_relative_time_idx=True,

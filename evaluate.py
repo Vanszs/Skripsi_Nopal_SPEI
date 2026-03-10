@@ -12,7 +12,7 @@ from pytorch_forecasting import TemporalFusionTransformer, TimeSeriesDataSet
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from src.models.dataset import create_dataset
 
-def evaluate_model(checkpoint_path="logs/checkpoints/enc30-epoch=1-val_loss=0.2892.ckpt", test_year_start=2024):
+def evaluate_model(checkpoint_path="logs/checkpoints/enc90-epoch=3-val_loss=0.1956.ckpt", test_year_start=2024):
     """
     Evaluate model on test set.
     NOTE: test_year_start=2024 to avoid overlap with validation (2023).
@@ -178,6 +178,64 @@ def evaluate_model(checkpoint_path="logs/checkpoints/enc30-epoch=1-val_loss=0.28
     for k, v in naive_raw.items():
         print(f"  {k.upper():10}: {v}")
 
+    # ── Multi-horizon evaluation (step-h-only) ────────────────────────────
+    # For each horizon h, use only the prediction from the freshest encoder
+    # context and compare against ground-truth actuals from test_data.
+    print("\n" + "="*60)
+    print("MULTI-HORIZON EVALUATION (step-h-only)")
+    print("="*60)
+
+    actual_lookup = {}
+    for _, row in test_data.iterrows():
+        actual_lookup[(int(row["time_idx"]), row["location_id"])] = float(row["SPEI_3"])
+
+    horizon_preds = {h: {} for h in range(pred_len)}
+    for loc in test_data["location_id"].unique():
+        loc_data = test_data[test_data.location_id == loc].copy()
+        loc_ds = TimeSeriesDataSet.from_dataset(
+            train_ds, loc_data, predict=False, stop_randomization=True)
+        loader = loc_ds.to_dataloader(train=False, batch_size=64, num_workers=0)
+        raw = model.predict(loader, mode="raw", return_x=True)
+        pv = raw.output.prediction.cpu().numpy()
+        tv = raw.x["decoder_time_idx"].cpu().numpy()
+        for i in range(pv.shape[0]):
+            for h in range(pred_len):
+                key = (int(tv[i, h]), loc)
+                if key not in horizon_preds[h]:
+                    horizon_preds[h][key] = float(pv[i, h, 3])
+
+    # Per-horizon naive baselines
+    test_sorted_h = test_data.sort_values(["location_id", "time_idx"]).copy()
+    naive_by_h = {}
+    for h_off in range(1, pred_len + 1):
+        test_sorted_h[f"_n{h_off}"] = (
+            test_sorted_h.groupby("location_id")["SPEI_3"].shift(h_off))
+        v = test_sorted_h.dropna(subset=[f"_n{h_off}"])
+        naive_by_h[h_off] = float(np.sqrt(mean_squared_error(v["SPEI_3"], v[f"_n{h_off}"]))) if len(v) >= 2 else None
+
+    beat_count = 0
+    print(f"\n{'Day':>5} {'TFT_RMSE':>10} {'Naive_RMSE':>12} {'Ratio':>8} {'Beats?':>8}")
+    print("-" * 50)
+    for h in range(pred_len):
+        actuals_h, preds_h = [], []
+        for key, pval in horizon_preds[h].items():
+            aval = actual_lookup.get(key)
+            if aval is not None:
+                actuals_h.append(aval)
+                preds_h.append(pval)
+        if len(actuals_h) < 2:
+            continue
+        rmse_h = float(np.sqrt(mean_squared_error(actuals_h, preds_h)))
+        naive_h = naive_by_h.get(h + 1)
+        beats = rmse_h < naive_h if naive_h else False
+        if beats:
+            beat_count += 1
+        ratio = rmse_h / naive_h if naive_h else float("nan")
+        marker = "  BEATS" if beats else ""
+        print(f"  {h+1:>3} {rmse_h:>10.4f} {naive_h:>12.4f} {ratio:>7.2f}x {'YES' if beats else 'no':>6}{marker}")
+
+    print(f"\nModel beats naive at {beat_count}/{pred_len} horizons")
+
     # Per-location metrics (raw only — no leaky calibration)
     per_location = {}
     for loc in df_final["location_id"].unique():
@@ -334,4 +392,9 @@ def evaluate_model(checkpoint_path="logs/checkpoints/enc30-epoch=1-val_loss=0.28
     return metrics_payload
 
 if __name__ == "__main__":
-    evaluate_model()
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--checkpoint", type=str, default="logs/checkpoints/enc90-epoch=3-val_loss=0.1956.ckpt")
+    parser.add_argument("--test_year", type=int, default=2024)
+    args = parser.parse_args()
+    evaluate_model(checkpoint_path=args.checkpoint, test_year_start=args.test_year)
