@@ -1,4 +1,4 @@
-# Panduan Persiapan Seminar Proposal Skripsi
+﻿# Panduan Persiapan Seminar Proposal Skripsi
 
 > **Judul:** "Peramalan Multi-Horizon Indeks Kekeringan Lahan Pertanian (SPEI) di Sentra Padi Jawa Timur Menggunakan Temporal Fusion Transformer (TFT)"
 
@@ -6,14 +6,14 @@
 
 ## 1. Apa Itu Seminar Proposal?
 
-Seminar proposal adalah ujian kelayakan **rencana penelitian** (Bab 1–3). Fokusnya:
+Seminar proposal adalah ujian kelayakan **rencana penelitian** (Bab 1â€“3). Fokusnya:
 - Apakah masalah penelitian jelas dan layak?
 - Apakah landasan teori memadai?
 - Apakah rancangan metodologi bisa dieksekusi?
 
 **Yang BELUM perlu ada:**
 - Hasil eksperimen / akurasi model
-- Nilai RMSE, MAE, R², dsb.
+- Nilai RMSE, MAE, RÂ², dsb.
 - Variabel importance / attention weight aktual
 - Analisis hasil dan pembahasan
 
@@ -24,7 +24,7 @@ Seminar proposal adalah ujian kelayakan **rencana penelitian** (Bab 1–3). Foku
 
 ---
 
-## 2. Struktur Bab 1–3 dan Kedalaman Pembahasan
+## 2. Struktur Bab 1â€“3 dan Kedalaman Pembahasan
 
 ### Bab 1: Pendahuluan
 
@@ -32,11 +32,11 @@ Seminar proposal adalah ujian kelayakan **rencana penelitian** (Bab 1–3). Foku
 
 | Sub-bab | Isi | Kedalaman |
 |---------|-----|-----------|
-| **1.1 Latar Belakang** | Dampak kekeringan terhadap pertanian padi di Jawa Timur; keterbatasan metode konvensional; potensi deep learning (TFT) untuk peramalan SPEI | Naratif 2–3 halaman, didukung data/statistik |
-| **1.2 Rumusan Masalah** | Pertanyaan penelitian (bagaimana membangun model TFT untuk meramalkan SPEI-3 multi-horizon 30 hari?) | 2–4 butir pertanyaan |
-| **1.3 Tujuan Penelitian** | Membangun dan mengevaluasi model TFT untuk peramalan SPEI-3 di 5 kabupaten sentra padi Jawa Timur | Selaras 1:1 dengan rumusan masalah |
+| **1.1 Latar Belakang** | Dampak kekeringan terhadap pertanian padi di Jawa Timur; keterbatasan metode konvensional; potensi deep learning (TFT) untuk peramalan SPEI | Naratif 2â€“3 halaman, didukung data/statistik |
+| **1.2 Rumusan Masalah** | Pertanyaan penelitian (bagaimana membangun model TFT untuk meramalkan SPEI-3 multi-horizon 30 hari?) | 2â€“4 butir pertanyaan |
+| **1.3 Tujuan Penelitian** | Membangun dan mengevaluasi model TFT untuk peramalan SPEI-3 di N kabupaten (config-driven) sentra padi Jawa Timur | Selaras 1:1 dengan rumusan masalah |
 | **1.4 Manfaat Penelitian** | Manfaat akademis (kontribusi literatur) dan praktis (early warning kekeringan) | Ringkas, 1 halaman |
-| **1.5 Batasan Masalah** | 5 kabupaten (Bojonegoro, Lamongan, Nganjuk, Ngawi, Tuban); data 2005–2025; horizon 30 hari; SPEI-3 sebagai target utama | Poin-poin jelas |
+| **1.5 Batasan Masalah** | N kabupaten (config-driven) (City_A, City_B, City_C, City_D, City_E); data 2005â€“2025; horizon 30 hari; SPEI-3 sebagai target utama | Poin-poin jelas |
 
 **Kedalaman algoritma di Bab 1:** Cukup *sebut nama* TFT sebagai solusi yang diusulkan, tanpa detail arsitektur.
 
@@ -48,12 +48,12 @@ Seminar proposal adalah ujian kelayakan **rencana penelitian** (Bab 1–3). Foku
 
 | Sub-bab | Isi | Kedalaman |
 |---------|-----|-----------|
-| **2.1 Kekeringan dan Dampaknya** | Definisi kekeringan meteorologis; dampak pada produksi padi; konteks Jawa Timur | Deskriptif, 1–2 halaman |
+| **2.1 Kekeringan dan Dampaknya** | Definisi kekeringan meteorologis; dampak pada produksi padi; konteks Jawa Timur | Deskriptif, 1â€“2 halaman |
 | **2.2 Indeks Kekeringan SPEI** | Konsep SPEI (Standardized Precipitation-Evapotranspiration Index); perbedaan dengan SPI; skala temporal (SPEI-3, SPEI-6); distribusi Log-Logistic; klasifikasi 9 kelas WMO | Teori cukup mendalam (rumus, tabel klasifikasi) |
-| **2.3 Time Series Forecasting** | Evolusi metode: statistik klasik (ARIMA) → machine learning → deep learning (RNN, LSTM, Transformer) | Ringkasan evolusi, bukan tutorial |
+| **2.3 Time Series Forecasting** | Evolusi metode: statistik klasik (ARIMA) â†’ machine learning â†’ deep learning (RNN, LSTM, Transformer) | Ringkasan evolusi, bukan tutorial |
 | **2.4 Temporal Fusion Transformer (TFT)** | Arsitektur TFT: Variable Selection Network, Gated Residual Network, LSTM Encoder-Decoder, Multi-Head Attention, Quantile Regression | Jelaskan *konsep* tiap komponen dan mengapa cocok untuk masalah ini |
-| **2.5 Penelitian Terdahulu** | Tabel perbandingan 5–10 paper terkait (SPEI forecasting, TFT applications) dengan kolom: penulis, tahun, metode, data, hasil, kelebihan/kekurangan | Tabel + narasi gap |
-| **2.6 Kerangka Pemikiran** | Diagram alur logis: masalah → teori → metode → rencana solusi | 1 diagram + narasi pendek |
+| **2.5 Penelitian Terdahulu** | Tabel perbandingan 5â€“10 paper terkait (SPEI forecasting, TFT applications) dengan kolom: penulis, tahun, metode, data, hasil, kelebihan/kekurangan | Tabel + narasi gap |
+| **2.6 Kerangka Pemikiran** | Diagram alur logis: masalah â†’ teori â†’ metode â†’ rencana solusi | 1 diagram + narasi pendek |
 
 **Kedalaman algoritma di Bab 2:** Jelaskan *konsep dan teori* TFT (apa itu VSN, GRN, attention, quantile loss), tetapi belum perlu detail implementasi (kode, hyperparameter spesifik).
 
@@ -66,13 +66,13 @@ Seminar proposal adalah ujian kelayakan **rencana penelitian** (Bab 1–3). Foku
 | Sub-bab | Isi | Kedalaman |
 |---------|-----|-----------|
 | **3.1 Jenis Penelitian** | Penelitian kuantitatif eksperimental | 1 paragraf |
-| **3.2 Sumber dan Jenis Data** | Open-Meteo Archive API; data iklim harian; 5 kabupaten; periode 2005–2025 | Tabel variabel yang akan digunakan |
+| **3.2 Sumber dan Jenis Data** | Open-Meteo Archive API; data iklim harian; N kabupaten (config-driven); periode 2005â€“2025 | Tabel variabel yang akan digunakan |
 | **3.3 Preprocessing Data** | Interpolasi, transformasi logaritmik presipitasi, encoding fitur temporal (month_sin/cos) | Alur langkah, belum perlu kode |
-| **3.4 Komputasi SPEI** | Defisit air (P−ET₀), rolling window, fitting distribusi Log-Logistic, standardisasi → SPEI-3 & SPEI-6 | Rumus + flowchart proses |
-| **3.5 Pembagian Dataset** | Train (<2023), Validation (2023), Test (≥2024); scaler fit hanya pada training | Diagram split timeline |
+| **3.4 Komputasi SPEI** | Defisit air (Pâˆ’ETâ‚€), rolling window, fitting distribusi Log-Logistic, standardisasi â†’ SPEI-3 & SPEI-6 | Rumus + flowchart proses |
+| **3.5 Pembagian Dataset** | Train (<2023), Validation (2023), Test (â‰¥2024); scaler fit hanya pada training | Diagram split timeline |
 | **3.6 Rancangan Model TFT** | Konfigurasi input: static, time-varying known, time-varying unknown; encoder/decoder window; quantile output | Tabel konfigurasi fitur |
 | **3.7 Rencana Training** | Loss function (Quantile Loss), optimizer, early stopping, rencana hyperparameter tuning | Deskripsi rencana, bukan hasil |
-| **3.8 Rencana Evaluasi** | Metrik: RMSE, MAE, R², Pearson r, Bias, PICP; baseline naive persistence; step-0-only decoding | Definisi rumus tiap metrik |
+| **3.8 Rencana Evaluasi** | Metrik: RMSE, MAE, RÂ², Pearson r, Bias, PICP; baseline naive persistence; step-0-only decoding | Definisi rumus tiap metrik |
 | **3.9 Perangkat Penelitian** | Hardware (GPU RTX 3050) dan software (Python, PyTorch, pytorch-forecasting, Lightning) | Tabel spesifikasi |
 | **3.10 Jadwal Penelitian** | Gantt chart / timeline rencana pelaksanaan | Tabel/diagram |
 
@@ -91,8 +91,8 @@ Seminar proposal adalah ujian kelayakan **rencana penelitian** (Bab 1–3). Foku
 | 3 | **Mengapa TFT?** Keunggulan TFT vs metode lain (interpretable, multi-horizon, quantile output, attention mechanism) | Wajib |
 | 4 | **Mengapa SPEI?** Keunggulan SPEI vs SPI (memperhitungkan evapotranspirasi) | Wajib |
 | 5 | **Sumber data**: Open-Meteo Archive API, variabel apa saja, periode berapa | Wajib |
-| 6 | **Lokasi studi**: 5 kabupaten sentra padi Jawa Timur (Bojonegoro, Lamongan, Nganjuk, Ngawi, Tuban) + justifikasi pemilihan | Wajib |
-| 7 | **Alur metodologi**: Dari akuisisi data → preprocessing → SPEI → dataset → model → evaluasi | Wajib |
+| 6 | **Lokasi studi**: N kabupaten (config-driven) sentra padi Jawa Timur (City_A, City_B, City_C, City_D, City_E) + justifikasi pemilihan | Wajib |
+| 7 | **Alur metodologi**: Dari akuisisi data â†’ preprocessing â†’ SPEI â†’ dataset â†’ model â†’ evaluasi | Wajib |
 | 8 | **Rancangan arsitektur model**: Layout fitur (static/known/unknown), encoder-decoder window | Wajib |
 | 9 | **Rencana evaluasi**: Metrik apa yang digunakan dan mengapa | Wajib |
 | 10 | **Jadwal penelitian**: Timeline pelaksanaan (Gantt chart) | Wajib |
@@ -101,7 +101,7 @@ Seminar proposal adalah ujian kelayakan **rencana penelitian** (Bab 1–3). Foku
 
 | Tidak Perlu | Alasan |
 |-------------|--------|
-| Nilai akurasi (RMSE, MAE, R²) | Belum ada eksperimen |
+| Nilai akurasi (RMSE, MAE, RÂ²) | Belum ada eksperimen |
 | Hasil variable importance | Belum training model |
 | Grafik prediksi vs aktual | Belum ada prediksi |
 | Hyperparameter final | Masih rencana, belum tuning |
@@ -121,8 +121,8 @@ Berikut diagram-diagram yang **sebaiknya ada** di seminar proposal, diselaraskan
 flowchart TD
     A["<b>Permasalahan</b><br/>Kekeringan mengancam<br/>produksi padi Jawa Timur"] --> B["<b>Gap Penelitian</b><br/>Belum ada peramalan SPEI<br/>multi-horizon berbasis<br/>deep learning di Indonesia"]
     B --> C["<b>Solusi yang Diusulkan</b><br/>Temporal Fusion Transformer<br/>untuk peramalan SPEI-3<br/>30 hari ke depan"]
-    C --> D["<b>Data</b><br/>Data iklim harian<br/>Open-Meteo API<br/>5 kabupaten, 2005–2025"]
-    D --> E["<b>Proses</b><br/>Preprocessing → Komputasi SPEI<br/>→ Training TFT → Evaluasi"]
+    C --> D["<b>Data</b><br/>Data iklim harian<br/>Open-Meteo API<br/>N kabupaten (config-driven), 2005â€“2025"]
+    D --> E["<b>Proses</b><br/>Preprocessing â†’ Komputasi SPEI<br/>â†’ Training TFT â†’ Evaluasi"]
     E --> F["<b>Output yang Diharapkan</b><br/>Model peramalan SPEI-3<br/>multi-horizon dengan<br/>prediksi probabilistik"]
 ```
 
@@ -133,8 +133,8 @@ flowchart TD
 ```mermaid
 flowchart TD
     subgraph "Tahap 1: Pengumpulan Data"
-        A1["Akuisisi data iklim harian<br/>dari Open-Meteo Archive API<br/>(2005–2025)"]
-        A2["Variabel: presipitasi, ET₀,<br/>kelembaban tanah, suhu maks/min,<br/>elevasi"]
+        A1["Akuisisi data iklim harian<br/>dari Open-Meteo Archive API<br/>(2005â€“2025)"]
+        A2["Variabel: presipitasi, ETâ‚€,<br/>kelembaban tanah, suhu maks/min,<br/>elevasi"]
     end
 
     subgraph "Tahap 2: Preprocessing"
@@ -144,15 +144,15 @@ flowchart TD
     end
 
     subgraph "Tahap 3: Komputasi SPEI"
-        C1["Hitung defisit air<br/>(Presipitasi − ET₀)"]
+        C1["Hitung defisit air<br/>(Presipitasi âˆ’ ETâ‚€)"]
         C2["Rolling window<br/>90 hari (SPEI-3) / 180 hari (SPEI-6)"]
         C3["Fitting distribusi Log-Logistic"]
-        C4["Standardisasi Z-score<br/>→ SPEI-3, SPEI-6"]
+        C4["Standardisasi Z-score<br/>â†’ SPEI-3, SPEI-6"]
     end
 
     subgraph "Tahap 4: Pembentukan Dataset"
         D1["TimeSeriesDataSet<br/>Encoder: 90 hari<br/>Decoder: 30 hari"]
-        D2["Split: Train < 2023<br/>Val = 2023 | Test ≥ 2024"]
+        D2["Split: Train < 2023<br/>Val = 2023 | Test â‰¥ 2024"]
     end
 
     subgraph "Tahap 5: Perancangan & Training Model TFT"
@@ -161,7 +161,7 @@ flowchart TD
     end
 
     subgraph "Tahap 6: Evaluasi"
-        F1["Metrik: RMSE, MAE, R²,<br/>Pearson r, Bias, PICP"]
+        F1["Metrik: RMSE, MAE, RÂ²,<br/>Pearson r, Bias, PICP"]
         F2["Baseline: Naive persistence"]
         F3["Analisis per lokasi &<br/>interpretabilitas model"]
     end
@@ -178,7 +178,7 @@ flowchart TD
     subgraph INPUT["Input Multivariat"]
         S["<b>Static</b><br/>location_id<br/>elevation"]
         K["<b>Time-Varying Known</b><br/>time_idx<br/>month_sin, month_cos"]
-        U["<b>Time-Varying Unknown</b><br/>SPEI-3, SPEI-6<br/>water_deficit, precipitation_log<br/>ET₀, soil_moisture<br/>temp_max, temp_min"]
+        U["<b>Time-Varying Unknown</b><br/>SPEI-3, SPEI-6<br/>water_deficit, precipitation_log<br/>ETâ‚€, soil_moisture<br/>temp_max, temp_min"]
     end
 
     subgraph TFT["Temporal Fusion Transformer"]
@@ -215,13 +215,13 @@ gantt
     axisFormat %Y
 
     section Training
-    Data Training (2005–2022)    :done, train, 2005, 2023
+    Data Training (2005â€“2022)    :done, train, 2005, 2023
 
     section Validation
     Data Validasi (2023)         :active, val, 2023, 2024
 
     section Testing
-    Data Testing (2024–2025)     :crit, test, 2024, 2026
+    Data Testing (2024â€“2025)     :crit, test, 2024, 2026
 ```
 
 ---
@@ -232,7 +232,7 @@ gantt
 flowchart LR
     subgraph STATIC["Static Features"]
         direction TB
-        SC["<b>Categorical</b><br/>location_id<br/>(5 kabupaten)"]
+        SC["<b>Categorical</b><br/>location_id<br/>(N kabupaten (config-driven))"]
         SR["<b>Real</b><br/>elevation"]
     end
 
@@ -245,7 +245,7 @@ flowchart LR
 
     subgraph UNKNOWN["Time-Varying Unknown<br/>(hanya di encoder)"]
         direction TB
-        U1["SPEI-3 ← target"]
+        U1["SPEI-3 â† target"]
         U2["SPEI-6"]
         U3["water_deficit"]
         U4["precipitation_log"]
@@ -266,14 +266,14 @@ flowchart LR
 ### Diagram 6: Encoder-Decoder Window
 
 ```
-    ◄──────── Encoder (90 hari) ────────►◄──── Decoder (30 hari) ────►
-    ┌──┬──┬──┬─────────────────┬──┬──┬──┐┌──┬──┬──┬──────────┬──┬──┐
-    │t-89│t-88│...              │t-1│ t₀ ││t+1│t+2│...        │t+29│t+30│
-    └──┴──┴──┴─────────────────┴──┴──┴──┘└──┴──┴──┴──────────┴──┴──┘
-    │                                    ││                            │
-    │  Semua fitur tersedia              ││  Hanya time-varying known  │
-    │  (static + known + unknown)        ││  (time_idx, month_sin/cos) │
-    └────────────────────────────────────┘└────────────────────────────┘
+    â—„â”€â”€â”€â”€â”€â”€â”€â”€ Encoder (90 hari) â”€â”€â”€â”€â”€â”€â”€â”€â–ºâ—„â”€â”€â”€â”€ Decoder (30 hari) â”€â”€â”€â”€â–º
+    â”Œâ”€â”€â”¬â”€â”€â”¬â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”¬â”€â”€â”¬â”€â”€â”â”Œâ”€â”€â”¬â”€â”€â”¬â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”¬â”€â”€â”
+    â”‚t-89â”‚t-88â”‚...              â”‚t-1â”‚ tâ‚€ â”‚â”‚t+1â”‚t+2â”‚...        â”‚t+29â”‚t+30â”‚
+    â””â”€â”€â”´â”€â”€â”´â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”´â”€â”€â”´â”€â”€â”˜â””â”€â”€â”´â”€â”€â”´â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”´â”€â”€â”˜
+    â”‚                                    â”‚â”‚                            â”‚
+    â”‚  Semua fitur tersedia              â”‚â”‚  Hanya time-varying known  â”‚
+    â”‚  (static + known + unknown)        â”‚â”‚  (time_idx, month_sin/cos) â”‚
+    â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
 ---
@@ -282,9 +282,9 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-    PRED["Prediksi Model TFT<br/>(Step-0-Only Decoding)"] --> REG["<b>Metrik Regresi</b><br/>RMSE, MAE, R²<br/>Pearson r, Bias"]
-    PRED --> PROB["<b>Metrik Probabilistik</b><br/>PICP: cakupan P10–P90<br/>(nominal 80%)"]
-    PRED --> BASE["<b>Perbandingan Baseline</b><br/>Naive Persistence<br/>SPEI(t) ≈ SPEI(t−1)"]
+    PRED["Prediksi Model TFT<br/>(Step-0-Only Decoding)"] --> REG["<b>Metrik Regresi</b><br/>RMSE, MAE, RÂ²<br/>Pearson r, Bias"]
+    PRED --> PROB["<b>Metrik Probabilistik</b><br/>PICP: cakupan P10â€“P90<br/>(nominal 80%)"]
+    PRED --> BASE["<b>Perbandingan Baseline</b><br/>Naive Persistence<br/>SPEI(t) â‰ˆ SPEI(tâˆ’1)"]
     PRED --> INTERP["<b>Interpretabilitas</b><br/>Variable Importance (VSN)<br/>Attention Weights"]
 
     REG --> FINAL["Kesimpulan:<br/>Model TFT harus<br/>outperform baseline naif"]
@@ -298,18 +298,18 @@ flowchart TD
 ### Diagram 8: Peta Lokasi Studi (Deskriptif)
 
 ```
-                    JAWA TIMUR — 5 Kabupaten Sentra Padi
-    ┌─────────────────────────────────────────────────────────┐
-    │                                                         │
-    │         ★ Ngawi          ★ Tuban                        │
-    │                                                         │
-    │              ★ Nganjuk        ★ Lamongan                │
-    │                                                         │
-    │                    ★ Bojonegoro                          │
-    │                                                         │
-    │   Justifikasi: 5 kabupaten penghasil padi terbesar      │
-    │   di Jawa Timur (data BPS)                              │
-    └─────────────────────────────────────────────────────────┘
+                    JAWA TIMUR â€” N kabupaten (config-driven) Sentra Padi
+    â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+    â”‚                                                         â”‚
+    â”‚         â˜… City_D          â˜… City_E                        â”‚
+    â”‚                                                         â”‚
+    â”‚              â˜… City_C        â˜… City_B                â”‚
+    â”‚                                                         â”‚
+    â”‚                    â˜… City_A                          â”‚
+    â”‚                                                         â”‚
+    â”‚   Justifikasi: N kabupaten (config-driven) penghasil padi terbesar      â”‚
+    â”‚   di Jawa Timur (data BPS)                              â”‚
+    â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
 ---
@@ -320,15 +320,15 @@ flowchart TD
 
 | Kategori | Rentang SPEI | Deskripsi |
 |----------|-------------|-----------|
-| Ekstrem Basah | SPEI ≥ 2.0 | Kondisi sangat basah |
-| Parah Basah | 1.5 ≤ SPEI < 2.0 | Basah signifikan |
-| Sedang Basah | 1.0 ≤ SPEI < 1.5 | Basah moderat |
-| Ringan Basah | 0.5 ≤ SPEI < 1.0 | Sedikit basah |
+| Ekstrem Basah | SPEI â‰¥ 2.0 | Kondisi sangat basah |
+| Parah Basah | 1.5 â‰¤ SPEI < 2.0 | Basah signifikan |
+| Sedang Basah | 1.0 â‰¤ SPEI < 1.5 | Basah moderat |
+| Ringan Basah | 0.5 â‰¤ SPEI < 1.0 | Sedikit basah |
 | Normal | -0.5 < SPEI < 0.5 | Kondisi normal |
-| Ringan Kering | -1.0 < SPEI ≤ -0.5 | Sedikit kering |
-| Sedang Kering | -1.5 < SPEI ≤ -1.0 | Kering moderat |
-| Parah Kering | -2.0 < SPEI ≤ -1.5 | Kering signifikan |
-| Ekstrem Kering | SPEI ≤ -2.0 | Kondisi sangat kering |
+| Ringan Kering | -1.0 < SPEI â‰¤ -0.5 | Sedikit kering |
+| Sedang Kering | -1.5 < SPEI â‰¤ -1.0 | Kering moderat |
+| Parah Kering | -2.0 < SPEI â‰¤ -1.5 | Kering signifikan |
+| Ekstrem Kering | SPEI â‰¤ -2.0 | Kondisi sangat kering |
 
 ### Tabel B: Variabel Input Penelitian
 
@@ -341,7 +341,7 @@ flowchart TD
 | soil_moisture | Time-varying unknown | Open-Meteo API | Kelembaban tanah |
 | temperature_2m_max | Time-varying unknown | Open-Meteo API | Suhu maksimum |
 | temperature_2m_min | Time-varying unknown | Open-Meteo API | Suhu minimum |
-| water_deficit | Time-varying unknown | Dihitung (P − ET₀) | Defisit air |
+| water_deficit | Time-varying unknown | Dihitung (P âˆ’ ETâ‚€) | Defisit air |
 | time_idx | Time-varying known | Generated | Indeks waktu |
 | month_sin | Time-varying known | Derived from date | Encoding musiman |
 | month_cos | Time-varying known | Derived from date | Encoding musiman |
@@ -357,7 +357,7 @@ flowchart TD
 | 3 | ... | TFT | ... | ... | ... | ... | Bukan untuk SPEI/Indonesia |
 | ... | | | | | | | |
 
-*→ Isi dengan paper relevan dari literature review*
+*â†’ Isi dengan paper relevan dari literature review*
 
 ### Tabel D: Rencana Metrik Evaluasi
 
@@ -365,10 +365,10 @@ flowchart TD
 |--------|---------|--------|
 | RMSE | $\sqrt{\frac{1}{n}\sum(y_i - \hat{y}_i)^2}$ | Mengukur rata-rata kesalahan (sensitif terhadap outlier) |
 | MAE | $\frac{1}{n}\sum\|y_i - \hat{y}_i\|$ | Mengukur rata-rata kesalahan absolut |
-| R² | $1 - \frac{\sum(y_i - \hat{y}_i)^2}{\sum(y_i - \bar{y})^2}$ | Proporsi variansi yang dijelaskan model |
+| RÂ² | $1 - \frac{\sum(y_i - \hat{y}_i)^2}{\sum(y_i - \bar{y})^2}$ | Proporsi variansi yang dijelaskan model |
 | Pearson r | $\frac{\text{cov}(y, \hat{y})}{\sigma_y \cdot \sigma_{\hat{y}}}$ | Korelasi linear aktual vs prediksi |
 | Bias | $\frac{1}{n}\sum(\hat{y}_i - y_i)$ | Rata-rata over/under-prediction |
-| PICP | $\frac{1}{n}\sum \mathbb{1}(y_i \in [P_{10}, P_{90}])$ | Cakupan interval prediksi (target ≈ 80%) |
+| PICP | $\frac{1}{n}\sum \mathbb{1}(y_i \in [P_{10}, P_{90}])$ | Cakupan interval prediksi (target â‰ˆ 80%) |
 
 ### Tabel E: Perangkat Penelitian
 
@@ -387,19 +387,19 @@ flowchart TD
 
 ## 6. Tips Presentasi Seminar Proposal
 
-1. **Slide 1–2:** Judul, nama, dosen pembimbing
-2. **Slide 3–4:** Latar belakang + urgensi (gunakan data BPS produksi padi, statistik kekeringan)
+1. **Slide 1â€“2:** Judul, nama, dosen pembimbing
+2. **Slide 3â€“4:** Latar belakang + urgensi (gunakan data BPS produksi padi, statistik kekeringan)
 3. **Slide 5:** Rumusan masalah & tujuan (poin-poin)
-4. **Slide 6–7:** Tinjauan pustaka ringkas (apa itu SPEI? apa itu TFT?)
+4. **Slide 6â€“7:** Tinjauan pustaka ringkas (apa itu SPEI? apa itu TFT?)
 5. **Slide 8:** Tabel penelitian terdahulu + gap
 6. **Slide 9:** Kerangka pemikiran (Diagram 1)
-7. **Slide 10–12:** Metodologi (Diagram 2 + Diagram 3 arsitektur TFT)
+7. **Slide 10â€“12:** Metodologi (Diagram 2 + Diagram 3 arsitektur TFT)
 8. **Slide 13:** Layout fitur (Diagram 5) + split data (Diagram 4)
 9. **Slide 14:** Rencana evaluasi (Diagram 7) + metrik (Tabel D)
 10. **Slide 15:** Jadwal penelitian (Gantt chart)
 11. **Slide terakhir:** Penutup + daftar pustaka
 
-**Durasi:** ±15 menit presentasi + tanya jawab
+**Durasi:** Â±15 menit presentasi + tanya jawab
 
 ---
 
@@ -409,9 +409,29 @@ flowchart TD
 |------------|-------------|
 | Mengapa TFT, bukan LSTM/ARIMA biasa? | TFT interpretable (VSN + attention), native multi-horizon, output probabilistik (quantile) |
 | Mengapa SPEI dan bukan SPI? | SPEI memperhitungkan evapotranspirasi, lebih representatif untuk kondisi aktual lahan pertanian |
-| Mengapa 5 kabupaten ini? | Sentra padi terbesar Jawa Timur berdasarkan data BPS |
+| Mengapa N kabupaten (config-driven) ini? | Sentra padi terbesar Jawa Timur berdasarkan data BPS |
 | Mengapa horizon 30 hari? | Rentang waktu yang cukup untuk early warning sebelum masa tanam/panen |
 | Data dari mana? | Open-Meteo Archive API (gratis, resolusi harian, data reanalysis ERA5) |
 | Apa baseline-nya? | Naive persistence (SPEI hari ini = SPEI kemarin) |
-| Bagaimana menghindari data leakage? | Strict temporal split: train <2023, val 2023, test ≥2024; scaler fit hanya pada training |
+| Bagaimana menghindari data leakage? | Strict temporal split: train <2023, val 2023, test â‰¥2024; scaler fit hanya pada training |
 | Distribusi apa untuk SPEI? | Log-Logistic (scipy.stats.fisk), kalibrasi per bulan kalender |
+
+
+## Addendum Arsitektur Implementasi (Schema v2)
+- Data tidak lagi 1 titik per kota; sekarang multi-node per kota lalu agregasi ke super-node.
+- Seleksi node dilakukan train-only dan deterministik (tanpa data 2023+).
+- Entity model yang dipakai untuk sequence adalah super_node_id.
+- Laporan evaluasi wajib menampilkan metrik per-entity dan agregat per-city.
+
+
+## Addendum Wajib (Schema v2)
+
+Ketentuan implementasi yang berlaku:
+- arsitektur data bersifat config-driven, tidak boleh mengunci daftar tetap N kota (config-driven).
+- identitas sequence model menggunakan `super_node_id`.
+- proses node selection dilakukan train-only dan deterministik sebelum agregasi super-node.
+- evaluasi akhir memuat dua granularitas: per-entity dan per-city.
+- dataset schema lama harus ditolak oleh version guard.
+
+Referensi daftar kota tetap pada bagian lama dokumen bersifat historis (baseline awal), bukan batasan implementasi terkini.
+

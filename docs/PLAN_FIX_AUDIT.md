@@ -1,4 +1,4 @@
-# Plan Fix & Audit Lanjutan — TFT SPEI Forecasting
+﻿# Plan Fix & Audit Lanjutan â€” TFT SPEI Forecasting
 
 > Dibuat: 2026-03-08  
 > Status: **AKTIF**  
@@ -9,7 +9,7 @@
 
 ## Ringkasan Masalah Utama
 
-Model TFT **kalah dari naive persistence** (SPEI(t) ≈ SPEI(t-1)):
+Model TFT **kalah dari naive persistence** (SPEI(t) â‰ˆ SPEI(t-1)):
 
 | Metrik | TFT Model | Naive | Gap |
 |--------|-----------|-------|-----|
@@ -18,32 +18,32 @@ Model TFT **kalah dari naive persistence** (SPEI(t) ≈ SPEI(t-1)):
 | Pearson r | 0.9051 | 0.9659 | |
 | Skill Score | -65.2% | 0% | Negatif = kalah |
 
-**Akar masalah**: SPEI-3 memiliki autocorrelation lag-1 = 0.97 (sangat smooth karena rolling 90 hari). Baseline naive yang hanya mengikuti observasi terakhir sudah sangat kuat. Model TFT under-dispersed (variance ratio 0.38–0.97) dan over-regularized.
+**Akar masalah**: SPEI-3 memiliki autocorrelation lag-1 = 0.97 (sangat smooth karena rolling 90 hari). Baseline naive yang hanya mengikuti observasi terakhir sudah sangat kuat. Model TFT under-dispersed (variance ratio 0.38â€“0.97) dan over-regularized.
 
 ---
 
-## FASE 1: Bug Fix Pipeline (SELESAI ✅)
+## FASE 1: Bug Fix Pipeline (SELESAI âœ…)
 
-### 1.1 Double Denormalization di `full_evaluation.py` ✅
+### 1.1 Double Denormalization di `full_evaluation.py` âœ…
 - **Masalah**: `model.predict(mode="raw")` sudah mengembalikan output yang di-denormalize oleh `transform_output()`. Manual `pv * scale + center` = double-denorm.
 - **Fix**: Hapus manual denorm, pakai output langsung.
-- **Dampak**: Minimal (±0.006 RMSE) karena GroupNormalizer near-identity pada SPEI.
+- **Dampak**: Minimal (Â±0.006 RMSE) karena GroupNormalizer near-identity pada SPEI.
 
-### 1.2 Default Checkpoint Salah di `evaluate.py` ✅
+### 1.2 Default Checkpoint Salah di `evaluate.py` âœ…
 - **Masalah**: Default = `epoch=0-val_loss=0.35.ckpt` (tidak ada).
 - **Fix**: Diganti ke `enc30-epoch=1-val_loss=0.2892.ckpt`.
 
-### 1.3 Checkpoint Selection di `run_evaluation.py` ✅
+### 1.3 Checkpoint Selection di `run_evaluation.py` âœ…
 - **Masalah**: Pilih alphabetical terakhir, bukan val_loss terendah.
 - **Fix**: `min(checkpoints, key=parse_val_loss)`.
 
-### 1.4 Encoder Mismatch di `detailed_actual_vs_predict.py` ✅
+### 1.4 Encoder Mismatch di `detailed_actual_vs_predict.py` âœ…
 - **Masalah**: Hardcoded `MAX_ENCODER_LENGTH=90` padahal checkpoint enc=30. Juga pakai `predict=True` + full data.
 - **Fix**: Baca dari checkpoint hparams; pakai `predict=False` + test data only.
 
 ---
 
-## FASE 2: Retraining — Encoder=90 (BELUM)
+## FASE 2: Retraining â€” Encoder=90 (BELUM)
 
 ### Tujuan
 Memberikan model konteks penuh rolling window SPEI-3 (90 hari) agar model bisa melihat seluruh informasi yang membentuk target.
@@ -53,13 +53,13 @@ Memberikan model konteks penuh rolling window SPEI-3 (90 hari) agar model bisa m
 - **Perubahan**:
   - `max_encoder_length=90` (sudah default di `dataset.py`, tapi train.py call harus eksplisit)
   - Kurangi regularisasi:
-    - `dropout`: 0.35 → 0.20
-    - `hidden_size`: 48 → 64
-    - `attention_head_size`: 1 → 2
-  - `max_epochs`: 60 → 80 (beri ruang lebih untuk konvergen)
-  - `patience`: 25 → 30
+    - `dropout`: 0.35 â†’ 0.20
+    - `hidden_size`: 48 â†’ 64
+    - `attention_head_size`: 1 â†’ 2
+  - `max_epochs`: 60 â†’ 80 (beri ruang lebih untuk konvergen)
+  - `patience`: 25 â†’ 30
 - **Risiko**: GPU memory lebih besar (encoder 3x lebih panjang). RTX 3050 = 4GB VRAM.
-  - Mitigasi: `batch_size` 32 → 16 jika OOM.
+  - Mitigasi: `batch_size` 32 â†’ 16 jika OOM.
 
 ### 2.2 Hyperparameter Ablation Plan
 
@@ -79,7 +79,7 @@ train_pipeline(max_encoder_length=90, max_epochs=80, batch_size=32)
 "
 
 # Experiment C (modifikasi build_tft_model diperlukan)
-# → Lihat Fase 2.4
+# â†’ Lihat Fase 2.4
 ```
 
 ### 2.4 Parameterize `build_tft_model`
@@ -91,7 +91,7 @@ train_pipeline(max_encoder_length=90, max_epochs=80, batch_size=32)
 ## FASE 3: Feature Engineering (BELUM)
 
 ### 3.1 Tambah SPEI Diff Feature
-SPEI-3 sangat autokorelasi → model perlu belajar **ARAH perubahan**, bukan hanya level.
+SPEI-3 sangat autokorelasi â†’ model perlu belajar **ARAH perubahan**, bukan hanya level.
 
 - **File**: `src/data/preprocess.py`
 - **Feature baru**:
@@ -101,12 +101,12 @@ SPEI-3 sangat autokorelasi → model perlu belajar **ARAH perubahan**, bukan han
 - **Registrasi**: Tambahkan `SPEI_3_diff` ke `time_varying_unknown_reals` di `dataset.py`
 
 ### 3.2 Tambah Lagged SPEI Features (Opsional)
-- `SPEI_3_lag7`, `SPEI_3_lag30` — eksplisit lag agar model tidak perlu "belajar" shift sendiri.
+- `SPEI_3_lag7`, `SPEI_3_lag30` â€” eksplisit lag agar model tidak perlu "belajar" shift sendiri.
 - Hati-hati: jangan sampai leakage (lag harus dari waktu sebelumnya saja).
 
 ### 3.3 Seasonal Decomposition (Opsional)
 - Dekomposisi SPEI-3 menjadi trend + seasonal + residual (STL)
-- Prediksi residual saja → tambahkan trend+seasonal kembali saat evaluasi
+- Prediksi residual saja â†’ tambahkan trend+seasonal kembali saat evaluasi
 - **Risiko**: Complexity bertambah, sulit dijelaskan di skripsi
 
 ---
@@ -130,55 +130,55 @@ QuantileLoss cenderung over-smooth pada target yang highly autocorrelated.
 - **Ubah** ke: `patience=5` agar LR tidak turun terlalu cepat
 
 ### 4.3 Gradient Clipping
-- Saat ini: `gradient_clip_val=0.1` — cukup ketat
+- Saat ini: `gradient_clip_val=0.1` â€” cukup ketat
 - Bisa coba `0.5` jika training lambat konvergen
 
 ---
 
-## FASE 5: Audit Lanjutan — Validasi Setelah Fix (BELUM)
+## FASE 5: Audit Lanjutan â€” Validasi Setelah Fix (BELUM)
 
 ### 5.1 Checklist Evaluasi Post-Retraining
 
 - [ ] Model RMSE < Naive RMSE (Skill Score > 0%)
-- [ ] Variance ratio per lokasi mendekati 1.0 (0.7–1.3 acceptable range)
-- [ ] PICP P10-P90 dalam range 0.75–0.85 (tidak over/under-coverage)
+- [ ] Variance ratio per lokasi mendekati 1.0 (0.7â€“1.3 acceptable range)
+- [ ] PICP P10-P90 dalam range 0.75â€“0.85 (tidak over/under-coverage)
 - [ ] Horizon degradation: RMSE Day-1 < Day-30 (expected, tapi gap reasonable)
 - [ ] Bias overall < 0.05 (mendekati unbiased)
-- [ ] Per-location: tidak ada lokasi dengan R² < 0.5
+- [ ] Per-location: tidak ada lokasi dengan RÂ² < 0.5
 
 ### 5.2 Cek Konsistensi Pipeline End-to-End
 
-- [ ] `test_pipeline.py` — 6 tests PASS
-- [ ] `evaluate.py` — checkpoint default benar, berjalan tanpa error
-- [ ] `full_evaluation.py` — no double-denorm, metrics konsisten dengan `evaluate.py`
-- [ ] `scripts/detailed_actual_vs_predict.py` — encoder length dari checkpoint
-- [ ] `scripts/visualize_predictions.py` — CSV path mengarah ke run terbaru
+- [ ] `test_pipeline.py` â€” 6 tests PASS
+- [ ] `evaluate.py` â€” checkpoint default benar, berjalan tanpa error
+- [ ] `full_evaluation.py` â€” no double-denorm, metrics konsisten dengan `evaluate.py`
+- [ ] `scripts/detailed_actual_vs_predict.py` â€” encoder length dari checkpoint
+- [ ] `scripts/visualize_predictions.py` â€” CSV path mengarah ke run terbaru
 
 ### 5.3 Validasi SPEI Computation
 
-- [ ] SPEI-3 mean ≈ 0 ± 0.1 per lokasi pada train set (sudah ✅: mean ≈ 0)
-- [ ] SPEI-3 std ≈ 1.0 ± 0.1 pada train set (sudah ✅: std ≈ 1.02)
+- [ ] SPEI-3 mean â‰ˆ 0 Â± 0.1 per lokasi pada train set (sudah âœ…: mean â‰ˆ 0)
+- [ ] SPEI-3 std â‰ˆ 1.0 Â± 0.1 pada train set (sudah âœ…: std â‰ˆ 1.02)
 - [ ] Distribusi log-logistic (fisk) per bulan konvergen (tidak ada fallback NaN)
 - [ ] Tidak ada data leakage: scaler fit hanya pada train (year < 2023)
 
 ### 5.4 Validasi Data Split Integrity
 
 - [ ] Train tidak mengandung data 2023+
-- [ ] Val hanya 2023 (1,825 rows = 365 × 5 lokasi)
-- [ ] Test hanya 2024+ (1,835 rows ≈ 367 × 5 lokasi)
+- [ ] Val hanya 2023 (1,825 rows = 365 Ã— N lokasi (config-driven))
+- [ ] Test hanya 2024+ (1,835 rows â‰ˆ 367 Ã— N lokasi (config-driven))
 - [ ] `time_idx` kontinu dan tidak ada gap antar split
 
 ### 5.5 Audit GroupNormalizer Behavior
 
 | Lokasi | Center | Scale | Catatan |
 |--------|--------|-------|---------|
-| Bojonegoro | -0.003 | 1.021 | Near-identity ✅ |
-| Lamongan | -0.084 | 1.029 | Slight offset ⚠️ |
-| Nganjuk | +0.002 | 0.984 | Near-identity ✅ |
-| Ngawi | -0.003 | 1.003 | Near-identity ✅ |
-| Tuban | -0.074 | 1.035 | Slight offset ⚠️ |
+| City_A | -0.003 | 1.021 | Near-identity âœ… |
+| City_B | -0.084 | 1.029 | Slight offset âš ï¸ |
+| City_C | +0.002 | 0.984 | Near-identity âœ… |
+| City_D | -0.003 | 1.003 | Near-identity âœ… |
+| City_E | -0.074 | 1.035 | Slight offset âš ï¸ |
 
-Center/scale near-identity mengonfirmasi SPEI sudah Z-score → GroupNormalizer hanya melakukan normalisasi ringan. Double-denorm dampaknya minimal tapi SALAH secara prinsip.
+Center/scale near-identity mengonfirmasi SPEI sudah Z-score â†’ GroupNormalizer hanya melakukan normalisasi ringan. Double-denorm dampaknya minimal tapi SALAH secara prinsip.
 
 ---
 
@@ -191,7 +191,7 @@ Center/scale near-identity mengonfirmasi SPEI sudah Z-score → GroupNormalizer 
 - Tambah penjelasan skill score dan interpretasinya
 
 ### 6.2 Visualisasi yang Perlu Di-regenerate
-- `A1_timeseries_per_lokasi.png` — dari run terbaru
+- `A1_timeseries_per_lokasi.png` â€” dari run terbaru
 - Scatter plot actual vs predicted
 - Horizon degradation chart
 
@@ -200,29 +200,46 @@ Center/scale near-identity mengonfirmasi SPEI sudah Z-score → GroupNormalizer 
 ## Prioritas Eksekusi
 
 ```
-FASE 1 ████████████████████ SELESAI
-FASE 2 ░░░░░░░░░░░░░░░░░░░ PRIORITAS 1 — Retrain enc=90
-FASE 3 ░░░░░░░░░░░░░░░░░░░ PRIORITAS 2 — SPEI_3_diff
-FASE 4 ░░░░░░░░░░░░░░░░░░░ PRIORITAS 3 — HP tuning
-FASE 5 ░░░░░░░░░░░░░░░░░░░ SETELAH retrain selesai
-FASE 6 ░░░░░░░░░░░░░░░░░░░ TERAKHIR — setelah metrik final
+FASE 1 â–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆ SELESAI
+FASE 2 â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘ PRIORITAS 1 â€” Retrain enc=90
+FASE 3 â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘ PRIORITAS 2 â€” SPEI_3_diff
+FASE 4 â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘ PRIORITAS 3 â€” HP tuning
+FASE 5 â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘ SETELAH retrain selesai
+FASE 6 â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘ TERAKHIR â€” setelah metrik final
 ```
 
 ### Skenario Keputusan
 
 ```
 Retrain enc=90 selesai
-  │
-  ├─ Skill Score > 0% → BERHASIL → lanjut Fase 5 + 6
-  │
-  └─ Skill Score masih negatif
-       │
-       ├─ Tambah SPEI_3_diff (Fase 3) → retrain lagi
-       │
-       └─ Masih gagal → tulis di skripsi bahwa SPEI-3 terlalu
+  â”‚
+  â”œâ”€ Skill Score > 0% â†’ BERHASIL â†’ lanjut Fase 5 + 6
+  â”‚
+  â””â”€ Skill Score masih negatif
+       â”‚
+       â”œâ”€ Tambah SPEI_3_diff (Fase 3) â†’ retrain lagi
+       â”‚
+       â””â”€ Masih gagal â†’ tulis di skripsi bahwa SPEI-3 terlalu
           autokorelasi untuk daily 1-step TFT; fokuskan pada
           multi-step horizon (Day 7, 14, 30) di mana naive
           makin lemah dan TFT punya keunggulan
 ```
 
-> **Catatan penting**: Pada horizon Day-30, naive RMSE ≈ 0.63 (jauh lebih buruk dari Day-1). Jika TFT bisa mempertahankan RMSE < 0.63 pada Day-30, itu sudah menunjukkan skill di long-range. Argumen skripsi bisa digeser ke "TFT unggul di multi-day horizon".
+> **Catatan penting**: Pada horizon Day-30, naive RMSE â‰ˆ 0.63 (jauh lebih buruk dari Day-1). Jika TFT bisa mempertahankan RMSE < 0.63 pada Day-30, itu sudah menunjukkan skill di long-range. Argumen skripsi bisa digeser ke "TFT unggul di multi-day horizon".
+
+
+## Update Plan Status - Multi-Node to Super-Node
+- Schema v2 implemented with version guard and stale schema rejection.
+- Node selection now deterministic and persisted with metadata + input fingerprint.
+- Evaluation and visualization paths refactored to dynamic cardinality (no fixed 5-panel assumption).
+- Remaining acceptance is tied to smoke run evidence on schema-v2 dataset and updated docs consistency.
+
+
+## Closure Notes (Schema v2 Robustness)
+
+Status final implementasi mengunci prinsip berikut:
+- tidak ada hardcoded city list di jalur eksekusi pipeline.
+- deterministic top-k node selection dengan artifact dan metadata fingerprint.
+- leakage guard aktif: train-only node selection + sequence grouping by `super_node_id`.
+- evaluasi dan visualisasi bersifat cardinality-agnostic (>5 entity didukung).
+

@@ -79,6 +79,20 @@ def _best_checkpoint(enc: int) -> Path:
     return ckpts[-1]
 
 
+def _checkpoint_from_run_config() -> Path | None:
+    cfg_path = ROOT / "logs" / "run_config.json"
+    if not cfg_path.exists():
+        return None
+    try:
+        payload = json.loads(cfg_path.read_text(encoding="utf-8"))
+        ckpt = payload.get("best_model_path")
+        if ckpt and Path(ckpt).exists():
+            return Path(ckpt)
+    except Exception:
+        return None
+    return None
+
+
 def _latest_eval_dir() -> Path:
     dirs = sorted(RESULTS_DIR.glob("full_eval_*"), reverse=True)
     if not dirs:
@@ -286,6 +300,7 @@ def main():
 
     # -- 2. Train -----------------------------------------------------------
     t_train_start = time.time()
+    trained_ckpt = None
     if not args.skip_train:
         _banner(f"STEP 2 - Training (encoder={enc}, max_epochs={args.epochs})")
         from src.training.train import train_pipeline
@@ -293,8 +308,10 @@ def main():
             max_epochs=args.epochs,
             batch_size=args.batch,
             max_encoder_length=enc,
+            run_id=datetime.now().strftime("%Y%m%d_%H%M%S"),
         )
-        print(f"\n  Best checkpoint: {best_ckpt}", flush=True)
+        trained_ckpt = Path(best_ckpt)
+        print(f"\n  Best checkpoint: {trained_ckpt}", flush=True)
     else:
         _banner("STEP 2 - Skipped (--skip-train)")
         print("  --skip-train: skipping training step.")
@@ -302,7 +319,10 @@ def main():
 
     # -- 3. Resolve best checkpoint -----------------------------------------
     _banner("STEP 3 - Resolving best checkpoint")
-    ckpt = _best_checkpoint(enc)
+    if trained_ckpt is not None:
+        ckpt = trained_ckpt
+    else:
+        ckpt = _checkpoint_from_run_config() or _best_checkpoint(enc)
     print(f"  Checkpoint : {ckpt}")
 
     # -- 4. Run full_evaluation (in-process, no subprocess) -----------------

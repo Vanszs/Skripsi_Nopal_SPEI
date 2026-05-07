@@ -1,67 +1,125 @@
-from pytorch_forecasting import TimeSeriesDataSet, GroupNormalizer
-from pytorch_forecasting.data.encoders import EncoderNormalizer, NaNLabelEncoder
 import pandas as pd
+import numpy as np
+from pytorch_forecasting import TimeSeriesDataSet
+from pytorch_forecasting.data.encoders import EncoderNormalizer
+from sklearn.preprocessing import StandardScaler
 
-MAX_ENCODER_LENGTH = 90   # 90 days history (matches SPEI-3 = 3×30 day window)
-MAX_PREDICTION_LENGTH = 30  # 30 days forecast
+MAX_ENCODER_LENGTH = 30
+MAX_PREDICTION_LENGTH = 30
+MODEL_GROUP_COL = "super_node_id"
 
-def create_dataset(data: pd.DataFrame,
-                   max_encoder_length: int = MAX_ENCODER_LENGTH,
-                   max_prediction_length: int = MAX_PREDICTION_LENGTH):
+
+class ArrayStandardScaler(StandardScaler):
     """
-    Creates a TimeSeriesDataSet from the processed dataframe.
+    StandardScaler variant that always fits/transforms on ndarray.
 
-    Args:
-        max_encoder_length: encoder context window in days.
-            MUST be >= 90 so SPEI-3 (90-day rolling) is fully observable.
-            Passed from checkpoint hparams so train/eval are always consistent.
-        max_prediction_length: forecast horizon in days.
-
-    Design notes:
-        min_encoder_length = max_encoder_length   → no short-context samples;
-            every sample sees exactly 'max_encoder_length' past days.
-        min_prediction_length = max_prediction_length → full 30-day horizon
-            on every sample; prevents the model learning on partial horizons.
-        allow_missing_timesteps=True handles minor calendar gaps.
-        EncoderNormalizer: normalises each sample using its own encoder
-            window statistics (mean / std).  This makes the model predict
-            *deviations from recent SPEI* instead of absolute levels,
-            automatically adapting to distribution shifts between train
-            (pre-2023) and test (2024+) periods.  Critical because SPEI-3
-            means can shift by >1 σ across periods (e.g. Nganjuk drought).
+    This avoids sklearn's "valid feature names" warnings caused by fitting on
+    DataFrame columns and transforming with ndarray batches.
     """
-    # Ensure no NaN in critical columns
-    data = data.replace([float('inf'), float('-inf')], float('nan')).dropna()
+
+    @staticmethod
+    def _to_2d_array(X):
+        arr = np.asarray(X, dtype=np.float64)
+        if arr.ndim == 1:
+            arr = arr.reshape(-1, 1)
+        return arr
+
+    def fit(self, X, y=None, sample_weight=None):
+        return super().fit(self._to_2d_array(X), y=y, sample_weight=sample_weight)
+
+    def partial_fit(self, X, y=None, sample_weight=None):
+        return super().partial_fit(self._to_2d_array(X), y=y, sample_weight=sample_weight)
+
+    def transform(self, X, copy=None):
+        return super().transform(self._to_2d_array(X), copy=copy)
+
+    def inverse_transform(self, X, copy=None):
+        return super().inverse_transform(self._to_2d_array(X), copy=copy)
+
+
+def _validate_schema(data: pd.DataFrame):
+    required = {
+        "schema_version",
+        "time_idx",
+        "SPEI_3",
+        "SPEI_6",
+        "SPEI_3_diff",
+        "water_deficit",
+        "precipitation_log",
+        "et0_fao_evapotranspiration",
+        "soil_moisture",
+        "temperature_2m_max",
+        "temperature_2m_min",
+        "month_sin",
+        "month_cos",
+        "city_id",
+        "location_id",
+        MODEL_GROUP_COL,
+        "elevation",
+        "lat",
+        "lon",
+    }
+    missing = required - set(data.columns)
+    if missing:
+        raise ValueError(
+            f"Processed schema missing columns: {sorted(missing)}. "
+            "Run preprocess_pipeline() with schema v2."
+        )
+
+
+def create_dataset(
+    data: pd.DataFrame,
+    max_encoder_length: int = MAX_ENCODER_LENGTH,
+    max_prediction_length: int = MAX_PREDICTION_LENGTH,
+):
+    """
+    Creates a TimeSeriesDataSet from processed schema-v2 data.
+
+    Model grouping is based on super_node_id to guarantee leakage-safe sequence
+    boundaries when raw nodes are expanded per city before aggregation.
+    """
+    data = data.replace([float("inf"), float("-inf")], float("nan")).dropna().copy()
+    _validate_schema(data)
     print(f"Dataset Shape after dropna: {data.shape}")
-    
-    # Check for NaNs one last time
-    if data.isna().any().any():
-        print("CRITICAL WARNING: NaNs still present in data passed to TimeSeriesDataSet!")
-        print(data.isna().sum())
-    
+
+    if data[MODEL_GROUP_COL].nunique() == 0:
+        raise ValueError("No super_node_id found in data.")
+
+    for col in ["city_id", "location_id", MODEL_GROUP_COL]:
+        data[col] = data[col].astype(str)
+
+    real_scalers = {
+        "elevation": ArrayStandardScaler(),
+        "lat": ArrayStandardScaler(),
+        "lon": ArrayStandardScaler(),
+        "month_sin": ArrayStandardScaler(),
+        "month_cos": ArrayStandardScaler(),
+        "SPEI_6": ArrayStandardScaler(),
+        "SPEI_3_diff": ArrayStandardScaler(),
+        "water_deficit": ArrayStandardScaler(),
+        "precipitation_log": ArrayStandardScaler(),
+        "et0_fao_evapotranspiration": ArrayStandardScaler(),
+        "soil_moisture": ArrayStandardScaler(),
+        "temperature_2m_max": ArrayStandardScaler(),
+        "temperature_2m_min": ArrayStandardScaler(),
+    }
+
     training = TimeSeriesDataSet(
         data[lambda x: x.time_idx < x.time_idx.max() - max_prediction_length],
         time_idx="time_idx",
         target="SPEI_3",
-        group_ids=["location_id"],
-        # Enforce full context: every sample must have exactly max_encoder_length
-        # past days so the model always sees a complete SPEI-3 rolling window.
+        group_ids=[MODEL_GROUP_COL],
         min_encoder_length=max_encoder_length,
         max_encoder_length=max_encoder_length,
-        # Enforce full forecast window: every sample predicts exactly
-        # max_prediction_length steps (no partial-horizon samples).
         min_prediction_length=max_prediction_length,
         max_prediction_length=max_prediction_length,
-        
-        static_categoricals=["location_id"],
-        static_reals=["elevation"],
-        
+        static_categoricals=[MODEL_GROUP_COL, "city_id"],
+        static_reals=["elevation", "lat", "lon"],
         time_varying_known_reals=[
-            "time_idx", 
-            "month_sin", 
+            "time_idx",
+            "month_sin",
             "month_cos",
         ],
-        
         time_varying_unknown_reals=[
             "SPEI_3",
             "SPEI_6",
@@ -71,17 +129,13 @@ def create_dataset(data: pd.DataFrame,
             "et0_fao_evapotranspiration",
             "soil_moisture",
             "temperature_2m_max",
-            "temperature_2m_min"
+            "temperature_2m_min",
         ],
-        
-        target_normalizer=EncoderNormalizer(
-            transformation=None,   # SPEI already Z-score, no Box-Cox needed
-        ),
-            
+        target_normalizer=EncoderNormalizer(transformation=None),
+        scalers=real_scalers,
         add_relative_time_idx=True,
         add_target_scales=True,
         add_encoder_length=True,
-        allow_missing_timesteps=True
+        allow_missing_timesteps=True,
     )
-    
     return training

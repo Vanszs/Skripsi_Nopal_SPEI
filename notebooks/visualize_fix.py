@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 from collections import defaultdict
 from pytorch_forecasting import TemporalFusionTransformer, TimeSeriesDataSet
-from src.models.dataset import create_dataset, MAX_ENCODER_LENGTH, MAX_PREDICTION_LENGTH
+from src.models.dataset import MODEL_GROUP_COL, create_dataset, MAX_ENCODER_LENGTH, MAX_PREDICTION_LENGTH
 
 warnings.filterwarnings('ignore')
 
@@ -28,6 +28,7 @@ def generate_visualization():
     # 1. Load Data
     data = pd.read_parquet('../data/processed/spei_dataset.parquet')
     data['year'] = data['time'].dt.year
+    entity_col = MODEL_GROUP_COL if MODEL_GROUP_COL in data.columns else "location_id"
     train_data = data[data.year < 2023].copy()
     test_data = data[data.year >= 2023].copy()
 
@@ -43,11 +44,11 @@ def generate_visualization():
     if torch.cuda.is_available():
         model = model.cuda()
     
-    # 3. Rolling Window Inference (Bojonegoro)
-    target_loc = 'Bojonegoro'
+    # 3. Rolling Window Inference (dynamic target)
+    target_loc = os.environ.get("TARGET_LOCATION", sorted(test_data[entity_col].astype(str).unique().tolist())[0])
     print(f"Generating Rolling Ensemble for {target_loc}...")
     
-    loc_test_data = test_data[test_data.location_id == target_loc].copy()
+    loc_test_data = test_data[test_data[entity_col].astype(str) == target_loc].copy()
     # predict=False enables sliding window creation
     loc_test_ds = TimeSeriesDataSet.from_dataset(train_ds, loc_test_data, predict=False, stop_randomization=True)
     loc_loader = loc_test_ds.to_dataloader(train=False, batch_size=128, num_workers=0)

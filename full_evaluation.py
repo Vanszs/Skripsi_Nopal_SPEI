@@ -1,81 +1,52 @@
 """
 full_evaluation.py
 ==================
-One-shot comprehensive evaluation script for TFT SPEI Forecasting Model.
-
-Outputs (saved to results/full_eval_<TIMESTAMP>/):
-  Metrics:
-    - metrics_summary.json       : Overall + per-location + per-horizon metrics
-                                   + PICP (interval coverage) + naive baseline
-    - metrics_report.txt         : Human-readable full report
-    - horizon_metrics.csv        : RMSE/MAE/Bias/Corr per forecast day (1-30)
-    - classification_report.csv  : SPEI drought-class accuracy per location
-    - classification_summary.csv : 3-class broad accuracy summary
-    - predictions_full.csv       : Aligned actual/pred table with in_interval flag
-
-  Plots:
-    01_scatter_overall.png       : Actual vs Predicted scatter (all locations)
-    02_scatter_per_location.png  : 5-panel scatter per location
-    03_timeseries_per_location.png : Time-series overlay per location (sample)
-    04_error_distribution.png    : Error histogram + KDE per location
-    05_variable_importance.png   : VSN encoder & decoder importance
-    06_horizon_metrics.png       : RMSE / MAE / Bias / Corr vs forecast horizon
-    07_location_comparison.png   : Grouped bar: metrics across locations
-    08_quantile_fan.png          : P10/P50/P90 fan chart per location
-    09_spei_classification.png   : Confusion heatmap (actual class vs pred class)
-    10_bias_over_time.png        : Monthly rolling bias per location
-    11_model_vs_naive_picp.png   : Model vs Naive RMSE comparison + PICP coverage
-
-Run:
-    python full_evaluation.py
-    python full_evaluation.py --checkpoint logs/checkpoints/epoch=8-val_loss=0.37.ckpt
+Comprehensive TFT evaluation with schema-v2 support and dynamic plotting.
 """
 
-import sys
-import json
-import re
 import argparse
+import json
+import math
+import re
+import sys
 import warnings
 from datetime import datetime
 from pathlib import Path
 
+import matplotlib
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import torch
-import matplotlib
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
 import seaborn as sns
-from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+import torch
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
-# Suppress only routine convergence / Lightning boilerplate warnings
+matplotlib.use("Agg")
 warnings.filterwarnings("ignore", category=UserWarning, module="pytorch_forecasting")
 warnings.filterwarnings("ignore", category=UserWarning, module="lightning")
+warnings.filterwarnings(
+    "ignore",
+    message=r"X does not have valid feature names, but StandardScaler was fitted with feature names",
+    category=UserWarning,
+)
+warnings.filterwarnings(
+    "ignore",
+    message=r"You are using `torch.load` with `weights_only=False`.*",
+    category=UserWarning,
+)
 torch.set_float32_matmul_precision("medium")
 
-# Project root
 ROOT = Path(__file__).parent
 sys.path.insert(0, str(ROOT))
 
 from pytorch_forecasting import TemporalFusionTransformer, TimeSeriesDataSet
-from src.models.dataset import create_dataset
 from src.data.spei import classify_spei
+from src.models.dataset import MODEL_GROUP_COL, create_dataset
 
-# ---------------------------------------------------------------------------
-# Style
-# ---------------------------------------------------------------------------
-PALETTE = {
-    "Bojonegoro": "#e63946",
-    "Lamongan":   "#f4a261",
-    "Nganjuk":    "#2a9d8f",
-    "Ngawi":      "#457b9d",
-    "Tuban":      "#7b2d8b",
-}
+EXPECTED_SCHEMA_VERSION = 2
 sns.set_theme(style="whitegrid", font_scale=1.0)
 
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
+
 def _metrics(actual: np.ndarray, pred: np.ndarray) -> dict:
     mask = np.isfinite(actual) & np.isfinite(pred)
     a, p = actual[mask], pred[mask]
@@ -99,16 +70,29 @@ def _log(msg: str = "", fp=None):
 
 
 def _broad(c: str) -> str:
-    """Map 9-class SPEI label to 3-class (Kekeringan / Normal / Basah)."""
     return "Kekeringan" if "Kekeringan" in c else ("Basah" if "Basah" in c else "Normal")
 
 
+def _entity_col(df: pd.DataFrame) -> str:
+    if MODEL_GROUP_COL in df.columns:
+        return MODEL_GROUP_COL
+    if "location_id" in df.columns:
+        return "location_id"
+    raise ValueError("No valid entity key found in dataset.")
+
+
+def _palette(keys):
+    colors = sns.color_palette("tab20", n_colors=max(3, len(keys)))
+    return {key: colors[i % len(colors)] for i, key in enumerate(keys)}
+
+
+def _grid(n, max_cols=3):
+    cols = min(max_cols, max(1, n))
+    rows = math.ceil(n / cols)
+    return rows, cols
+
+
 def _best_checkpoint(ckpt_dir: Path) -> Path:
-    """
-    Return the checkpoint with the lowest val_loss parsed from filename.
-    Pattern expected: epoch=N-val_loss=X.ckpt
-    Falls back to alphabetical last if no val_loss can be parsed.
-    """
     ckpts = sorted(ckpt_dir.glob("*.ckpt"))
     if not ckpts:
         raise FileNotFoundError(f"No .ckpt files found in {ckpt_dir}")
@@ -118,458 +102,395 @@ def _best_checkpoint(ckpt_dir: Path) -> Path:
         if m:
             scored.append((float(m.group(1)), p))
     if scored:
-        scored.sort(key=lambda x: x[0])   # lowest val_loss first
+        scored.sort(key=lambda x: x[0])
         return scored[0][1]
-    return ckpts[-1]   # fallback: alphabetical last
+    return ckpts[-1]
 
 
-# ---------------------------------------------------------------------------
-# Core evaluation
-# ---------------------------------------------------------------------------
+def _checkpoint_from_run_config() -> Path | None:
+    cfg_path = ROOT / "logs" / "run_config.json"
+    if not cfg_path.exists():
+        return None
+    try:
+        payload = json.loads(cfg_path.read_text(encoding="utf-8"))
+        ckpt = payload.get("best_model_path")
+        if ckpt and Path(ckpt).exists():
+            return Path(ckpt)
+    except Exception:
+        return None
+    return None
+
+
+def _quantile_index_map(model):
+    quantiles = np.array([float(q) for q in getattr(model.loss, "quantiles", [0.1, 0.5, 0.9])])
+    idx_p10 = int(np.argmin(np.abs(quantiles - 0.10)))
+    idx_p50 = int(np.argmin(np.abs(quantiles - 0.50)))
+    idx_p90 = int(np.argmin(np.abs(quantiles - 0.90)))
+    return quantiles.tolist(), {"p10": idx_p10, "p50": idx_p50, "p90": idx_p90}
+
+
 def run(checkpoint_path: str, out_dir: Path, log_fp):
-
     _log("=" * 72, log_fp)
-    _log("  TFT SPEI-3 FORECASTING — COMPREHENSIVE EVALUATION", log_fp)
+    _log("  TFT SPEI-3 FORECASTING - COMPREHENSIVE EVALUATION", log_fp)
     _log(f"  Generated : {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", log_fp)
     _log("=" * 72, log_fp)
 
-    # ── 1. LOAD DATA ─────────────────────────────────────────────────────
-    _log("\n[1/6] Loading dataset …", log_fp)
     data_path = ROOT / "data/processed/spei_dataset.parquet"
     if not data_path.exists():
-        _log(f"ERROR: {data_path} not found.", log_fp); return
+        _log(f"ERROR: {data_path} not found.", log_fp)
+        return
 
     data = pd.read_parquet(data_path)
+    data["time"] = pd.to_datetime(data["time"])
     data["year"] = data["time"].dt.year
+    entity_col = _entity_col(data)
 
-    _log(f"  Rows      : {len(data):,}", log_fp)
-    _log(f"  Period    : {data['time'].min().date()} → {data['time'].max().date()}", log_fp)
-    _log(f"  Locations : {sorted(data['location_id'].unique())}", log_fp)
-    _log(f"  SPEI_3    : mean={data['SPEI_3'].mean():.3f}  std={data['SPEI_3'].std():.3f}"
-         f"  min={data['SPEI_3'].min():.3f}  max={data['SPEI_3'].max():.3f}", log_fp)
+    if "schema_version" in data.columns:
+        versions = sorted(data["schema_version"].dropna().unique().tolist())
+        if versions != [EXPECTED_SCHEMA_VERSION]:
+            raise ValueError(
+                f"Processed schema version {versions}, expected [{EXPECTED_SCHEMA_VERSION}]"
+            )
 
-    # ── 2. LOAD MODEL ─────────────────────────────────────────────────────
-    _log("\n[2/6] Loading model checkpoint …", log_fp)
-    _log(f"  Path: {checkpoint_path}", log_fp)
+    _log(f"Rows      : {len(data):,}", log_fp)
+    _log(f"Period    : {data['time'].min().date()} -> {data['time'].max().date()}", log_fp)
+    _log(f"Entity key: {entity_col}", log_fp)
+    _log(f"Entities  : {data[entity_col].nunique()}", log_fp)
+    _log(f"Cities    : {data['city_id'].nunique()}", log_fp)
 
-    model = TemporalFusionTransformer.load_from_checkpoint(
-        checkpoint_path, map_location="cpu")
+    model = TemporalFusionTransformer.load_from_checkpoint(checkpoint_path, map_location="cpu")
     model.eval()
+    quantiles, qidx = _quantile_index_map(model)
 
-    enc_len  = int(getattr(model.hparams, "max_encoder_length",  90))
+    enc_len = int(getattr(model.hparams, "max_encoder_length", 90))
     pred_len = int(getattr(model.hparams, "max_prediction_length", 30))
-    _log(f"  Encoder length   : {enc_len}", log_fp)
-    _log(f"  Prediction length: {pred_len}", log_fp)
+    _log(f"Checkpoint: {checkpoint_path}", log_fp)
+    _log(f"enc_len={enc_len} pred_len={pred_len}", log_fp)
 
-    # ── 3. BUILD DATASETS ─────────────────────────────────────────────────
-    # Split consistent with train.py: train<2023, val=2023, test>=2024
-    _log("\n[3/6] Building datasets …", log_fp)
     train_data = data[data.year < 2023].copy()
-    val_data   = data[data.year == 2023].copy()
-    test_data  = data[data.year >= 2024].copy()
-
-    _log(f"  Train : year < 2023   → {len(train_data):,} rows", log_fp)
-    _log(f"  Val   : year == 2023  → {len(val_data):,} rows", log_fp)
-    _log(f"  Test  : year >= 2024  → {len(test_data):,} rows  ← evaluation target", log_fp)
-
-    # Guard: empty test set
+    test_data = data[data.year >= 2024].copy()
     if test_data.empty:
-        _log("ERROR: test_data is empty (no rows with year >= 2024). Aborting.", log_fp)
+        _log("ERROR: test_data empty (year>=2024).", log_fp)
         return
 
-    locations = sorted(test_data["location_id"].unique())
-    if not locations:
-        _log("ERROR: No locations found in test_data. Aborting.", log_fp)
-        return
+    entities = sorted(test_data[entity_col].astype(str).unique().tolist())
+    cities = sorted(test_data["city_id"].astype(str).unique().tolist())
+    entity_palette = _palette(entities)
+    city_palette = _palette(cities)
 
-    train_ds = create_dataset(train_data,
-                              max_encoder_length=enc_len,
-                              max_prediction_length=pred_len)
+    train_ds = create_dataset(train_data, max_encoder_length=enc_len, max_prediction_length=pred_len)
 
-    # ── 4. GENERATE PREDICTIONS (single pass — ensemble + horizon) ─────────
-    _log("\n[4/6] Generating predictions …", log_fp)
-
-    # Build ground-truth lookup: (time_idx, location_id) -> SPEI_3
-    actual_lookup: dict = {}
-    for _, row in test_data.iterrows():
-        actual_lookup[(int(row["time_idx"]), row["location_id"])] = float(row["SPEI_3"])
+    # Build ground truth lookup for horizon metrics.
+    actual_lookup = {
+        (int(r.time_idx), str(getattr(r, entity_col))): float(r.SPEI_3)
+        for r in test_data.itertuples(index=False)
+    }
 
     ensemble_rows = []
-    # Step-h-only horizon storage: h -> {(time_idx, loc) -> pred_p50}
-    # Keeps only the first occurrence per (time_idx, loc, h) = freshest encoder context
     horizon_preds = {h: {} for h in range(pred_len)}
-
-    for loc in locations:
-        _log(f"  Processing {loc} …", log_fp)
-        loc_data = test_data[test_data.location_id == loc].copy()
-
-        loc_ds = TimeSeriesDataSet.from_dataset(
-            train_ds, loc_data, predict=False, stop_randomization=True)
+    for ent in entities:
+        _log(f"Processing {ent} ...", log_fp)
+        loc_data = test_data[test_data[entity_col].astype(str) == ent].copy()
+        loc_ds = TimeSeriesDataSet.from_dataset(train_ds, loc_data, predict=False, stop_randomization=True)
         loader = loc_ds.to_dataloader(train=False, batch_size=64, num_workers=0)
+        raw = model.predict(
+            loader,
+            mode="raw",
+            return_x=True,
+            trainer_kwargs={"accelerator": "cpu", "devices": 1},
+        )
+        pv = raw.output.prediction.cpu().numpy()
+        tv = raw.x["decoder_time_idx"].cpu().numpy()
 
-        raw = model.predict(loader, mode="raw", return_x=True)
-        # TFT.forward() already calls transform_output() which denormalizes
-        # predictions via the output_transformer (inverse of EncoderNormalizer).
-        # Do NOT apply manual denormalization — that would be double-denorm.
-        pv = raw.output.prediction.cpu().numpy()            # (B, T, 7) already in SPEI units
-        tv = raw.x["decoder_time_idx"].cpu().numpy()        # (B, T)
-
-        # ── Step-0-only predictions (no ensemble averaging) ────────────────────
-        # For each window i, tv[i, 0] is the time_idx at step=0.
-        # Using step-0 only ensures each timestep is predicted from the
-        # freshest encoder context, eliminating the smoothing bias introduced
-        # by averaging predictions where the same timestep is at step 1..29.
-        step0_preds: dict = {}          # time_idx -> {p10, p50, p90}
+        step0 = {}
         for i in range(pv.shape[0]):
-            t = int(tv[i, 0])           # time_idx of the first decoder step
-            if t not in step0_preds:    # deduplicate (safety)
-                step0_preds[t] = {
-                    "pred_p10": float(pv[i, 0, 1]),
-                    "pred_p50": float(pv[i, 0, 3]),
-                    "pred_p90": float(pv[i, 0, 5]),
+            t_idx = int(tv[i, 0])
+            if t_idx not in step0:
+                step0[t_idx] = {
+                    "pred_p10": float(pv[i, 0, qidx["p10"]]),
+                    "pred_p50": float(pv[i, 0, qidx["p50"]]),
+                    "pred_p90": float(pv[i, 0, qidx["p90"]]),
                 }
-
-        # ── Step-h-only horizon collection ─────────────────────────────────────
-        # For each horizon h, store the prediction from the FRESHEST encoder
-        # context (first occurrence per time_idx+loc key). Uses ground-truth
-        # actuals from test_data instead of denormalized decoder_target.
-        for i in range(pv.shape[0]):
             for h in range(pred_len):
-                t_idx = int(tv[i, h])
-                key = (t_idx, loc)
+                key = (int(tv[i, h]), ent)
                 if key not in horizon_preds[h]:
-                    horizon_preds[h][key] = float(pv[i, h, 3])  # P50
+                    horizon_preds[h][key] = float(pv[i, h, qidx["p50"]])
 
-        for t in sorted(step0_preds):
-            ensemble_rows.append({
-                "time_idx":    t,
-                "location_id": loc,
-                **step0_preds[t],
-            })
+        city_id = str(loc_data["city_id"].iloc[0])
+        for t in sorted(step0):
+            ensemble_rows.append({"time_idx": t, entity_col: ent, "city_id": city_id, **step0[t]})
 
     df_preds = pd.DataFrame(ensemble_rows)
-    df_actual = (test_data[["time_idx", "time", "location_id", "SPEI_3"]]
-                 .rename(columns={"SPEI_3": "actual"}))
-    df = pd.merge(df_actual, df_preds, on=["time_idx", "location_id"], how="inner")
+    df_actual = test_data[[entity_col, "city_id", "time_idx", "time", "SPEI_3"]].rename(
+        columns={"SPEI_3": "actual"}
+    )
+    df = pd.merge(df_actual, df_preds, on=[entity_col, "city_id", "time_idx"], how="inner")
     df["error"] = df["pred_p50"] - df["actual"]
     df["month"] = pd.to_datetime(df["time"]).dt.to_period("M").astype(str)
     df["actual_class"] = df["actual"].apply(classify_spei)
-    df["pred_class"]   = df["pred_p50"].apply(classify_spei)
-    # PICP: 1 if actual falls inside the P10–P90 prediction interval, else 0
-    # Nominal coverage for P10–P90 = 80%.
+    df["pred_class"] = df["pred_p50"].apply(classify_spei)
     df["in_interval"] = (
-        (df["actual"] >= df["pred_p10"]) &
-        (df["actual"] <= df["pred_p90"])
+        (df["actual"] >= df["pred_p10"]) & (df["actual"] <= df["pred_p90"])
     ).astype(int)
-
-    _log(f"  Merged prediction rows: {len(df):,}", log_fp)
-
-    # ── 5. COMPUTE METRICS ────────────────────────────────────────────────
-    _log("\n[5/6] Computing metrics …", log_fp)
+    _log(f"Merged rows: {len(df):,}", log_fp)
 
     overall = _metrics(df["actual"].values, df["pred_p50"].values)
+    picp_overall = float(df["in_interval"].mean())
+    picp_per_entity = {
+        ent: float(df[df[entity_col].astype(str) == ent]["in_interval"].mean()) for ent in entities
+    }
+    picp_per_city = {
+        city: float(df[df["city_id"].astype(str) == city]["in_interval"].mean()) for city in cities
+    }
 
-    per_loc = {}
-    for loc in locations:
-        sub = df[df.location_id == loc]
-        per_loc[loc] = _metrics(sub["actual"].values, sub["pred_p50"].values)
+    per_entity = {}
+    for ent in entities:
+        sub = df[df[entity_col].astype(str) == ent]
+        per_entity[ent] = _metrics(sub["actual"].values, sub["pred_p50"].values)
 
-    # True per-horizon metrics — step-h-only using ground-truth actuals
-    # Build per-horizon naive baselines: naive(h) predicts SPEI(t) = SPEI(t - h - 1)
-    test_sorted_h = test_data.sort_values(["location_id", "time_idx"]).copy()
+    per_city = {}
+    for city in cities:
+        sub = df[df["city_id"].astype(str) == city]
+        per_city[city] = _metrics(sub["actual"].values, sub["pred_p50"].values)
+
+    test_sorted = test_data.sort_values([entity_col, "time_idx"]).copy()
+    test_sorted["naive_pred"] = test_sorted.groupby(entity_col)["SPEI_3"].shift(1)
+    df_naive = pd.merge(
+        df[[entity_col, "city_id", "time_idx", "actual"]],
+        test_sorted[[entity_col, "time_idx", "naive_pred"]].dropna(),
+        on=[entity_col, "time_idx"],
+        how="inner",
+    )
+    naive_overall = _metrics(df_naive["actual"].values, df_naive["naive_pred"].values)
+    naive_per_entity = {}
+    for ent in entities:
+        sub = df_naive[df_naive[entity_col].astype(str) == ent]
+        naive_per_entity[ent] = _metrics(sub["actual"].values, sub["naive_pred"].values)
+    naive_per_city = {}
+    for city in cities:
+        sub = df_naive[df_naive["city_id"].astype(str) == city]
+        naive_per_city[city] = _metrics(sub["actual"].values, sub["naive_pred"].values)
+
+    # Horizon metrics + fair naive horizon (same timestamp/entity subset as model horizon).
     naive_by_h = {}
-    for h_offset in range(1, pred_len + 1):
-        test_sorted_h[f"_nh{h_offset}"] = (
-            test_sorted_h.groupby("location_id")["SPEI_3"].shift(h_offset))
-        valid_h = test_sorted_h.dropna(subset=[f"_nh{h_offset}"])
-        if len(valid_h) >= 2:
-            naive_by_h[h_offset] = float(np.sqrt(
-                mean_squared_error(valid_h["SPEI_3"], valid_h[f"_nh{h_offset}"])))
-        else:
-            naive_by_h[h_offset] = None
-    # Drop temp columns
-    test_sorted_h = test_sorted_h[[c for c in test_sorted_h.columns if not c.startswith("_nh")]]
-
-    horizon_agg = []
     for h in range(pred_len):
-        actuals_h, preds_h = [], []
+        pairs = []
+        for (t_idx, ent), _pred_val in horizon_preds[h].items():
+            y_t = actual_lookup.get((t_idx, ent))
+            y_prev = actual_lookup.get((t_idx - (h + 1), ent))
+            if y_t is not None and y_prev is not None:
+                pairs.append((y_t, y_prev))
+        if len(pairs) >= 2:
+            a = np.array([x[0] for x in pairs], dtype=float)
+            p = np.array([x[1] for x in pairs], dtype=float)
+            naive_by_h[h + 1] = float(np.sqrt(mean_squared_error(a, p)))
+        else:
+            naive_by_h[h + 1] = None
+    horizon_rows = []
+    for h in range(pred_len):
+        actuals_h = []
+        preds_h = []
         for key, pred_val in horizon_preds[h].items():
             actual_val = actual_lookup.get(key)
             if actual_val is not None:
                 actuals_h.append(actual_val)
                 preds_h.append(pred_val)
-
         if len(actuals_h) >= 2:
             m = _metrics(np.array(actuals_h), np.array(preds_h))
         else:
             m = dict(rmse=None, mae=None, r2=None, bias=None, pearson_r=None, n=0)
         m["horizon"] = h + 1
         m["naive_rmse"] = naive_by_h.get(h + 1)
-        m["beats_naive"] = (m["rmse"] < m["naive_rmse"]
-                            if m["rmse"] is not None and m["naive_rmse"] is not None
-                            else None)
-        horizon_agg.append(m)
-
-    df_horizon = pd.DataFrame(horizon_agg)
-
-    # ── PICP (Prediction Interval Coverage Probability) ────────────────────
-    picp_overall = float(df["in_interval"].mean())
-    picp_per_loc = {
-        loc: float(df[df.location_id == loc]["in_interval"].mean())
-        for loc in locations
-    }
-
-    # ── Naive persistence baseline ──────────────────────────────────────
-    # Predict SPEI(t) = SPEI(t-1).  If the model cannot beat this,
-    # the training configuration is fundamentally flawed.
-    test_sorted_naive = (
-        test_data.sort_values(["location_id", "time_idx"])
-        .assign(naive_pred=lambda x:
-                x.groupby("location_id")["SPEI_3"].transform(lambda s: s.shift(1)))
-        [["time_idx", "location_id", "naive_pred"]]
-        .dropna()
-    )
-    df_naive = pd.merge(
-        df[["time_idx", "location_id", "actual"]],
-        test_sorted_naive, on=["time_idx", "location_id"], how="inner"
-    )
-    naive_overall = _metrics(df_naive["actual"].values, df_naive["naive_pred"].values)
-    naive_per_loc = {
-        loc: _metrics(
-            df_naive[df_naive.location_id == loc]["actual"].values,
-            df_naive[df_naive.location_id == loc]["naive_pred"].values,
+        m["beats_naive"] = (
+            m["rmse"] < m["naive_rmse"]
+            if m["rmse"] is not None and m["naive_rmse"] is not None
+            else None
         )
-        for loc in locations
-    }
+        horizon_rows.append(m)
+    df_horizon = pd.DataFrame(horizon_rows)
 
-    # Classification — per-class stats (9 canonical SPEI classes)
+    # Classification reports.
     all_classes = [
-        "Kekeringan Ekstrem", "Kekeringan Parah", "Kekeringan Sedang", "Kekeringan Ringan",
+        "Kekeringan Ekstrem",
+        "Kekeringan Parah",
+        "Kekeringan Sedang",
+        "Kekeringan Ringan",
         "Normal",
-        "Basah Ringan", "Basah Sedang", "Basah Parah", "Basah Ekstrem",
+        "Basah Ringan",
+        "Basah Sedang",
+        "Basah Parah",
+        "Basah Ekstrem",
     ]
-    clf_detail_rows = []
-    for loc in locations:
-        sub = df[df.location_id == loc]
+    clf_rows = []
+    for ent in entities:
+        sub = df[df[entity_col].astype(str) == ent]
         for cls in all_classes:
             actual_count = int((sub["actual_class"] == cls).sum())
-            pred_count   = int((sub["pred_class"]   == cls).sum())
-            correct      = int(((sub["actual_class"] == cls) & (sub["pred_class"] == cls)).sum())
-            precision    = correct / pred_count   if pred_count   > 0 else 0.0
-            recall       = correct / actual_count if actual_count > 0 else 0.0
-            f1           = (2 * precision * recall / (precision + recall)
-                            if (precision + recall) > 0 else 0.0)
-            clf_detail_rows.append({
-                "location":     loc,      "class":        cls,
-                "actual_count": actual_count, "pred_count": pred_count,
-                "correct":      correct,  "precision":    round(precision, 4),
-                "recall":       round(recall, 4), "f1": round(f1, 4),
-            })
-    df_clf = pd.DataFrame(clf_detail_rows)
+            pred_count = int((sub["pred_class"] == cls).sum())
+            correct = int(((sub["actual_class"] == cls) & (sub["pred_class"] == cls)).sum())
+            precision = correct / pred_count if pred_count > 0 else 0.0
+            recall = correct / actual_count if actual_count > 0 else 0.0
+            f1 = (2 * precision * recall / (precision + recall)) if (precision + recall) > 0 else 0.0
+            clf_rows.append(
+                {
+                    "entity": ent,
+                    "city_id": str(sub["city_id"].iloc[0]) if len(sub) else None,
+                    "class": cls,
+                    "actual_count": actual_count,
+                    "pred_count": pred_count,
+                    "correct": correct,
+                    "precision": round(precision, 4),
+                    "recall": round(recall, 4),
+                    "f1": round(f1, 4),
+                }
+            )
+    df_clf = pd.DataFrame(clf_rows)
 
-    # Broad accuracy summary (3-class)
     clf_summary_rows = []
-    for loc in locations:
-        sub       = df[df.location_id == loc].copy()
+    for city in cities:
+        sub = df[df["city_id"].astype(str) == city].copy()
         exact_acc = float((sub["actual_class"] == sub["pred_class"]).mean())
-        broad_acc = float(
-            (sub["actual_class"].apply(_broad) == sub["pred_class"].apply(_broad)).mean())
-        clf_summary_rows.append({
-            "location": loc, "exact_acc": round(exact_acc, 4),
-            "broad_acc": round(broad_acc, 4), "total": len(sub),
-        })
+        broad_acc = float((sub["actual_class"].apply(_broad) == sub["pred_class"].apply(_broad)).mean())
+        clf_summary_rows.append(
+            {"city_id": city, "exact_acc": round(exact_acc, 4), "broad_acc": round(broad_acc, 4), "total": len(sub)}
+        )
     df_clf_summary = pd.DataFrame(clf_summary_rows)
 
-    # Print overall metrics
-    _log("\n  ─── OVERALL METRICS (test year ≥ 2024) ───", log_fp)
-    for k, v in overall.items():
-        if v is None:
-            _log(f"    {k.upper():<12}: N/A", log_fp)
-        else:
-            _log(f"    {k.upper():<12}: {v:.4f}", log_fp)
-    _log(f"    {'PICP':<12}: {picp_overall:.4f}  (nominal 0.80 for P10–P90)", log_fp)
-
-    _log("\n  ─── NAIVE PERSISTENCE BASELINE ───", log_fp)
-    for k, v in naive_overall.items():
-        if v is None:
-            _log(f"    {k.upper():<12}: N/A", log_fp)
-        else:
-            _log(f"    {k.upper():<12}: {v:.4f}", log_fp)
-    _log("  (model must beat naive RMSE to demonstrate predictive skill)", log_fp)
-
-    _log("\n  ─── PER-LOCATION METRICS ───", log_fp)
-    for loc, m in per_loc.items():
-        _log(f"    {loc:<15} RMSE={m['rmse']:.4f}  MAE={m['mae']:.4f}"
-             f"  R²={m['r2']:.4f}  Bias={m['bias']:.4f}  r={m['pearson_r']:.4f}"
-             f"  PICP={picp_per_loc.get(loc, float('nan')):.4f}", log_fp)
-
-    _log("\n  ─── HORIZON METRICS (step-h-only with naive comparison) ───", log_fp)
-    beat_count = sum(1 for row in horizon_agg if row.get("beats_naive"))
-    _log(f"    Model beats naive at {beat_count}/{pred_len} horizons", log_fp)
-    for row in horizon_agg:
-        h = int(row["horizon"])
-        if h <= 5 or h >= pred_len - 4:
-            rmse = row['rmse']; bias = row['bias']; r = row['pearson_r']
-            naive_r = row.get('naive_rmse')
-            beats = row.get('beats_naive')
-            if rmse is not None:
-                ratio_str = f"  ratio={rmse/naive_r:.2f}x" if naive_r else ""
-                beats_str = "  BEATS!" if beats else ""
-                _log(f"    Day {h:>2}  RMSE={rmse:.4f}  Naive={naive_r:.4f}{ratio_str}{beats_str}"
-                     f"  Bias={bias:.4f}  r={r:.4f}", log_fp)
-            else:
-                _log(f"    Day {h:>2}  (no data)", log_fp)
-        elif h == 6:
-            _log("    ...   (days 6–25 omitted)", log_fp)
-
-    # Save CSVs
+    # Persist outputs.
     df_horizon.to_csv(out_dir / "horizon_metrics.csv", index=False)
-    df_clf.to_csv(out_dir / "classification_report.csv", index=False)         # 9-class detail
-    df_clf_summary.to_csv(out_dir / "classification_summary.csv", index=False) # 3-class summary
+    df_clf.to_csv(out_dir / "classification_report.csv", index=False)
+    df_clf_summary.to_csv(out_dir / "classification_summary.csv", index=False)
     df.to_csv(out_dir / "predictions_full.csv", index=False)
 
-    # JSON — now includes per_horizon, picp, naive baseline
     metrics_payload = {
-        "generated": datetime.now().isoformat(),
+        "schema_version": EXPECTED_SCHEMA_VERSION,
+        "entity_key": entity_col,
         "checkpoint": str(checkpoint_path),
-        "encoder_length": enc_len,
-        "prediction_length": pred_len,
-        "test_period": "year >= 2024",
+        "quantiles": quantiles,
+        "quantile_index_map": qidx,
         "train_period": "year < 2023",
         "val_period": "year == 2023",
-        "aggregation": "step-0-only (no ensemble averaging)",
+        "test_period": "year >= 2024",
+        "prediction_length": pred_len,
         "overall": overall,
-        "picp_overall": round(picp_overall, 6),
-        "picp_nominal": 0.80,
-        "picp_per_location": {k: round(v, 6) for k, v in picp_per_loc.items()},
+        "picp_overall": picp_overall,
+        "picp_per_entity": picp_per_entity,
+        "picp_per_city": picp_per_city,
+        "picp_per_location": picp_per_city,
         "naive_persistence": naive_overall,
-        "naive_per_location": naive_per_loc,
-        "per_location": per_loc,
-        "per_horizon": [
-            {k: (round(v, 6) if isinstance(v, float) else v) for k, v in row.items()
-             if k != "beats_naive"}
-            | ({"beats_naive": row.get("beats_naive")} if "beats_naive" in row else {})
-            for row in horizon_agg
-        ],
-        "multi_horizon_summary": {
-            "beats_naive_count": sum(1 for r in horizon_agg if r.get("beats_naive")),
-            "total_horizons": pred_len,
-        },
+        # Backward compatibility key
+        "per_location": per_city,
+        "per_entity": per_entity,
+        "per_city": per_city,
+        "naive_per_entity": naive_per_entity,
+        "naive_per_city": naive_per_city,
+        "per_horizon": horizon_rows,
     }
-    with open(out_dir / "metrics_summary.json", "w") as f:
+    with open(out_dir / "metrics_summary.json", "w", encoding="utf-8") as f:
         json.dump(metrics_payload, f, indent=2)
+    _log("Saved core CSV/JSON artifacts.", log_fp)
 
-    _log("\n  Saved: metrics_summary.json  horizon_metrics.csv"
-         "  classification_report.csv  classification_summary.csv  predictions_full.csv", log_fp)
-
-    # ── 6. PLOTS ─────────────────────────────────────────────────────────
-    _log("\n[6/6] Generating plots …", log_fp)
-
-    # ── Plot 01: Overall scatter ──────────────────────────────────────────
+    # -------------------- Plots --------------------
+    # 01 Overall scatter
     fig, ax = plt.subplots(figsize=(7, 7))
-    for loc in locations:
-        sub = df[df.location_id == loc]
-        ax.scatter(sub["actual"], sub["pred_p50"],
-                   alpha=0.25, s=8, color=PALETTE[loc], label=loc)
-    lim = [-3.5, 3.5]
-    ax.plot(lim, lim, "k--", lw=1.5, label="Perfect")
-    ax.set_xlim(lim); ax.set_ylim(lim)
-    ax.set_xlabel("Actual SPEI-3"); ax.set_ylabel("Predicted P50 SPEI-3")
-    ax.set_title(f"Actual vs Predicted — All Locations\n"
-                 f"RMSE={overall['rmse']:.3f}  MAE={overall['mae']:.3f}"
-                 f"  R²={overall['r2']:.3f}  r={overall['pearson_r']:.3f}")
-    ax.legend(markerscale=2, fontsize=9)
+    for city in cities:
+        sub = df[df["city_id"].astype(str) == city]
+        ax.scatter(sub["actual"], sub["pred_p50"], alpha=0.3, s=8, color=city_palette[city], label=city)
+    ax.plot([-3.5, 3.5], [-3.5, 3.5], "k--", lw=1.2)
+    ax.set_xlim([-3.5, 3.5])
+    ax.set_ylim([-3.5, 3.5])
+    ax.set_xlabel("Actual SPEI-3")
+    ax.set_ylabel("Predicted P50")
+    ax.set_title(
+        f"Actual vs Predicted - All Cities\n"
+        f"RMSE={overall['rmse']:.3f} MAE={overall['mae']:.3f} R2={overall['r2']:.3f}"
+    )
+    ax.legend(fontsize=8)
     ax.grid(True, alpha=0.3)
     fig.tight_layout()
     fig.savefig(out_dir / "01_scatter_overall.png", dpi=150)
     plt.close(fig)
-    _log("  01_scatter_overall.png", log_fp)
 
-    # ── Plot 02: Per-location scatter (2×3 grid) ──────────────────────────
-    fig, axes = plt.subplots(2, 3, figsize=(15, 10))
-    axes = axes.flatten()
-    for i, loc in enumerate(locations):
-        sub = df[df.location_id == loc]
-        m   = per_loc[loc]
-        ax  = axes[i]
-        ax.scatter(sub["actual"], sub["pred_p50"],
-                   alpha=0.3, s=8, color=PALETTE[loc])
-        ax.plot([-3.5, 3.5], [-3.5, 3.5], "k--", lw=1.2)
-        ax.set_xlim([-3.5, 3.5]); ax.set_ylim([-3.5, 3.5])
-        ax.set_title(f"{loc}\nRMSE={m['rmse']:.3f}  R²={m['r2']:.3f}  Bias={m['bias']:.3f}")
-        ax.set_xlabel("Actual"); ax.set_ylabel("Predicted P50")
+    # 02 Per-entity scatter (dynamic grid)
+    rows, cols = _grid(len(entities), max_cols=3)
+    fig, axes = plt.subplots(rows, cols, figsize=(5 * cols, 4 * rows))
+    axes = np.array(axes).reshape(-1)
+    for i, ent in enumerate(entities):
+        sub = df[df[entity_col].astype(str) == ent]
+        m = per_entity[ent]
+        ax = axes[i]
+        ax.scatter(sub["actual"], sub["pred_p50"], alpha=0.3, s=8, color=entity_palette[ent])
+        ax.plot([-3.5, 3.5], [-3.5, 3.5], "k--", lw=1)
+        ax.set_xlim([-3.5, 3.5])
+        ax.set_ylim([-3.5, 3.5])
+        ax.set_title(f"{ent}\nRMSE={m['rmse']:.3f} R2={m['r2']:.3f}")
+        ax.set_xlabel("Actual")
+        ax.set_ylabel("Pred P50")
         ax.grid(True, alpha=0.3)
-    axes[-1].axis("off")
-    fig.suptitle("Per-Location Actual vs Predicted Scatter", fontsize=14, y=1.01)
+    for j in range(len(entities), len(axes)):
+        axes[j].axis("off")
+    fig.suptitle("Per-Entity Scatter", fontsize=13)
     fig.tight_layout()
     fig.savefig(out_dir / "02_scatter_per_location.png", dpi=150, bbox_inches="tight")
     plt.close(fig)
-    _log("  02_scatter_per_location.png", log_fp)
 
-    # ── Plot 03: Time series per location ─────────────────────────────────
-    fig, axes = plt.subplots(len(locations), 1,
-                             figsize=(16, 4 * len(locations)), sharex=False)
-    if len(locations) == 1:
-        axes = [axes]
-    for i, loc in enumerate(locations):
-        sub = df[df.location_id == loc].sort_values("time").reset_index(drop=True)
-        n   = min(365, len(sub))
+    # 03 Time-series per city
+    rows, cols = _grid(len(cities), max_cols=2)
+    fig, axes = plt.subplots(rows, cols, figsize=(8 * cols, 3.8 * rows))
+    axes = np.array(axes).reshape(-1)
+    for i, city in enumerate(cities):
+        sub = (
+            df[df["city_id"].astype(str) == city]
+            .groupby("time", as_index=False)[["actual", "pred_p10", "pred_p50", "pred_p90"]]
+            .mean()
+            .sort_values("time")
+        )
+        n = min(365, len(sub))
         sub = sub.iloc[:n]
-        ax  = axes[i]
-        ax.fill_between(range(n), sub["pred_p10"], sub["pred_p90"],
-                        alpha=0.2, color=PALETTE[loc], label="P10–P90")
-        ax.plot(range(n), sub["actual"],   "k-",  lw=1.2, label="Actual", alpha=0.85)
-        ax.plot(range(n), sub["pred_p50"], "--",   lw=1.2,
-                color=PALETTE[loc], label="Predicted P50")
-        ax.axhline(-1.5, color="orange", ls=":", lw=0.9, alpha=0.7)
-        ax.axhline( 1.5, color="steelblue", ls=":", lw=0.9, alpha=0.7)
-        ax.set_ylim([-4, 4])
-        ax.set_ylabel("SPEI-3", fontsize=9)
-        ax.set_title(f"{loc} — First {n} test days", fontsize=10)
-        ax.legend(fontsize=8, loc="upper right")
+        ax = axes[i]
+        ax.fill_between(range(n), sub["pred_p10"], sub["pred_p90"], alpha=0.2, color=city_palette[city])
+        ax.plot(range(n), sub["actual"], "k-", lw=1.2, label="Actual")
+        ax.plot(range(n), sub["pred_p50"], "--", lw=1.2, color=city_palette[city], label="Pred P50")
+        ax.set_title(f"{city} - first {n} test days")
+        ax.set_ylabel("SPEI-3")
         ax.grid(True, alpha=0.25)
-    fig.suptitle("Time Series: Actual vs Predicted P50 (test 2024+)", fontsize=13)
+        ax.legend(fontsize=8)
+    for j in range(len(cities), len(axes)):
+        axes[j].axis("off")
+    fig.suptitle("Time Series per City", fontsize=13)
     fig.tight_layout()
     fig.savefig(out_dir / "03_timeseries_per_location.png", dpi=150, bbox_inches="tight")
     plt.close(fig)
-    _log("  03_timeseries_per_location.png", log_fp)
 
-    # ── Plot 04: Error distribution per location ──────────────────────────
-    from scipy.stats import gaussian_kde
-    n_cols = 3
-    n_rows = int(np.ceil(len(locations) / n_cols))
-    fig, axes = plt.subplots(n_rows, n_cols, figsize=(5 * n_cols, 4 * n_rows))
-    axes = axes.flatten()
-    for i, loc in enumerate(locations):
-        sub = df[df.location_id == loc]["error"].dropna()
-        ax  = axes[i]
-        ax.hist(sub, bins=40, color=PALETTE.get(loc, "gray"),
-                alpha=0.7, edgecolor="white", density=True)
-        kde = gaussian_kde(sub)
-        xs  = np.linspace(sub.min(), sub.max(), 200)
-        ax.plot(xs, kde(xs), "k-", lw=1.5)
-        ax.axvline(0,          color="red",    ls="--", lw=1.2, label="Zero")
-        ax.axvline(sub.mean(), color="orange",  ls="-",  lw=1.2,
-                   label=f"Mean={sub.mean():.3f}")
-        ax.set_title(f"{loc}\nμ={sub.mean():.3f}  σ={sub.std():.3f}")
-        ax.set_xlabel("Error (Pred − Actual)")
-        ax.legend(fontsize=8)
+    # 04 Error distribution per city
+    rows, cols = _grid(len(cities), max_cols=3)
+    fig, axes = plt.subplots(rows, cols, figsize=(5 * cols, 3.5 * rows))
+    axes = np.array(axes).reshape(-1)
+    for i, city in enumerate(cities):
+        sub = df[df["city_id"].astype(str) == city]["error"].dropna()
+        ax = axes[i]
+        ax.hist(sub, bins=40, color=city_palette[city], alpha=0.7, edgecolor="white", density=True)
+        ax.axvline(0, color="red", ls="--", lw=1)
+        ax.axvline(sub.mean(), color="black", ls="-", lw=1)
+        ax.set_title(f"{city} | mean={sub.mean():.3f} std={sub.std():.3f}")
         ax.grid(True, alpha=0.3)
-    for j in range(len(locations), len(axes)):
+    for j in range(len(cities), len(axes)):
         axes[j].axis("off")
-    fig.suptitle("Prediction Error Distribution per Location", fontsize=13)
+    fig.suptitle("Error Distribution per City", fontsize=13)
     fig.tight_layout()
     fig.savefig(out_dir / "04_error_distribution.png", dpi=150, bbox_inches="tight")
     plt.close(fig)
-    _log("  04_error_distribution.png", log_fp)
 
-    # ── Plot 05: Variable importance ──────────────────────────────────────
+    # 05 Variable importance
     try:
-        test_ds_vi = TimeSeriesDataSet.from_dataset(
-            train_ds, test_data, predict=False, stop_randomization=True)
-        vi_loader  = test_ds_vi.to_dataloader(train=False, batch_size=64, num_workers=0)
-        raw_vi     = model.predict(vi_loader, mode="raw")
-        interp     = model.interpret_output(raw_vi, reduction="sum")
+        test_ds_vi = TimeSeriesDataSet.from_dataset(train_ds, test_data, predict=False, stop_randomization=True)
+        vi_loader = test_ds_vi.to_dataloader(train=False, batch_size=64, num_workers=0)
+        raw_vi = model.predict(
+            vi_loader,
+            mode="raw",
+            trainer_kwargs={"accelerator": "cpu", "devices": 1},
+        )
+        interp = model.interpret_output(raw_vi, reduction="sum")
 
         def _to_dict(imp, names):
             if isinstance(imp, torch.Tensor):
@@ -578,261 +499,187 @@ def run(checkpoint_path: str, out_dir: Path, log_fp):
 
         enc_imp = _to_dict(interp["encoder_variables"], model.encoder_variables)
         dec_imp = _to_dict(interp["decoder_variables"], model.decoder_variables)
-
         fig, axes = plt.subplots(1, 2, figsize=(14, 6))
         for ax, imp_dict, title, color in [
-            (axes[0], enc_imp, "Encoder (Past Inputs)",   "steelblue"),
-            (axes[1], dec_imp, "Decoder (Future Inputs)", "darkorange"),
+            (axes[0], enc_imp, "Encoder", "steelblue"),
+            (axes[1], dec_imp, "Decoder", "darkorange"),
         ]:
             names = list(imp_dict.keys())
-            vals  = [imp_dict[n] for n in names]
-            idx   = np.argsort(vals)
-            ax.barh([names[j] for j in idx], [vals[j] for j in idx], color=color)
-            ax.set_xlabel("Importance Score (VSN)")
+            vals = [imp_dict[n] for n in names]
+            order = np.argsort(vals)
+            ax.barh([names[j] for j in order], [vals[j] for j in order], color=color)
             ax.set_title(title)
             ax.grid(True, alpha=0.3, axis="x")
-        fig.suptitle("Variable Importance (TFT Attention)", fontsize=13)
+        fig.suptitle("Variable Importance")
         fig.tight_layout()
         fig.savefig(out_dir / "05_variable_importance.png", dpi=150, bbox_inches="tight")
         plt.close(fig)
-        _log("  05_variable_importance.png", log_fp)
-    except Exception as e:
-        _log(f"  05_variable_importance.png SKIPPED: {e}", log_fp)
+    except Exception as exc:
+        _log(f"05_variable_importance skipped: {exc}", log_fp)
 
-    # ── Plot 06: Metrics per horizon (TFT vs Naive) ─────────────────────
+    # 06 Horizon metrics
     fig, axes = plt.subplots(2, 2, figsize=(14, 10))
-    metrics_to_plot = [
-        ("rmse",      "RMSE",             "steelblue"),
-        ("mae",       "MAE",              "darkorange"),
-        ("bias",      "Bias (Pred−Actual)","tomato"),
-        ("pearson_r", "Pearson r",         "seagreen"),
+    plot_metrics = [
+        ("rmse", "RMSE"),
+        ("mae", "MAE"),
+        ("bias", "Bias"),
+        ("pearson_r", "Pearson r"),
     ]
-    for ax, (col, label, color) in zip(axes.flatten(), metrics_to_plot):
+    for ax, (col, title) in zip(axes.reshape(-1), plot_metrics):
         valid = df_horizon.dropna(subset=[col])
-        ax.bar(valid["horizon"], valid[col], color=color, alpha=0.75, edgecolor="white",
-               label="TFT Model")
-        # Overlay naive RMSE on the RMSE subplot
-        if col == "rmse" and "naive_rmse" in df_horizon.columns:
+        ax.plot(valid["horizon"], valid[col], marker="o", lw=1.5, label="TFT")
+        if col == "rmse":
             naive_valid = df_horizon.dropna(subset=["naive_rmse"])
-            ax.plot(naive_valid["horizon"], naive_valid["naive_rmse"],
-                    "k--", lw=2.0, marker="s", markersize=3, label="Naive Persistence")
-            ax.legend(fontsize=9)
-        ax.axhline(0, color="black", lw=0.8, ls="--")
-        ax.set_xlabel("Forecast Horizon (days)")
-        ax.set_ylabel(label)
-        ax.set_title(f"{label} vs Forecast Horizon")
-        ax.grid(True, alpha=0.3, axis="y")
-    fig.suptitle("Step-h-Only Horizon Metrics — TFT vs Naive (test 2024+)", fontsize=12)
+            ax.plot(naive_valid["horizon"], naive_valid["naive_rmse"], "k--", lw=1.5, label="Naive")
+        ax.axhline(0, color="black", ls="--", lw=0.8)
+        ax.set_title(title)
+        ax.set_xlabel("Horizon")
+        ax.grid(True, alpha=0.3)
+        ax.legend(fontsize=8)
+    fig.suptitle("Horizon Metrics")
     fig.tight_layout()
     fig.savefig(out_dir / "06_horizon_metrics.png", dpi=150, bbox_inches="tight")
     plt.close(fig)
-    _log("  06_horizon_metrics.png", log_fp)
 
-    # ── Plot 07: Per-location comparison (grouped bars) ───────────────────
-    metrics_bar = ["rmse", "mae", "pearson_r"]
-    bar_labels  = ["RMSE", "MAE", "Pearson r"]
-    x = np.arange(len(locations))
+    # 07 City comparison
+    x = np.arange(len(cities))
     width = 0.25
     fig, ax = plt.subplots(figsize=(12, 6))
-    for j, (met, lbl) in enumerate(zip(metrics_bar, bar_labels)):
-        vals = [per_loc[loc][met] for loc in locations]
-        ax.bar(x + j * width, vals, width, label=lbl, alpha=0.85)
+    for j, met in enumerate(["rmse", "mae", "pearson_r"]):
+        vals = [per_city[c][met] if per_city[c][met] is not None else 0.0 for c in cities]
+        ax.bar(x + j * width, vals, width, label=met.upper())
     ax.set_xticks(x + width)
-    ax.set_xticklabels(locations, rotation=15)
-    ax.axhline(0, color="black", lw=0.8, ls="--")
-    ax.set_ylabel("Metric Value")
-    ax.set_title("Metric Comparison Across Locations")
-    ax.legend()
+    ax.set_xticklabels(cities, rotation=15)
+    ax.set_title("Per-City Metric Comparison")
     ax.grid(True, alpha=0.3, axis="y")
+    ax.legend()
     fig.tight_layout()
     fig.savefig(out_dir / "07_location_comparison.png", dpi=150, bbox_inches="tight")
     plt.close(fig)
-    _log("  07_location_comparison.png", log_fp)
 
-    # ── Plot 08: Quantile fan chart — all locations ───────────────────────
-    fig, axes = plt.subplots(len(locations), 1,
-                             figsize=(14, 4 * len(locations)), sharex=False)
-    if len(locations) == 1:
-        axes = [axes]
-    for i, loc in enumerate(locations):
-        sub   = df[df.location_id == loc].sort_values("time").reset_index(drop=True)
-        n_fan = min(180, len(sub))
-        sub   = sub.iloc[:n_fan]
+    # 08 Quantile fan per city
+    rows, cols = _grid(len(cities), max_cols=2)
+    fig, axes = plt.subplots(rows, cols, figsize=(8 * cols, 3.8 * rows))
+    axes = np.array(axes).reshape(-1)
+    for i, city in enumerate(cities):
+        sub = (
+            df[df["city_id"].astype(str) == city]
+            .groupby("time", as_index=False)[["actual", "pred_p10", "pred_p50", "pred_p90"]]
+            .mean()
+            .sort_values("time")
+        )
+        n = min(180, len(sub))
+        sub = sub.iloc[:n]
         dates = pd.to_datetime(sub["time"])
-        ax    = axes[i]
-        ax.fill_between(dates, sub["pred_p10"], sub["pred_p90"],
-                        alpha=0.25, color=PALETTE.get(loc, "gray"),
-                        label="P10–P90 Interval")
-        ax.plot(dates, sub["pred_p50"], "-",  color=PALETTE.get(loc, "gray"),
-                lw=1.8, label="Predicted P50")
-        ax.plot(dates, sub["actual"],   "k-", lw=1.4, label="Actual")
-        ax.axhline(-1.5, color="orange",    ls="--", lw=1, alpha=0.7)
-        ax.axhline( 1.5, color="steelblue", ls="--", lw=1, alpha=0.7)
-        ax.set_ylim([-4, 4])
-        ax.set_ylabel("SPEI-3")
-        ax.set_title(f"{loc} — first {n_fan} test days")
-        ax.legend(fontsize=8, loc="upper right")
+        ax = axes[i]
+        ax.fill_between(dates, sub["pred_p10"], sub["pred_p90"], alpha=0.25, color=city_palette[city], label="P10-P90")
+        ax.plot(dates, sub["pred_p50"], "-", color=city_palette[city], label="Pred P50")
+        ax.plot(dates, sub["actual"], "k-", lw=1.2, label="Actual")
+        ax.set_title(city)
         ax.grid(True, alpha=0.3)
-    fig.suptitle("Quantile Fan Chart P10/P50/P90 (test 2024+)", fontsize=13)
+        ax.legend(fontsize=8)
+    for j in range(len(cities), len(axes)):
+        axes[j].axis("off")
+    fig.suptitle("Quantile Fan (Per City)")
     fig.tight_layout()
     fig.savefig(out_dir / "08_quantile_fan.png", dpi=150, bbox_inches="tight")
     plt.close(fig)
-    _log("  08_quantile_fan.png", log_fp)
 
-    # ── Plot 09: SPEI classification confusion heatmap ────────────────────
+    # 09 Broad confusion matrix
     df["ab"] = df["actual_class"].apply(_broad)
     df["pb"] = df["pred_class"].apply(_broad)
-    cats     = ["Kekeringan", "Normal", "Basah"]
-    conf     = pd.crosstab(df["ab"], df["pb"],
-                           rownames=["Actual"], colnames=["Predicted"])
-    conf     = conf.reindex(index=cats, columns=cats, fill_value=0)
+    cats = ["Kekeringan", "Normal", "Basah"]
+    conf = pd.crosstab(df["ab"], df["pb"], rownames=["Actual"], colnames=["Predicted"])
+    conf = conf.reindex(index=cats, columns=cats, fill_value=0)
     conf_pct = conf.div(conf.sum(axis=1), axis=0) * 100
-
     fig, axes = plt.subplots(1, 2, figsize=(14, 5))
-    sns.heatmap(conf, annot=True, fmt="d", cmap="Blues",
-                linewidths=0.5, ax=axes[0])
-    axes[0].set_title("Confusion Matrix — Count\n(3-class: Kekeringan / Normal / Basah)")
-    sns.heatmap(conf_pct, annot=True, fmt=".1f", cmap="Greens",
-                linewidths=0.5, ax=axes[1], vmin=0, vmax=100)
-    axes[1].set_title("Confusion Matrix — Row % (Recall)\n(3-class)")
+    sns.heatmap(conf, annot=True, fmt="d", cmap="Blues", linewidths=0.5, ax=axes[0])
+    axes[0].set_title("Confusion Count (3-class)")
+    sns.heatmap(conf_pct, annot=True, fmt=".1f", cmap="Greens", linewidths=0.5, ax=axes[1], vmin=0, vmax=100)
+    axes[1].set_title("Confusion Row %")
     fig.tight_layout()
     fig.savefig(out_dir / "09_spei_classification.png", dpi=150, bbox_inches="tight")
     plt.close(fig)
-    _log("  09_spei_classification.png", log_fp)
 
-    # ── Plot 10: Monthly bias per location ────────────────────────────────
-    month_bias = (df.groupby(["location_id", "month"])["error"]
-                  .mean().reset_index().rename(columns={"error": "bias"}))
+    # 10 Bias over time per city
+    month_bias = (
+        df.groupby(["city_id", "month"])["error"]
+        .mean()
+        .reset_index()
+        .rename(columns={"error": "bias"})
+    )
     month_bias["month_dt"] = pd.to_datetime(month_bias["month"])
-    month_bias = month_bias.sort_values("month_dt")
-
     fig, ax = plt.subplots(figsize=(14, 5))
-    for loc in locations:
-        sub_m = month_bias[month_bias.location_id == loc]
-        ax.plot(sub_m["month_dt"], sub_m["bias"],
-                marker="o", markersize=3, lw=1.5,
-                color=PALETTE[loc], label=loc)
+    for city in cities:
+        sub = month_bias[month_bias["city_id"].astype(str) == city].sort_values("month_dt")
+        ax.plot(sub["month_dt"], sub["bias"], marker="o", markersize=3, lw=1.5, label=city, color=city_palette[city])
     ax.axhline(0, color="black", lw=1, ls="--")
-    ax.set_xlabel("Month")
-    ax.set_ylabel("Mean Bias (Pred − Actual)")
-    ax.set_title("Monthly Bias Over Test Period per Location")
-    ax.legend(fontsize=9)
+    ax.set_title("Monthly Bias by City")
+    ax.set_ylabel("Mean Bias")
     ax.grid(True, alpha=0.3)
+    ax.legend(fontsize=8)
     fig.tight_layout()
     fig.savefig(out_dir / "10_bias_over_time.png", dpi=150, bbox_inches="tight")
     plt.close(fig)
-    _log("  10_bias_over_time.png", log_fp)
-    # ── Plot 11: Model vs Naive baseline RMSE + PICP per location ──────────
+
+    # 11 Model vs Naive + PICP per city
     fig, axes = plt.subplots(1, 2, figsize=(14, 6))
-
-    # Left panel: RMSE comparison (model vs naive) per location
-    x      = np.arange(len(locations))
-    width  = 0.35
-    rmse_model = [per_loc[loc]["rmse"] or 0.0 for loc in locations]
-    rmse_naive = [naive_per_loc[loc]["rmse"] or 0.0 for loc in locations]
-    axes[0].bar(x - width / 2, rmse_model, width, label="TFT Model",
-                color="steelblue", alpha=0.85)
-    axes[0].bar(x + width / 2, rmse_naive, width, label="Naive Persistence",
-                color="tomato",    alpha=0.85)
-    axes[0].set_xticks(x)
-    axes[0].set_xticklabels(locations, rotation=15, ha="right")
-    axes[0].set_ylabel("RMSE")
-    axes[0].set_title("RMSE: TFT Model vs Naive Persistence Baseline")
-    axes[0].legend()
-    axes[0].grid(True, alpha=0.3, axis="y")
-
-    # Right panel: PICP per location (bar) with nominal 80% line
-    picp_vals = [picp_per_loc.get(loc, 0.0) for loc in locations]
-    bar_colors = [
-        "seagreen" if v >= 0.75 else "darkorange" for v in picp_vals
+    rmse_model = [per_city[c]["rmse"] if per_city[c]["rmse"] is not None else 0.0 for c in cities]
+    rmse_naive = [
+        naive_per_city[c]["rmse"] if naive_per_city[c]["rmse"] is not None else 0.0 for c in cities
     ]
-    axes[1].bar(x, picp_vals, color=bar_colors, alpha=0.85)
-    axes[1].axhline(0.80, color="black", lw=1.5, ls="--",
-                    label="Nominal 80% (P10–P90)")
-    axes[1].set_xticks(x)
-    axes[1].set_xticklabels(locations, rotation=15, ha="right")
-    axes[1].set_ylim([0, 1.05])
-    axes[1].set_ylabel("Coverage Probability")
-    axes[1].set_title("PICP — P10–P90 Interval Coverage per Location")
-    axes[1].legend(fontsize=9)
-    axes[1].grid(True, alpha=0.3, axis="y")
+    axes[0].bar(x - 0.18, rmse_model, 0.36, label="TFT", color="steelblue", alpha=0.85)
+    axes[0].bar(x + 0.18, rmse_naive, 0.36, label="Naive", color="tomato", alpha=0.85)
+    axes[0].set_xticks(x)
+    axes[0].set_xticklabels(cities, rotation=15, ha="right")
+    axes[0].set_title("RMSE: Model vs Naive")
+    axes[0].grid(True, alpha=0.3, axis="y")
+    axes[0].legend()
 
-    fig.suptitle("Model Skill vs Naive Baseline and Prediction Interval Coverage",
-                 fontsize=13)
+    picp_vals = [picp_per_city.get(city, 0.0) for city in cities]
+    axes[1].bar(x, picp_vals, color="seagreen", alpha=0.85)
+    axes[1].axhline(0.80, color="black", ls="--", lw=1.3, label="Nominal 80%")
+    axes[1].set_xticks(x)
+    axes[1].set_xticklabels(cities, rotation=15, ha="right")
+    axes[1].set_ylim([0, 1.05])
+    axes[1].set_title("PICP per City")
+    axes[1].grid(True, alpha=0.3, axis="y")
+    axes[1].legend(fontsize=8)
     fig.tight_layout()
     fig.savefig(out_dir / "11_model_vs_naive_picp.png", dpi=150, bbox_inches="tight")
     plt.close(fig)
-    _log("  11_model_vs_naive_picp.png", log_fp)
-    # ── Final summary ─────────────────────────────────────────────────────
-    _log("\n" + "=" * 72, log_fp)
-    _log("  ALL OUTPUTS SAVED", log_fp)
-    _log(f"  Directory : {out_dir}", log_fp)
-    _log("=" * 72, log_fp)
 
-    _log("\n  FILES GENERATED:", log_fp)
-    for f in sorted(out_dir.iterdir()):
-        size = f.stat().st_size
-        _log(f"    {f.name:<45}  {size/1024:>7.1f} KB", log_fp)
-
-    _log("\n  CLASSIFICATION ACCURACY (broad 3-class):", log_fp)
-    for _, row in df_clf_summary.iterrows():
-        _log(f"    {row['location']:<15}  exact={row['exact_acc']*100:.1f}%"
-             f"  broad={row['broad_acc']*100:.1f}%", log_fp)
-
-    _log("\n  PICP — P10–P90 Interval Coverage (nominal = 80%):", log_fp)
-    for loc in locations:
-        _log(f"    {loc:<15}  PICP={picp_per_loc.get(loc, float('nan')):.4f}", log_fp)
-    _log(f"    {'OVERALL':<15}  PICP={picp_overall:.4f}", log_fp)
-
-    _log("\n  MODEL vs NAIVE PERSISTENCE (overall step-0):", log_fp)
-    m_rmse = overall.get("rmse") or float("nan")
-    n_rmse = naive_overall.get("rmse") or float("nan")
-    skill  = (1.0 - m_rmse / n_rmse) * 100 if n_rmse > 0 else float("nan")
-    _log(f"    Model  RMSE = {m_rmse:.4f}", log_fp)
-    _log(f"    Naive  RMSE = {n_rmse:.4f}", log_fp)
-    _log(f"    Skill Score = {skill:.1f}%  (positive = model beats naive)", log_fp)
-
-    _log(f"\n  MULTI-HORIZON SUMMARY (step-h-only):", log_fp)
-    beat_count = sum(1 for row in horizon_agg if row.get("beats_naive"))
-    _log(f"    Model beats naive at {beat_count}/{pred_len} horizons", log_fp)
-    for h_day in [1, 2, 7, 14, 30]:
-        row = horizon_agg[h_day - 1] if h_day <= len(horizon_agg) else None
-        if row and row["rmse"] is not None and row.get("naive_rmse") is not None:
-            ratio = row["rmse"] / row["naive_rmse"]
-            improvement = (1.0 - ratio) * 100
-            _log(f"    Day {h_day:>2}: TFT RMSE={row['rmse']:.4f}  "
-                 f"Naive={row['naive_rmse']:.4f}  "
-                 f"Ratio={ratio:.2f}x  "
-                 f"{'↑' if improvement > 0 else '↓'}{abs(improvement):.1f}%", log_fp)
+    _log("\nSUMMARY:", log_fp)
+    _log(f"Overall RMSE={overall['rmse']:.4f} | Naive RMSE={naive_overall['rmse']:.4f}", log_fp)
+    _log(f"Overall PICP={picp_overall:.4f}", log_fp)
+    beat_count = int(sum(1 for row in horizon_rows if row.get("beats_naive")))
+    _log(f"Horizon beats naive: {beat_count}/{pred_len}", log_fp)
 
 
-# ---------------------------------------------------------------------------
-# Entry point
-# ---------------------------------------------------------------------------
 def main():
     parser = argparse.ArgumentParser(description="Full TFT SPEI Evaluation")
     parser.add_argument(
-        "--checkpoint", type=str, default=None,
-        help="Path to .ckpt file. Defaults to latest in logs/checkpoints/")
+        "--checkpoint",
+        type=str,
+        default=None,
+        help="Path to .ckpt file. Defaults to best in logs/checkpoints/",
+    )
     args = parser.parse_args()
 
-    # Resolve checkpoint
     if args.checkpoint:
         ckpt_path = args.checkpoint
     else:
-        ckpt_path = str(_best_checkpoint(ROOT / "logs/checkpoints"))
+        ckpt_path = str(_checkpoint_from_run_config() or _best_checkpoint(ROOT / "logs/checkpoints"))
 
     print(f"Checkpoint : {ckpt_path}")
-
-    ts      = datetime.now().strftime("%Y%m%d_%H%M%S")
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
     out_dir = ROOT / f"results/full_eval_{ts}"
     out_dir.mkdir(parents=True, exist_ok=True)
-
     log_path = out_dir / "metrics_report.txt"
     with open(log_path, "w", encoding="utf-8") as log_fp:
         run(ckpt_path, out_dir, log_fp)
 
-    print(f"\nDone. Results → {out_dir}")
+    print(f"\nDone. Results -> {out_dir}")
 
 
 if __name__ == "__main__":

@@ -12,6 +12,9 @@ Output:
 
 import os
 import sys
+import json
+import re
+import warnings
 import torch
 import numpy as np
 import pandas as pd
@@ -27,12 +30,53 @@ OUTPUT_DIR = "results/actual_vs_predict_analysis"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 TIMESTAMP = datetime.now().strftime('%Y%m%d_%H%M%S')
 OUTPUT_FILE = os.path.join(OUTPUT_DIR, f"detailed_analysis_{TIMESTAMP}.txt")
+PREFERRED_ENCODER = 30
+
+warnings.filterwarnings(
+    "ignore",
+    message=r"X does not have valid feature names, but StandardScaler was fitted with feature names",
+    category=UserWarning,
+)
+warnings.filterwarnings("ignore", category=UserWarning, module="pytorch_forecasting")
+warnings.filterwarnings("ignore", category=UserWarning, module="lightning")
+warnings.filterwarnings(
+    "ignore",
+    message=r"You are using `torch.load` with `weights_only=False`.*",
+    category=UserWarning,
+)
+torch.set_float32_matmul_precision("medium")
 
 def log(message: str = ""):
     """Print and save to file"""
     print(message)
     with open(OUTPUT_FILE, "a", encoding="utf-8") as f:
         f.write(str(message) + "\n")
+
+
+def _resolve_checkpoint(checkpoint_dir: str, preferred_encoder: int = 30) -> str:
+    run_cfg = os.path.join("logs", "run_config.json")
+    if os.path.exists(run_cfg):
+        try:
+            with open(run_cfg, "r", encoding="utf-8") as f:
+                payload = json.load(f)
+            ckpt = payload.get("best_model_path")
+            if ckpt and os.path.exists(ckpt):
+                return ckpt
+        except Exception:
+            pass
+
+    checkpoints = sorted([f for f in os.listdir(checkpoint_dir) if f.endswith(".ckpt")])
+    if not checkpoints:
+        raise FileNotFoundError("No checkpoints found")
+
+    def parse_val_loss(fname: str) -> float:
+        m = re.search(r"val_loss=(\d+\.\d+)", fname)
+        return float(m.group(1)) if m else float("inf")
+
+    preferred = [f for f in checkpoints if f.startswith(f"enc{preferred_encoder}-")]
+    if preferred:
+        return os.path.join(checkpoint_dir, min(preferred, key=parse_val_loss))
+    return os.path.join(checkpoint_dir, min(checkpoints, key=parse_val_loss))
 
 def calculate_quantile_coverage(actuals, predictions, quantile_idx_low=1, quantile_idx_high=5):
     """
@@ -74,14 +118,14 @@ def calculate_calibration_error(actuals, predictions, quantiles=[0.02, 0.1, 0.25
         }
     return calibration
 
-def calculate_metrics_per_horizon(actuals, predictions, horizons):
+def calculate_metrics_per_horizon(actuals, predictions, horizons, quantile_idx_p50=3):
     """
     Calculate metrics for each forecast horizon separately
     """
     horizon_metrics = []
     
     # Use P50 (median) for point predictions
-    p50 = predictions[:, :, 3]  # Default quantiles: [0.02, 0.1, 0.25, 0.5, 0.75, 0.9, 0.98]
+    p50 = predictions[:, :, quantile_idx_p50]
     
     for h in range(horizons):
         actual_h = actuals[:, h].cpu().numpy()
@@ -102,12 +146,12 @@ def calculate_metrics_per_horizon(actuals, predictions, horizons):
     
     return pd.DataFrame(horizon_metrics)
 
-def analyze_drought_classification(actuals, predictions):
+def analyze_drought_classification(actuals, predictions, quantile_idx_p50=3):
     """
     Analyze drought event classification accuracy using canonical SPEI thresholds
     from src.data.spei (McKee et al., 1993 / WMO standard).
     """
-    p50 = predictions[:, :, 3].cpu().numpy().flatten()
+    p50 = predictions[:, :, quantile_idx_p50].cpu().numpy().flatten()
     actual = actuals.cpu().numpy().flatten()
 
     actual_class = np.array([_classify_spei_canonical(v) for v in actual])
@@ -177,22 +221,10 @@ def main():
     log("=" * 70)
     
     checkpoint_dir = "logs/checkpoints"
-    checkpoints = sorted([f for f in os.listdir(checkpoint_dir) if f.endswith('.ckpt')])
-    
-    if not checkpoints:
-        log("ERROR: No checkpoints found!")
+    if not os.path.exists(checkpoint_dir):
+        log("ERROR: checkpoint directory not found!")
         return
-
-    # Select checkpoint with lowest val_loss from filename
-    def parse_val_loss(fname):
-        try:
-            return float(fname.split("val_loss=")[1].replace(".ckpt", ""))
-        except (IndexError, ValueError):
-            return float("inf")
-
-    best_ckpt = min(checkpoints, key=parse_val_loss)
-    
-    model_path = os.path.join(checkpoint_dir, best_ckpt)
+    model_path = _resolve_checkpoint(checkpoint_dir, preferred_encoder=PREFERRED_ENCODER)
     log(f"Loading: {model_path}")
     
     model = TemporalFusionTransformer.load_from_checkpoint(model_path, map_location="cpu")
@@ -200,8 +232,18 @@ def main():
     
     ckpt_enc_len = int(getattr(model.hparams, "max_encoder_length", MAX_ENCODER_LENGTH))
     ckpt_pred_len = int(getattr(model.hparams, "max_prediction_length", MAX_PREDICTION_LENGTH))
+    quantiles = [float(q) for q in getattr(model.loss, "quantiles", [0.1, 0.5, 0.9])]
+    q_idx = {
+        "p10": int(np.argmin(np.abs(np.array(quantiles) - 0.10))),
+        "p25": int(np.argmin(np.abs(np.array(quantiles) - 0.25))),
+        "p50": int(np.argmin(np.abs(np.array(quantiles) - 0.50))),
+        "p75": int(np.argmin(np.abs(np.array(quantiles) - 0.75))),
+        "p90": int(np.argmin(np.abs(np.array(quantiles) - 0.90))),
+    }
     log(f"Checkpoint encoder length : {ckpt_enc_len}")
     log(f"Checkpoint prediction len : {ckpt_pred_len}")
+    log(f"Quantiles: {quantiles}")
+    log(f"Quantile index map: {q_idx}")
     log("")
     
     # 3. Create Test Dataset with proper splitting
@@ -287,7 +329,7 @@ def main():
     log("STEP 5: OVERALL METRICS")
     log("=" * 70)
     
-    p50 = preds[:, :, 3]  # Median prediction
+    p50 = preds[:, :, q_idx["p50"]]  # Median prediction
     
     # Flatten for overall metrics
     actual_flat = actuals.flatten().cpu().numpy()
@@ -321,11 +363,11 @@ def main():
     log("=" * 70)
     
     # Prediction Interval Coverage
-    coverage_80 = calculate_quantile_coverage(actuals, preds, 1, 5)  # P10-P90
-    coverage_50 = calculate_quantile_coverage(actuals, preds, 2, 4)  # P25-P75
+    coverage_80 = calculate_quantile_coverage(actuals, preds, q_idx["p10"], q_idx["p90"])
+    coverage_50 = calculate_quantile_coverage(actuals, preds, q_idx["p25"], q_idx["p75"])
     
-    sharpness_80 = calculate_interval_sharpness(preds, 1, 5)
-    sharpness_50 = calculate_interval_sharpness(preds, 2, 4)
+    sharpness_80 = calculate_interval_sharpness(preds, q_idx["p10"], q_idx["p90"])
+    sharpness_50 = calculate_interval_sharpness(preds, q_idx["p25"], q_idx["p75"])
     
     log("Prediction Interval Coverage Probability (PICP):")
     log(f"  80% Interval (P10-P90): {coverage_80:.4f} (Expected: 0.80)")
@@ -355,7 +397,7 @@ def main():
     log("STEP 7: METRICS PER FORECAST HORIZON")
     log("=" * 70)
     
-    horizon_df = calculate_metrics_per_horizon(actuals, preds, preds.shape[1])
+    horizon_df = calculate_metrics_per_horizon(actuals, preds, preds.shape[1], quantile_idx_p50=q_idx["p50"])
     
     log("-" * 60)
     log(f"{'Horizon':<10} {'RMSE':<12} {'MAE':<12} {'Bias':<12} {'Corr':<12}")
@@ -376,7 +418,7 @@ def main():
     log("STEP 8: DROUGHT CLASSIFICATION ANALYSIS")
     log("=" * 70)
     
-    accuracy, class_stats = analyze_drought_classification(actuals, preds)
+    accuracy, class_stats = analyze_drought_classification(actuals, preds, quantile_idx_p50=q_idx["p50"])
     log(f"Overall Classification Accuracy: {accuracy:.4f}")
     log("")
     log("-" * 80)
@@ -397,9 +439,9 @@ def main():
     
     for i in range(n_samples):
         sample_actual = actuals[i].cpu().numpy()
-        sample_p10 = preds[i, :, 1].cpu().numpy()
-        sample_p50 = preds[i, :, 3].cpu().numpy()
-        sample_p90 = preds[i, :, 5].cpu().numpy()
+        sample_p10 = preds[i, :, q_idx["p10"]].cpu().numpy()
+        sample_p50 = preds[i, :, q_idx["p50"]].cpu().numpy()
+        sample_p90 = preds[i, :, q_idx["p90"]].cpu().numpy()
         
         sample_rmse = np.sqrt(np.mean((sample_p50 - sample_actual) ** 2))
         sample_mae = np.mean(np.abs(sample_p50 - sample_actual))
@@ -441,13 +483,13 @@ def main():
                 "sample_id": i,
                 "horizon": h + 1,
                 "actual": actuals[i, h].item(),
-                "pred_p02": preds[i, h, 0].item(),
-                "pred_p10": preds[i, h, 1].item(),
-                "pred_p25": preds[i, h, 2].item(),
-                "pred_p50": preds[i, h, 3].item(),
-                "pred_p75": preds[i, h, 4].item(),
-                "pred_p90": preds[i, h, 5].item(),
-                "pred_p98": preds[i, h, 6].item(),
+                "pred_p02": preds[i, h, 0].item() if preds.shape[2] > 0 else np.nan,
+                "pred_p10": preds[i, h, q_idx["p10"]].item(),
+                "pred_p25": preds[i, h, q_idx["p25"]].item(),
+                "pred_p50": preds[i, h, q_idx["p50"]].item(),
+                "pred_p75": preds[i, h, q_idx["p75"]].item(),
+                "pred_p90": preds[i, h, q_idx["p90"]].item(),
+                "pred_p98": preds[i, h, -1].item(),
             })
     
     export_df = pd.DataFrame(export_data)

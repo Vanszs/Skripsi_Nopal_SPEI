@@ -1,8 +1,10 @@
-"""
-Pipeline Test Script — validates all stages without re-training.
+﻿"""
+Pipeline Test Script â€” validates all stages without re-training.
 Run: python test_pipeline.py
 """
 import sys
+import os
+import json
 import traceback
 import pandas as pd
 import numpy as np
@@ -12,6 +14,8 @@ sys.path.insert(0, ".")
 PASS = "[PASS]"
 FAIL = "[FAIL]"
 WARN = "[WARN]"
+EXPECTED_SCHEMA_VERSION = 2
+PROCESSED_DATA_PATH = None
 
 
 def section(title):
@@ -21,29 +25,97 @@ def section(title):
     print("=" * 60)
 
 
-# ─────────────────────────────────────────────────────────────
-# TEST 1 — Imports
-# ─────────────────────────────────────────────────────────────
+def _is_schema_v2(path):
+    if not os.path.exists(path):
+        return False
+    try:
+        df = pd.read_parquet(path, columns=["schema_version", "city_id", "super_node_id"])
+    except Exception:
+        return False
+    versions = sorted(pd.Series(df["schema_version"]).dropna().unique().tolist())
+    return versions == [EXPECTED_SCHEMA_VERSION]
+
+
+def _resolve_processed_data_path():
+    primary = "data/processed/spei_dataset.parquet"
+    smoke = "results/smoke_v2/processed_schema_v2.parquet"
+    if _is_schema_v2(primary):
+        return primary
+    if _is_schema_v2(smoke):
+        print(f"{WARN} Primary processed dataset is not schema v2. Using smoke dataset: {smoke}")
+        return smoke
+    raise FileNotFoundError(
+        "No schema-v2 processed dataset found. Run `python main.py` "
+        "or `python scripts/smoke_e2e_v2.py` first."
+    )
+
+
+def _resolve_checkpoint_path(processed_data_path):
+    run_cfg = "logs/run_config.json"
+    if os.path.exists(run_cfg):
+        try:
+            with open(run_cfg, "r", encoding="utf-8") as f:
+                payload = json.load(f)
+            ckpt = payload.get("best_model_path")
+            if ckpt and os.path.exists(ckpt):
+                return ckpt
+        except Exception:
+            pass
+
+    smoke_report = "results/smoke_v2/smoke_report.json"
+    if processed_data_path and os.path.normpath("results/smoke_v2") in os.path.normpath(processed_data_path):
+        if os.path.exists(smoke_report):
+            try:
+                with open(smoke_report, "r", encoding="utf-8") as f:
+                    payload = json.load(f)
+                ckpt = payload.get("checkpoint")
+                if ckpt and os.path.exists(ckpt):
+                    return ckpt
+            except Exception:
+                pass
+
+    ckpt_dir = "logs/checkpoints"
+    ckpts = [f for f in os.listdir(ckpt_dir) if f.endswith(".ckpt")]
+    if not ckpts:
+        raise FileNotFoundError("No checkpoint found in logs/checkpoints")
+
+    def parse_val_loss(fname):
+        try:
+            return float(fname.split("val_loss=")[1].replace(".ckpt", ""))
+        except Exception:
+            return float("inf")
+
+    return os.path.join(ckpt_dir, min(ckpts, key=parse_val_loss))
+
+
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# TEST 1 â€” Imports
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 section("TEST 1: Imports")
 try:
     from src.data.spei import calculate_water_deficit, calculate_spei, classify_spei
     from src.data.preprocess import preprocess_pipeline
-    from src.models.dataset import create_dataset, MAX_ENCODER_LENGTH, MAX_PREDICTION_LENGTH
+    from src.models.dataset import (
+        MODEL_GROUP_COL,
+        MAX_ENCODER_LENGTH,
+        MAX_PREDICTION_LENGTH,
+        create_dataset,
+    )
     from src.training.train import train_pipeline
     from src.evaluation.metrics import load_model, calculate_metrics
     print(f"{PASS} All src imports OK")
-    print(f"{PASS} MAX_ENCODER_LENGTH = {MAX_ENCODER_LENGTH}  (expected 90)")
+    print(f"{PASS} MAX_ENCODER_LENGTH = {MAX_ENCODER_LENGTH}  (expected 30)")
     print(f"{PASS} MAX_PREDICTION_LENGTH = {MAX_PREDICTION_LENGTH}  (expected 30)")
-    assert MAX_ENCODER_LENGTH == 90, "MAX_ENCODER_LENGTH should be 90!"
+    assert MAX_ENCODER_LENGTH == 30, "MAX_ENCODER_LENGTH should be 30!"
     assert MAX_PREDICTION_LENGTH == 30, "MAX_PREDICTION_LENGTH should be 30!"
 except Exception as e:
     print(f"{FAIL} Import error: {e}")
     traceback.print_exc()
     sys.exit(1)
 
-# ─────────────────────────────────────────────────────────────
-# TEST 2 — classify_spei canonical thresholds
-# ─────────────────────────────────────────────────────────────
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# TEST 2 â€” classify_spei canonical thresholds
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 section("TEST 2: classify_spei thresholds")
 cases = [
     (-2.5, "Kekeringan Ekstrem"),
@@ -67,17 +139,28 @@ for val, expected in cases:
 if all_ok:
     print(f"{PASS} All 9 SPEI classes correct")
 
-# ─────────────────────────────────────────────────────────────
-# TEST 3 — Processed data integrity
-# ─────────────────────────────────────────────────────────────
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# TEST 3 â€” Processed data integrity
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 section("TEST 3: Processed data integrity")
 try:
-    data = pd.read_parquet("data/processed/spei_dataset.parquet")
+    PROCESSED_DATA_PATH = _resolve_processed_data_path()
+    print(f"{PASS} Using processed dataset: {PROCESSED_DATA_PATH}")
+    data = pd.read_parquet(PROCESSED_DATA_PATH)
     data["year"] = data["time"].dt.year
 
     # Required columns
     required_cols = [
-        "time", "time_idx", "location_id", "elevation",
+        "schema_version",
+        "time",
+        "time_idx",
+        "city_id",
+        "super_node_id",
+        "location_id",
+        "selected_node_count",
+        "elevation",
+        "lat",
+        "lon",
         "SPEI_3", "SPEI_6", "SPEI_3_diff", "water_deficit",
         "precipitation_log", "et0_fao_evapotranspiration",
         "soil_moisture", "temperature_2m_max", "temperature_2m_min",
@@ -96,18 +179,55 @@ try:
 
     # Shape
     n_rows, n_cols = data.shape
-    print(f"{PASS} Shape: {n_rows} rows × {n_cols} cols")
+    print(f"{PASS} Shape: {n_rows} rows Ã— {n_cols} cols")
 
-    # Locations
-    locs = sorted(data.location_id.unique())
-    expected_locs = ["Bojonegoro", "Lamongan", "Nganjuk", "Ngawi", "Tuban"]
-    tag = PASS if locs == expected_locs else FAIL
-    print(f"  {tag}  Locations: {locs}")
+    # Schema/cardinality checks (dynamic, not hardcoded city list)
+    n_city = data["city_id"].nunique()
+    n_entity = data[MODEL_GROUP_COL].nunique()
+    tag_city = PASS if n_city >= 1 else FAIL
+    tag_entity = PASS if n_entity >= 1 else FAIL
+    print(f"  {tag_city}  city_id nunique = {n_city} (expected >=1)")
+    print(f"  {tag_entity}  {MODEL_GROUP_COL} nunique = {n_entity} (expected >=1)")
+    tag_card = PASS if n_entity == n_city else FAIL
+    print(f"  {tag_card}  model entities == cities ({n_entity} == {n_city}) for 1 super-node per city")
+    tag_sel = PASS if (data["selected_node_count"] == 5).all() else FAIL
+    print(f"  {tag_sel}  selected_node_count == 5 for all rows")
+
+    # Group uniqueness checks (post-aggregation)
+    dup_entity_time = data.duplicated(subset=[MODEL_GROUP_COL, "time_idx"]).sum()
+    tag_dup = PASS if dup_entity_time == 0 else FAIL
+    print(f"  {tag_dup}  duplicate ({MODEL_GROUP_COL}, time_idx) = {dup_entity_time}")
+    dup_city_time = data.duplicated(subset=["city_id", "time_idx"]).sum()
+    tag_dup_city = PASS if dup_city_time == 0 else FAIL
+    print(f"  {tag_dup_city}  duplicate (city_id, time_idx) = {dup_city_time}")
+    tag_group_name = PASS if MODEL_GROUP_COL == "super_node_id" else FAIL
+    print(f"  {tag_group_name}  MODEL_GROUP_COL == 'super_node_id'")
+
+    # Optional raw schema-v2 uniqueness checks (pre-aggregation)
+    raw_path = "data/raw/weather_history_east_java.parquet"
+    if os.path.exists(raw_path):
+        raw = pd.read_parquet(raw_path)
+        if {"schema_version", "node_id", "raw_node_id", "time"}.issubset(raw.columns):
+            dup_node_time = raw.duplicated(subset=["node_id", "time"]).sum()
+            dup_raw_time = raw.duplicated(subset=["raw_node_id", "time"]).sum()
+            tag_raw = PASS if (dup_node_time == 0 and dup_raw_time == 0) else FAIL
+            print(f"  {tag_raw}  raw duplicate (node_id,time)={dup_node_time}, (raw_node_id,time)={dup_raw_time}")
+        else:
+            print(f"  {WARN}  raw file exists but not schema v2; uniqueness check skipped")
+
+    # Reproducibility artifacts from preprocessing
+    base_dir = os.path.dirname(PROCESSED_DATA_PATH) if PROCESSED_DATA_PATH else "data/processed"
+    meta_path = os.path.join(base_dir, "node_selection_v2.meta.json")
+    sel_path = os.path.join(base_dir, "node_selection_v2.parquet")
+    tag_meta = PASS if os.path.exists(meta_path) else FAIL
+    tag_sel_art = PASS if os.path.exists(sel_path) else FAIL
+    print(f"  {tag_meta}  selection metadata exists: {meta_path}")
+    print(f"  {tag_sel_art}  selection artifact exists: {sel_path}")
 
     # Date range
-    print(f"{PASS} Date range: {data.time.min().date()} → {data.time.max().date()}")
+    print(f"{PASS} Date range: {data.time.min().date()} -> {data.time.max().date()}")
 
-    # SPEI_3 distribution — should be approx N(0,1)
+    # SPEI_3 distribution â€” should be approx N(0,1)
     s3 = data.SPEI_3
     mean_ok = abs(s3.mean()) < 0.15
     std_ok  = abs(s3.std() - 1.0) < 0.15
@@ -122,8 +242,8 @@ try:
     print(f"{PASS} Train(<2023)={n_train}  Val(2023)={n_val}  Test(>=2024)={n_test}")
     assert n_test > 0, "No test data!"
 
-    # time_idx monotone per location
-    for loc, g in data.groupby("location_id"):
+    # time_idx monotone per model entity
+    for loc, g in data.groupby(MODEL_GROUP_COL):
         g_sorted = g.sort_values("time")
         diffs = g_sorted.time_idx.diff().dropna()
         if not (diffs >= 0).all():
@@ -135,9 +255,25 @@ except Exception as e:
     print(f"{FAIL} {e}")
     traceback.print_exc()
 
-# ─────────────────────────────────────────────────────────────
-# TEST 4 — TimeSeriesDataSet creation
-# ─────────────────────────────────────────────────────────────
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# TEST 4 â€” TimeSeriesDataSet creation
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# Dynamic cardinality check (>5 entities) for plotting utilities
+section("TEST 3B: Dynamic cardinality (>5 entities)")
+try:
+    from full_evaluation import _grid, _palette
+
+    entities = [f"ent_{i:02d}" for i in range(8)]
+    rows, cols = _grid(len(entities), max_cols=3)
+    pal = _palette(entities)
+    tag_grid = PASS if (rows * cols >= len(entities)) else FAIL
+    tag_pal = PASS if len(pal) == len(entities) else FAIL
+    print(f"  {tag_grid}  dynamic grid capacity rows*cols={rows*cols} for n={len(entities)}")
+    print(f"  {tag_pal}  dynamic palette size={len(pal)} for n={len(entities)}")
+except Exception as e:
+    print(f"{FAIL} {e}")
+    traceback.print_exc()
+
 section("TEST 4: TimeSeriesDataSet creation + dataloader")
 try:
     from pytorch_forecasting import TimeSeriesDataSet
@@ -154,11 +290,14 @@ try:
     print(f"  time_varying_known : {train_ds.time_varying_known_reals}")
     print(f"  time_varying_unkn  : {train_ds.time_varying_unknown_reals}")
 
-    # static_reals must contain elevation
-    tag = PASS if "elevation" in train_ds.static_reals else FAIL
-    print(f"  {tag}  elevation in static_reals")
-    tag = PASS if "elevation" not in train_ds.time_varying_known_reals else FAIL
-    print(f"  {tag}  elevation NOT in time_varying_known")
+    # static_reals must contain spatial constants
+    for feat in ["elevation", "lat", "lon"]:
+        tag = PASS if feat in train_ds.static_reals else FAIL
+        print(f"  {tag}  {feat} in static_reals")
+    tag = PASS if MODEL_GROUP_COL in train_ds.static_categoricals else FAIL
+    print(f"  {tag}  {MODEL_GROUP_COL} in static_categoricals")
+    tag = PASS if "city_id" in train_ds.static_categoricals else FAIL
+    print(f"  {tag}  city_id in static_categoricals")
 
     # key features present
     for feat in ["SPEI_6", "water_deficit", "SPEI_3", "SPEI_3_diff"]:
@@ -171,7 +310,7 @@ try:
     enc_shape = bx["encoder_cont"].shape
     dec_shape = bx["decoder_cont"].shape
     tgt_shape = by[0].shape
-    print(f"{PASS} Batch shapes — enc_cont:{enc_shape}, dec_cont:{dec_shape}, target:{tgt_shape}")
+    print(f"{PASS} Batch shapes â€” enc_cont:{enc_shape}, dec_cont:{dec_shape}, target:{tgt_shape}")
 
     has_nan = bx["encoder_cont"].isnan().any().item()
     tag = PASS if not has_nan else FAIL
@@ -188,24 +327,15 @@ except Exception as e:
     print(f"{FAIL} {e}")
     traceback.print_exc()
 
-# ─────────────────────────────────────────────────────────────
-# TEST 5 — Model loading + predictions
-# ─────────────────────────────────────────────────────────────
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# TEST 5 â€” Model loading + predictions
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 section("TEST 5: Model loading + inference")
 try:
     import os, torch
     from pytorch_forecasting import TemporalFusionTransformer
 
-    ckpt_dir = "logs/checkpoints"
-    ckpts = [f for f in os.listdir(ckpt_dir) if f.endswith(".ckpt")]
-
-    def parse_val_loss(fname):
-        try:
-            return float(fname.split("val_loss=")[1].replace(".ckpt", ""))
-        except:
-            return float("inf")
-
-    best_ckpt = os.path.join(ckpt_dir, min(ckpts, key=parse_val_loss))
+    best_ckpt = _resolve_checkpoint_path(PROCESSED_DATA_PATH)
     print(f"  Checkpoint: {best_ckpt}")
 
     model = TemporalFusionTransformer.load_from_checkpoint(best_ckpt, map_location="cpu")
@@ -221,7 +351,7 @@ try:
     print(f"  ckpt encoder_len  : {ckpt_encoder_len}")
     print(f"  ckpt pred_len     : {ckpt_pred_len}")
 
-    # Quick forward pass on test data — use checkpoint's encoder length
+    # Quick forward pass on test data â€” use checkpoint's encoder length
     test_data_local = data[data.year >= 2024].copy()
     train_data_local = data[data.year < 2024].copy()
     train_ds_eval = create_dataset(train_data_local,
@@ -234,7 +364,12 @@ try:
     print(f"  Test sequences    : {len(test_ds)}")
 
     with torch.no_grad():
-        preds = model.predict(test_loader, mode="raw", return_x=True)
+        preds = model.predict(
+            test_loader,
+            mode="raw",
+            return_x=True,
+            trainer_kwargs={"accelerator": "cpu", "devices": 1},
+        )
 
     p = preds.output.prediction.cpu()
     print(f"{PASS} Predictions shape: {p.shape}  (expected: [N, 30, 7])")
@@ -279,13 +414,17 @@ except Exception as e:
     print(f"{FAIL} {e}")
     traceback.print_exc()
 
-# ─────────────────────────────────────────────────────────────
-# TEST 6 — evaluate.py end-to-end (run_evaluation.py logic)
-# ─────────────────────────────────────────────────────────────
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# TEST 6 â€” evaluate.py end-to-end (run_evaluation.py logic)
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 section("TEST 6: evaluate.py end-to-end")
 try:
     from evaluate import evaluate_model
-    metrics = evaluate_model(checkpoint_path=best_ckpt, test_year_start=2024)
+    metrics = evaluate_model(
+        checkpoint_path=best_ckpt,
+        test_year_start=2024,
+        data_path=PROCESSED_DATA_PATH,
+    )
 
     ov = metrics["overall_raw"]
     print()
@@ -318,6 +457,7 @@ except Exception as e:
     print(f"{FAIL} {e}")
     traceback.print_exc()
 
-# ─────────────────────────────────────────────────────────────
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 section("PIPELINE TEST COMPLETE")
 print("Check output files in results/ for saved plots and CSVs.")
+

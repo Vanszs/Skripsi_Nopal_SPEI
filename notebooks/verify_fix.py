@@ -14,7 +14,7 @@ import pandas as pd
 from collections import defaultdict
 
 from pytorch_forecasting import TemporalFusionTransformer, TimeSeriesDataSet
-from src.models.dataset import create_dataset, MAX_ENCODER_LENGTH, MAX_PREDICTION_LENGTH
+from src.models.dataset import MODEL_GROUP_COL, create_dataset, MAX_ENCODER_LENGTH, MAX_PREDICTION_LENGTH
 
 print(f"PyTorch version: {torch.__version__}")
 print(f"CUDA available: {torch.cuda.is_available()}")
@@ -23,7 +23,10 @@ print(f"CUDA available: {torch.cuda.is_available()}")
 data = pd.read_parquet('../data/processed/spei_dataset.parquet')
 data['year'] = data['time'].dt.year
 
+entity_col = MODEL_GROUP_COL if MODEL_GROUP_COL in data.columns else "location_id"
+
 print(f"Dataset Shape: {data.shape}")
+print(f"Entity key: {entity_col}")
 print(f"Date Range: {data['time'].min()} to {data['time'].max()}")
 
 # Split: Train < 2023, Test >= 2023
@@ -59,9 +62,9 @@ model.eval()
 print("Model loaded successfully!")
 
 # 3. Generate Predictions (Rolling Window Ensemble)
-target_loc = 'Bojonegoro'
+target_loc = os.environ.get("TARGET_LOCATION", sorted(test_data[entity_col].astype(str).unique().tolist())[0])
 print(f"Filtering test data for location: {target_loc}")
-loc_test_data = test_data[test_data.location_id == target_loc].copy()
+loc_test_data = test_data[test_data[entity_col].astype(str) == target_loc].copy()
 loc_test_ds = TimeSeriesDataSet.from_dataset(train_ds, loc_test_data, predict=False, stop_randomization=True)
 loc_loader = loc_test_ds.to_dataloader(train=False, batch_size=128, num_workers=0)
 
