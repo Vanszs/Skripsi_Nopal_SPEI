@@ -49,7 +49,7 @@ class EpochSummaryCallback(Callback):
         )
 
 
-def _validate_training_schema(data: pd.DataFrame):
+def _validate_training_schema(data: pd.DataFrame, meta_path: str = None):
     required_cols = {
         "schema_version",
         "time",
@@ -73,9 +73,19 @@ def _validate_training_schema(data: pd.DataFrame):
     if data[MODEL_GROUP_COL].nunique() == 0:
         raise ValueError("No super_node_id found in processed data.")
 
-    bad_count = data.groupby("city_id")["selected_node_count"].max()
-    if not (bad_count == 5).all():
-        raise ValueError(f"selected_node_count must be 5 for all cities: {bad_count.to_dict()}")
+    # Determine expected top_k from meta or fallback to mode of selected_node_count
+    top_k = None
+    if meta_path and os.path.exists(meta_path):
+        with open(meta_path, "r", encoding="utf-8") as _f:
+            top_k = json.load(_f).get("top_k")
+    if top_k is None:
+        top_k = int(data["selected_node_count"].mode().iloc[0])
+
+    city_counts = data.groupby("city_id")["selected_node_count"].max()
+    if not (city_counts == top_k).all():
+        raise ValueError(
+            f"selected_node_count must be {top_k} for all cities: {city_counts.to_dict()}"
+        )
 
     dup_keys = data.duplicated(subset=[MODEL_GROUP_COL, "time"]).sum()
     if dup_keys:
@@ -99,6 +109,9 @@ def train_pipeline(
     suppress_library_warnings=True,
     strict_determinism=False,
     run_id=None,
+    allow_cpu=False,
+    accumulate_grad_batches=1,
+    precision="bf16-mixed",
 ):
     effective_run_id = run_id or datetime.now().strftime("%Y%m%d_%H%M%S")
     if suppress_library_warnings:
@@ -136,7 +149,8 @@ def train_pipeline(
 
     data = pd.read_parquet(data_path)
     data["year"] = pd.to_datetime(data["time"]).dt.year
-    _validate_training_schema(data)
+    meta_path = os.path.join(os.path.dirname(data_path), "node_selection_v2.meta.json")
+    _validate_training_schema(data, meta_path=meta_path)
 
     n_cities = data["city_id"].nunique()
     n_groups = data[MODEL_GROUP_COL].nunique()
@@ -187,6 +201,9 @@ def train_pipeline(
         hidden_continuous_size=hidden_continuous_size,
         learning_rate=learning_rate,
         weight_decay=weight_decay,
+        # Disable per-step prediction-figure logging: it calls .numpy() on
+        # bf16 tensors (unsupported by numpy). Scalar metric logging is unaffected.
+        log_interval=-1,
     )
 
     callbacks = [
@@ -202,18 +219,34 @@ def train_pipeline(
     ]
 
     accelerator = "gpu" if torch.cuda.is_available() else "cpu"
+    if accelerator == "cpu" and not allow_cpu:
+        raise RuntimeError(
+            "Production training requires GPU (CUDA not available). "
+            "Pass allow_cpu=True to override."
+        )
+    elif accelerator == "cpu" and allow_cpu:
+        warnings.warn("Running training on CPU — this is not recommended for production.")
     devices = 1
+    # NOTE: bf16-mixed (not 16-mixed/fp16) — TFT attention mask_bias is a large
+    # negative constant that overflows fp16 (max ~6.5e4). bfloat16 has fp32's
+    # exponent range, giving the same VRAM/tensor-core benefit without overflow.
     trainer = L.Trainer(
         max_epochs=max_epochs,
         accelerator=accelerator,
         devices=devices,
-        precision=32,
+        precision=precision,
         enable_model_summary=True,
         enable_progress_bar=False,
         gradient_clip_val=gradient_clip_val,
+        accumulate_grad_batches=accumulate_grad_batches,
         callbacks=callbacks,
         logger=TensorBoardLogger("logs/lightning_logs"),
     )
+
+    if torch.cuda.is_available():
+        print(f"Device: {accelerator} — {torch.cuda.get_device_name(0)}")
+    else:
+        print(f"Device: {accelerator}")
 
     print("Starting Training...")
     trainer.fit(model, train_dataloaders=train_loader, val_dataloaders=val_loader)
@@ -226,6 +259,8 @@ def train_pipeline(
         "data_path": data_path,
         "max_epochs": max_epochs,
         "batch_size": batch_size,
+        "precision": precision,
+        "accumulate_grad_batches": accumulate_grad_batches,
         "max_encoder_length": max_encoder_length,
         "learning_rate": learning_rate,
         "weight_decay": weight_decay,

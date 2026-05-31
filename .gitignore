@@ -30,5 +30,15 @@ env/
 debug_*.py
 inspect_results.py
 
-/lightning_logs/
+# Lightning & training logs
+lightning_logs/
+notebooks/lightning_logs/
+logs/lightning_logs/
 /logs
+
+# Pycache (recursive)
+**/__pycache__/
+*.pyc
+
+# Archived artifacts
+# (old checkpoints, stale eval runs, etc.)

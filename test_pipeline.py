@@ -391,13 +391,13 @@ try:
 
     # Prediction metrics
     from sklearn.metrics import mean_squared_error
-    actuals_raw = preds.x["decoder_target"].cpu().numpy()  # shape [N, 30]
+    actuals_normalized = preds.x["decoder_target"].cpu().numpy()  # shape [N, 30]
     p50_flat = p50.flatten()
-    act_flat  = actuals_raw.flatten()
-    min_len   = min(len(p50_flat), len(act_flat))
-    rmse = np.sqrt(mean_squared_error(act_flat[:min_len], p50_flat[:min_len]))
-    mae  = np.mean(np.abs(act_flat[:min_len] - p50_flat[:min_len]))
-    corr = np.corrcoef(act_flat[:min_len], p50_flat[:min_len])[0, 1]
+    act_flat  = actuals_normalized.flatten()
+    assert len(p50_flat) == len(act_flat), f"Length mismatch: pred={len(p50_flat)} actual={len(act_flat)}"
+    rmse = np.sqrt(mean_squared_error(act_flat, p50_flat))
+    mae  = np.mean(np.abs(act_flat - p50_flat))
+    corr = np.corrcoef(act_flat, p50_flat)[0, 1]
     print(f"{PASS} Quick test metrics (P50, raw):")
     print(f"  RMSE       : {rmse:.4f}")
     print(f"  MAE        : {mae:.4f}")

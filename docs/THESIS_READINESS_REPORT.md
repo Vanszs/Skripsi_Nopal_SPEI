@@ -1,7 +1,7 @@
 # Laporan Kesiapan Skripsi — TFT SPEI Forecasting
 
 > **Tanggal Audit**: 2026-03-08  
-> **Checkpoint Dievaluasi**: `enc30-epoch=1-val_loss=0.2892.ckpt`  
+> **Checkpoint Dievaluasi**: `enc30-epoch=1-val_loss=0.2892.ckpt` *(stale; checkpoint baru akan di-regenerate dengan enc=90, hidden=64, dropout=0.20, heads=2, hidden_continuous_size=10)*  
 > **Evaluasi Terakhir**: `results/full_eval_20260308_114448/`  
 > **Skor Keseluruhan**: ████░░░░░░ **42%**
 
@@ -23,7 +23,7 @@ Pipeline teknis sudah solid — data ingest, SPEI computation, TimeSeriesDataSet
 | Preprocessing & interpolasi | `src/data/preprocess.py` | Linear interpolation, feature engineering |
 | SPEI computation (Log-Logistic) | `src/data/spei.py` | fisk distribution, per-calendar-month calibration |
 | TimeSeriesDataSet builder | `src/models/dataset.py` | min=max encoder/pred, GroupNormalizer(transformation=None) |
-| TFT model builder | `src/models/tft.py` | QuantileLoss, output_size=7 |
+| TFT model builder | `src/models/tft.py` | QuantileLoss(quantiles=[0.1, 0.5, 0.9]), output_size=3 |
 | Training loop | `src/training/train.py` | Lightning, EarlyStopping, ModelCheckpoint |
 | Evaluasi step-0-only | `evaluate.py`, `full_evaluation.py` | Tanpa smoothing bias |
 | PICP P10–P90 | `full_evaluation.py` | Coverage probability benar |
@@ -91,9 +91,9 @@ Pipeline teknis sudah solid — data ingest, SPEI computation, TimeSeriesDataSet
 
 ### Penyebab Model Kalah Naive
 
-1. **Encoder terlalu pendek (30 hari)** — SPEI-3 dihitung dari rolling window 90 hari. Model hanya melihat 1/3 dari periode yang membentuk target. Seperti mencoba memprediksi rata-rata 3 bulan terakhir dengan hanya melihat 1 bulan.
+1. **Encoder sebelumnya terlalu pendek (30 hari, sekarang diperbaiki ke 90 hari)** — SPEI-3 dihitung dari rolling window 90 hari. Model hanya melihat 1/3 dari periode yang membentuk target. Seperti mencoba memprediksi rata-rata 3 bulan terakhir dengan hanya melihat 1 bulan.
 
-2. **Over-regularization** — `dropout=0.35` + `hidden=48` + `weight_decay=1e-4` terlalu ketat untuk mempelajari pola yang diperlukan. Model belajar "aman" dengan mendekati mean.
+2. **Over-regularization (konfigurasi lama)** — `dropout=0.35` + `hidden=48` + `weight_decay=1e-4` terlalu ketat. Konfigurasi baru (`dropout=0.20`, `hidden=64`, `attention_head_size=2`, `hidden_continuous_size=10`) dirancang untuk mengatasi masalah ini.
 
 3. **Variance compression** — Variance ratio prediksi vs aktual: Lamongan=0.38, Tuban=0.39, Bojonegoro=0.55. Model memprediksi hanya 38–55% variasi yang sebenarnya terjadi.
 

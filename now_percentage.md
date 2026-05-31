@@ -1,3 +1,5 @@
+> **STATUS: USANG/OUTDATED** -- digantikan oleh PLAN_FIX_ROBUST.md
+
 Read [](file:///d%3A/SKRIPSI/Skripsi_Nopal/test_pipeline.py#1-1), lines 1 to 30
 
 Read [](file:///d%3A/SKRIPSI/Skripsi_Nopal/docs)

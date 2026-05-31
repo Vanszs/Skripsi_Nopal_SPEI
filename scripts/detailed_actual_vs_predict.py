@@ -207,7 +207,9 @@ def main():
     
     log(f"Dataset Shape: {data.shape}")
     log(f"Period: {data['time'].min()} to {data['time'].max()}")
-    log(f"Locations: {data['location_id'].unique().tolist()}")
+    from src.models.dataset import MODEL_GROUP_COL as _MGC
+    _entity_col = _MGC if _MGC in data.columns else "location_id"
+    log(f"Entities ({_entity_col}): {data[_entity_col].unique().tolist()}")
     log(f"Target (SPEI_3) Stats:")
     log(f"  - Mean: {data['SPEI_3'].mean():.4f}")
     log(f"  - Std: {data['SPEI_3'].std():.4f}")
@@ -281,11 +283,10 @@ def main():
     log("=" * 70)
     
     # Get predictions with raw mode for quantiles
-    predictions_obj = model.predict(test_dataloader, mode="raw", return_x=True, return_y=True)
+    predictions_obj = model.predict(test_dataloader, mode="raw", return_x=True)
     
     raw_predictions = predictions_obj.output
     x = predictions_obj.x
-    y = predictions_obj.y
     
     # Extract prediction tensor
     if hasattr(raw_predictions, 'prediction'):
@@ -295,31 +296,14 @@ def main():
     else:
         preds = raw_predictions
     
-    # Extract actuals
-    if isinstance(y, tuple):
-        actuals = y[0]
-    else:
-        actuals = y
+    # Extract actuals from decoder_target (scale-consistent with mode='raw')
+    actuals = x["decoder_target"]
     
     log(f"Predictions Shape: {preds.shape}")
     log(f"  - Samples: {preds.shape[0]}")
     log(f"  - Horizons: {preds.shape[1]}")
     log(f"  - Quantiles: {preds.shape[2]}")
-    
-    if actuals is None:
-        log("WARNING: Actuals is None! Attempting alternative extraction...")
-        # Try to get actuals from dataloader directly
-        all_actuals = []
-        for batch_x, batch_y in test_dataloader:
-            if isinstance(batch_y, tuple):
-                all_actuals.append(batch_y[0])
-            else:
-                all_actuals.append(batch_y)
-        actuals = torch.cat(all_actuals, dim=0)
-        log(f"Actuals Shape (from dataloader): {actuals.shape}")
-    else:
-        log(f"Actuals Shape: {actuals.shape}")
-    
+    log(f"Actuals Shape: {actuals.shape}")
     log("")
     
     # 5. Overall Metrics
@@ -334,9 +318,7 @@ def main():
     pred_flat = p50.flatten().cpu().numpy()
     
     # Ensure same length
-    min_len = min(len(actual_flat), len(pred_flat))
-    actual_flat = actual_flat[:min_len]
-    pred_flat = pred_flat[:min_len]
+    assert len(actual_flat) == len(pred_flat), f"Length mismatch: actual={len(actual_flat)} pred={len(pred_flat)}"
     
     rmse = np.sqrt(np.mean((pred_flat - actual_flat) ** 2))
     mae = np.mean(np.abs(pred_flat - actual_flat))

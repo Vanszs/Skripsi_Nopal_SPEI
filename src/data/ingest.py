@@ -35,6 +35,9 @@ REQUIRED_VARIABLES = [
     "soil_moisture_0_to_7cm_mean",
     "temperature_2m_max",
     "temperature_2m_min",
+    "relative_humidity_2m_mean",
+    "shortwave_radiation_sum",
+    "wind_speed_10m_mean",
 ]
 
 
@@ -141,6 +144,9 @@ def fetch_node_data(node_meta, max_retries=3):
                 "soil_moisture": daily["soil_moisture_0_to_7cm_mean"],
                 "temperature_2m_max": daily["temperature_2m_max"],
                 "temperature_2m_min": daily["temperature_2m_min"],
+                "relative_humidity_2m_mean": daily["relative_humidity_2m_mean"],
+                "shortwave_radiation_sum": daily["shortwave_radiation_sum"],
+                "wind_speed_10m_mean": daily["wind_speed_10m_mean"],
             }
             lengths = {k: len(v) for k, v in df_data.items()}
             if len(set(lengths.values())) > 1:

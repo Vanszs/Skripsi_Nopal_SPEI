@@ -23,6 +23,8 @@ from src.data.preprocess import preprocess_pipeline
 from src.models.dataset import MODEL_GROUP_COL, create_dataset
 from src.training.train import train_pipeline
 
+TOP_K = 5  # Number of selected nodes per city in smoke fixture
+
 
 def generate_synthetic_raw(path: Path, seed: int = 42):
     rng = np.random.default_rng(seed)
@@ -61,6 +63,9 @@ def generate_synthetic_raw(path: Path, seed: int = 42):
                         "soil_moisture": float(0.28 + 0.04 * np.sin(day / 20) + rng.normal(0, 0.01)),
                         "temperature_2m_max": float(31 + 2 * np.sin(day / 50) + rng.normal(0, 0.5)),
                         "temperature_2m_min": float(22 + 1.5 * np.cos(day / 45) + rng.normal(0, 0.4)),
+                        "relative_humidity_2m_mean": float(78 + 8 * np.sin(day / 35) + rng.normal(0, 1.0)),
+                        "shortwave_radiation_sum": float(18 + 4 * np.cos(day / 38) + rng.normal(0, 0.6)),
+                        "wind_speed_10m_mean": float(9 + 2 * np.sin(day / 42) + rng.normal(0, 0.4)),
                     }
                 )
     df = pd.DataFrame(rows)
@@ -88,7 +93,7 @@ def main():
         output_path=str(proc_path),
         selection_artifact_path=str(sel_path),
         selection_metadata_path=str(sel_meta),
-        top_k=5,
+        top_k=TOP_K,
         seed=args.seed,
     )
 
@@ -99,7 +104,8 @@ def main():
     checks = {
         "raw_node_id_time_unique": int(raw.duplicated(subset=["node_id", "time"]).sum()) == 0,
         "processed_group_time_unique": int(processed.duplicated(subset=[MODEL_GROUP_COL, "time"]).sum()) == 0,
-        "selected_node_count_eq_5": bool((processed["selected_node_count"] == 5).all()),
+        "selected_node_count_eq_5": bool((processed["selected_node_count"] == TOP_K).all()),
+        # SYNTHETIC smoke fixture uses 8 cities (distinct from production's 5) to ensure >5 entities
         "entity_count_gt_5": int(processed[MODEL_GROUP_COL].nunique()) > 5,
         "dataset_sequence_count_gt_0": len(ds) > 0,
         "selection_metadata_exists": sel_meta.exists(),

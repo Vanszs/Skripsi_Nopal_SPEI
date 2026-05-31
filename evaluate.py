@@ -74,13 +74,34 @@ def _checkpoint_from_run_config():
 
 
 def evaluate_model(
-    checkpoint_path="logs/checkpoints/enc90-epoch=3-val_loss=0.1956.ckpt",
+    checkpoint_path=None,
     test_year_start=2024,
     data_path="data/processed/spei_dataset.parquet",
 ):
     print("=" * 60)
     print("TFT SPEI FORECASTING - EVALUATION")
     print("=" * 60)
+
+    # L1: resolve checkpoint dynamically if not provided
+    if checkpoint_path is None:
+        checkpoint_path = _checkpoint_from_run_config()
+    if checkpoint_path is None:
+        import re as _re
+        ckpt_dir = Path("logs/checkpoints")
+        if ckpt_dir.exists():
+            ckpts = sorted(ckpt_dir.glob("*.ckpt"))
+            scored = []
+            for p in ckpts:
+                m = _re.search(r"val_loss=(\d+\.\d+)", p.name)
+                if m:
+                    scored.append((float(m.group(1)), str(p)))
+            if scored:
+                scored.sort(key=lambda x: x[0])
+                checkpoint_path = scored[0][1]
+            elif ckpts:
+                checkpoint_path = str(ckpts[-1])
+        if checkpoint_path is None:
+            raise FileNotFoundError("No checkpoint found. Provide --checkpoint or train first.")
 
     if not os.path.exists(data_path):
         raise FileNotFoundError(f"Processed dataset not found: {data_path}")
@@ -435,7 +456,7 @@ def evaluate_model(
 if __name__ == "__main__":
     import argparse
 
-    default_ckpt = _checkpoint_from_run_config() or "logs/checkpoints/enc90-epoch=0-val_loss=0.2000.ckpt"
+    default_ckpt = _checkpoint_from_run_config()
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--checkpoint",

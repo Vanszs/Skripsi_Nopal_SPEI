@@ -19,6 +19,9 @@ WEATHER_COLS = [
     "soil_moisture",
     "temperature_2m_max",
     "temperature_2m_min",
+    "relative_humidity_2m_mean",
+    "shortwave_radiation_sum",
+    "wind_speed_10m_mean",
 ]
 
 
@@ -58,11 +61,17 @@ def _validate_raw_schema(df):
 
 
 def _interpolate_per_node(df):
+    import warnings
     dfs = []
     for raw_node_id, group in df.groupby("raw_node_id", sort=True):
         group = group.sort_values("time").copy()
         # Forward-only fill to avoid leaking future values into historical rows.
-        group[WEATHER_COLS] = group[WEATHER_COLS].ffill()
+        group[WEATHER_COLS] = group[WEATHER_COLS].ffill(limit=7)
+        remaining_nans = group[WEATHER_COLS].isna().sum().sum()
+        if remaining_nans > 0:
+            warnings.warn(
+                f"Node {raw_node_id}: {remaining_nans} NaNs remain after ffill(limit=7)."
+            )
         dfs.append(group)
     out = pd.concat(dfs, ignore_index=True)
     return out
@@ -266,8 +275,9 @@ def preprocess_pipeline(
         group = group.sort_values("time").copy()
         group["water_deficit"] = calculate_water_deficit(group)
         indexed = group.set_index("time")
-        group["SPEI_3"] = calculate_spei(indexed["water_deficit"], scale=3).values
-        group["SPEI_3_diff"] = group["SPEI_3"].diff().fillna(0.0)
+        fit_mask = indexed.index <= pd.Timestamp(selection_end_date)
+        group["SPEI_3"] = calculate_spei(indexed["water_deficit"], scale=3, fit_mask=fit_mask).values
+        group["SPEI_3_diff"] = group["SPEI_3"].diff()
         processed.append(group)
     df_processed = pd.concat(processed, ignore_index=True)
 

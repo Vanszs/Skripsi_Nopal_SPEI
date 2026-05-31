@@ -49,6 +49,9 @@ def _validate_schema(data: pd.DataFrame):
         "soil_moisture",
         "temperature_2m_max",
         "temperature_2m_min",
+        "relative_humidity_2m_mean",
+        "shortwave_radiation_sum",
+        "wind_speed_10m_mean",
         "month_sin",
         "month_cos",
         "city_id",
@@ -100,6 +103,9 @@ def create_dataset(
         "soil_moisture": ArrayStandardScaler(),
         "temperature_2m_max": ArrayStandardScaler(),
         "temperature_2m_min": ArrayStandardScaler(),
+        "relative_humidity_2m_mean": ArrayStandardScaler(),
+        "shortwave_radiation_sum": ArrayStandardScaler(),
+        "wind_speed_10m_mean": ArrayStandardScaler(),
     }
 
     training = TimeSeriesDataSet(
@@ -111,7 +117,7 @@ def create_dataset(
         max_encoder_length=max_encoder_length,
         min_prediction_length=max_prediction_length,
         max_prediction_length=max_prediction_length,
-        static_categoricals=[MODEL_GROUP_COL, "city_id"],
+        static_categoricals=[MODEL_GROUP_COL],
         static_reals=["elevation", "lat", "lon"],
         time_varying_known_reals=[
             "time_idx",
@@ -127,6 +133,9 @@ def create_dataset(
             "soil_moisture",
             "temperature_2m_max",
             "temperature_2m_min",
+            "relative_humidity_2m_mean",
+            "shortwave_radiation_sum",
+            "wind_speed_10m_mean",
         ],
         target_normalizer=EncoderNormalizer(transformation=None),
         scalers=real_scalers,

@@ -137,7 +137,7 @@ def _write_md_report(metrics: dict, eval_dir: Path, enc: int, elapsed_train: flo
         f"",
         "---",
         "",
-        "## Overall Metrics (Test Set ? 2024)",
+        "## Overall Metrics (Test Set — 2024) — t+1 (step-0)",
         "",
         "| Metric | Model | Naive Persistence | Keterangan |",
         "|--------|-------|-------------------|------------|",
@@ -149,9 +149,27 @@ def _write_md_report(metrics: dict, eval_dir: Path, enc: int, elapsed_train: flo
         f"| PICP (P10?P90) | **{picp:.4f}** | ? | nominal = 0.80 |" if picp is not None else "| PICP | N/A | ? | |",
         f"| Skill Score | **{skill:.1f}%** | 0% | positif = model beats naive |" if skill is not None else "| Skill Score | N/A | | |",
         "",
-        "> **PICP nominal:** P10?P90 interval diharapkan mencakup 80% data aktual.",
-        "> **Skill Score:** `(1 - RMSE_model / RMSE_naive) ? 100%`",
+        "> **PICP nominal:** P10—P90 interval diharapkan mencakup 80% data aktual.",
+        "> **Skill Score:** `(1 - RMSE_model / RMSE_naive) × 100%`",
         "",
+    ]
+
+    # M1: overall_all_horizons + skill_score
+    ov_all = metrics.get("overall_all_horizons", {})
+    ss = metrics.get("skill_score")
+    if ov_all:
+        lines += [
+            "### All-Horizon Aggregate (pooled h=1..30)",
+            "",
+            f"| RMSE | MAE | R² | Pearson r | Skill Score |",
+            f"|------|-----|----|-----------|-------------|",
+            f"| {ov_all.get('rmse', 'N/A'):.4f} | {ov_all.get('mae', 'N/A'):.4f} | "
+            f"{ov_all.get('r2', 'N/A'):.4f} | {ov_all.get('pearson_r', 'N/A'):.4f} | "
+            f"{ss:.4f} |" if ss is not None else "| N/A | N/A | N/A | N/A | N/A |",
+            "",
+        ]
+
+    lines += [
         "---",
         "",
         "## Per-Location Metrics",

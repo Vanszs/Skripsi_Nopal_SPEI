@@ -1,3 +1,5 @@
+> **STATUS: USANG/OUTDATED** -- digantikan oleh PLAN_FIX_ROBUST.md
+
 ﻿# Plan Fix & Audit Lanjutan â€” TFT SPEI Forecasting
 
 > Dibuat: 2026-03-08  

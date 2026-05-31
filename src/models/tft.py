@@ -12,6 +12,7 @@ def build_tft_model(
     learning_rate: float = 3e-4,
     reduce_on_plateau_patience: int = 8,
     weight_decay: float = 1e-4,
+    log_interval: int = 10,
     **kwargs
 ):
     """
@@ -48,7 +49,7 @@ def build_tft_model(
         hidden_continuous_size=hidden_continuous_size,
         output_size=3,
         loss=QuantileLoss(quantiles=[0.1, 0.5, 0.9]),
-        log_interval=10,
+        log_interval=log_interval,
         reduce_on_plateau_patience=reduce_on_plateau_patience,
         weight_decay=weight_decay,
         **kwargs

@@ -1,4 +1,4 @@
-﻿# ðŸ“š DOKUMENTASI LENGKAP PROJECT
+# ðŸ“š DOKUMENTASI LENGKAP PROJECT
 ## Peramalan Multiâ€‘Horizon Indeks Kekeringan Lahan Pertanian (SPEI) Menggunakan Temporal Fusion Transformer (TFT)
 
 **Versi:** 1.0  
@@ -19,7 +19,7 @@
 |----------|------------|
 | **Peramalan Multiâ€‘Horizon** | Prediksi 30 hari ke depan secara berurutan |
 | **Indeks Kekeringan (SPEIâ€‘3)** | Indeks kekeringan berbasis iklim (3â€‘month scale) |
-| **Sentra Padi Jatim** | Lokasi studi: City_A, City_B, City_C, City_D, City_E |
+| **Sentra Padi Jatim** | Lokasi studi: Lamongan, Ngawi, Bojonegoro, Tuban, Nganjuk |
 | **Temporal Fusion Transformer** | Model deep learning untuk time series multivariat dan interpretable |
 
 ## 1.3 Tujuan Project
@@ -44,25 +44,28 @@ Membangun sistem peramalan SPEIâ€‘3 multiâ€‘horizon untuk mendukung mo
 | **Format** | Parquet |
 | **Lokasi** | data/processed/spei_dataset.parquet |
 | **Rentang Waktu** | 2005â€‘06â€‘29 s.d. 2025â€‘01â€‘01 |
-| **Lokasi** | City_A, City_B, City_C, City_D, City_E |
+| **Lokasi** | Lamongan, Ngawi, Bojonegoro, Tuban, Nganjuk |
 
 ## 2.2 Variabel Utama (dari Data)
 
 | Variabel | Deskripsi |
 |----------|-----------|
-| SPEI_3 | Target utama (SPEIâ€‘3) |
-| precipitation_log | Curah hujan (transformasi log) |
+| SPEI_3 | Target utama (SPEI-3) |
+| precipitation_sum | Curah hujan harian |
+| et0_fao_evapotranspiration | Evapotranspirasi potensial |
+| soil_moisture | Kelembapan tanah |
 | temperature_2m_max | Suhu maksimum |
 | temperature_2m_min | Suhu minimum |
-| soil_moisture | Kelembapan tanah |
-| et0_fao_evapotranspiration | Evapotranspirasi potensial |
-| month_sin, month_cos | Fitur musiman (cyclical encoding) |
+| relative_humidity_2m_mean | Kelembapan relatif rata-rata |
+| shortwave_radiation_sum | Radiasi gelombang pendek |
+| wind_speed_10m_mean | Kecepatan angin rata-rata |
 | time_idx | Indeks waktu kontinyu |
+| month_sin, month_cos | Fitur musiman (cyclical encoding) |
 | elevation | Elevasi lokasi |
 | location_id | ID lokasi (categorical) |
 
-**Variabel Tambahan (auto-generated oleh TFT):**
-- `relative_time_idx`: Indeks waktu relatif (generated via `add_relative_time_idx=True`)
+**Total variabel input cuaca: 8** (precipitation_sum, et0_fao_evapotranspiration, soil_moisture, temperature_2m_max, temperature_2m_min, relative_humidity_2m_mean, shortwave_radiation_sum, wind_speed_10m_mean).
+
 - `target_scales`, `encoder_length`: Features tambahan untuk TFT
 
 ---
@@ -80,10 +83,16 @@ Input multivariat â†’ Variable Selection Network (VSN) â†’ LSTM Encode
 
 | Parameter | Nilai |
 |-----------|-------|
-| Encoder length | 30 hari |
+| Encoder length | 90 hari |
 | Prediction length | 30 hari |
-| Quantiles | P10, P50, P90 |
-| Checkpoint | logs/checkpoints/epoch=8-val_loss=0.37.ckpt |
+| Quantiles | P10, P50, P90 (`[0.1, 0.5, 0.9]`) |
+| output_size | 3 |
+| hidden_size | 64 |
+| dropout | 0.20 |
+| attention_head_size | 2 |
+| hidden_continuous_size | 10 |
+| Training precision | 16-mixed (GPU) |
+| Checkpoint | *(akan di-regenerate dengan enc=90)* |
 
 ## 3.3 Skema Split
 
@@ -334,7 +343,7 @@ Tingkat kepentingan variabel input terhadap prediksi SPEI-3 yang dihasilkan dari
 - SPEI_3 (Standardized Precipitation Evapotranspiration Index - 3 month scale)
 
 **Static Categoricals:**
-- location_id (City_A, City_B, City_C, City_D, City_E)
+- location_id (Lamongan, Ngawi, Bojonegoro, Tuban, Nganjuk)
 
 **Time-Varying Known Reals (diketahui di masa depan):**
 - time_idx (indeks waktu continuous)
@@ -344,21 +353,24 @@ Tingkat kepentingan variabel input terhadap prediksi SPEI-3 yang dihasilkan dari
 
 **Time-Varying Unknown Reals (hanya diketahui di masa lalu):**
 - SPEI_3 (nilai historis sebagai feature)
-- precipitation_log (log transform curah hujan)
+- precipitation_sum (curah hujan harian)
 - et0_fao_evapotranspiration (evapotranspirasi potensial)
 - soil_moisture (kelembapan tanah)
 - temperature_2m_max (suhu maksimum)
 - temperature_2m_min (suhu minimum)
+- relative_humidity_2m_mean (kelembapan relatif rata-rata)
+- shortwave_radiation_sum (radiasi gelombang pendek)
+- wind_speed_10m_mean (kecepatan angin rata-rata)
 
 **Normalizer:**
 - GroupNormalizer per location_id, transformation=None (SPEI sudah normalized)
 
 ## 11.2 Encoder-Decoder Configuration
-- MAX_ENCODER_LENGTH: 30 hari (history window)
+- MAX_ENCODER_LENGTH: 90 hari (history window)
 - MAX_PREDICTION_LENGTH: 30 hari (forecast horizon)
-- min_encoder_length: 15 hari
+- min_encoder_length: 45 hari
 - min_prediction_length: 1 hari
-- Quantile outputs: P10, P50, P90 (indices [1, 3, 5])
+- Quantile outputs: P10, P50, P90 (quantiles=[0.1, 0.5, 0.9], output_size=3)
 - Additional features: add_relative_time_idx, add_target_scales, add_encoder_length
 - allow_missing_timesteps: True
 

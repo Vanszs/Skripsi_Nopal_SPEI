@@ -41,6 +41,11 @@ sys.path.insert(0, str(ROOT))
 
 from pytorch_forecasting import TemporalFusionTransformer, TimeSeriesDataSet
 from src.data.spei import classify_spei
+from src.evaluation.calibration import (
+    apply_calibration,
+    compute_picp,
+    fit_per_city_interval_calibration,
+)
 from src.models.dataset import MODEL_GROUP_COL, create_dataset
 
 EXPECTED_SCHEMA_VERSION = 2
@@ -362,6 +367,114 @@ def run(checkpoint_path: str, out_dir: Path, log_fp):
     df_clf_summary.to_csv(out_dir / "classification_summary.csv", index=False)
     df.to_csv(out_dir / "predictions_full.csv", index=False)
 
+    # M1: overall_all_horizons - pool all (pred, actual) across all horizons
+    all_h_actuals, all_h_preds = [], []
+    for h in range(pred_len):
+        for key, pred_val in horizon_preds[h].items():
+            actual_val = actual_lookup.get(key)
+            if actual_val is not None:
+                all_h_actuals.append(actual_val)
+                all_h_preds.append(pred_val)
+    overall_all_horizons = _metrics(np.array(all_h_actuals), np.array(all_h_preds)) if len(all_h_actuals) >= 2 else {}
+
+    # M1: skill_score
+    skill_score = None
+    if overall.get("rmse") is not None and naive_overall.get("rmse"):
+        skill_score = 1.0 - overall["rmse"] / naive_overall["rmse"]
+
+    # GAP-A: Calibration (fit on validation year==2023, apply to test)
+    val_data = data[data.year == 2023].copy()
+    val_preds_rows = []
+    if not val_data.empty:
+        for ent in entities:
+            loc_val = val_data[val_data[entity_col].astype(str) == ent].copy()
+            if loc_val.empty:
+                continue
+            try:
+                loc_val_ds = TimeSeriesDataSet.from_dataset(train_ds, loc_val, predict=False, stop_randomization=True)
+                val_loader = loc_val_ds.to_dataloader(train=False, batch_size=64, num_workers=0)
+                raw_val = model.predict(val_loader, mode="raw", return_x=True, trainer_kwargs={"accelerator": "cpu", "devices": 1})
+                pv_val = raw_val.output.prediction.cpu().numpy()
+                tv_val = raw_val.x["decoder_time_idx"].cpu().numpy()
+                city_id = str(loc_val["city_id"].iloc[0])
+                for i in range(pv_val.shape[0]):
+                    t_idx = int(tv_val[i, 0])
+                    val_preds_rows.append({
+                        "time_idx": t_idx, entity_col: ent, "city_id": city_id,
+                        "pred_p10": float(pv_val[i, 0, qidx["p10"]]),
+                        "pred_p50": float(pv_val[i, 0, qidx["p50"]]),
+                        "pred_p90": float(pv_val[i, 0, qidx["p90"]]),
+                    })
+            except Exception:
+                continue
+
+    calibration_result = {}
+    if val_preds_rows:
+        df_val_preds = pd.DataFrame(val_preds_rows)
+        df_val_actual = val_data[[entity_col, "city_id", "time_idx", "SPEI_3"]].rename(columns={"SPEI_3": "actual"})
+        df_val_merged = pd.merge(df_val_actual, df_val_preds, on=[entity_col, "city_id", "time_idx"], how="inner")
+        if len(df_val_merged) > 10:
+            cal_factors = fit_per_city_interval_calibration(df_val_merged, city_col="city_id")
+            picp_before_overall, picp_before_city = compute_picp(df.rename(columns={}), city_col="city_id")
+            df_calibrated = apply_calibration(df.copy(), cal_factors, city_col="city_id")
+            picp_after_overall, picp_after_city = compute_picp(df_calibrated, city_col="city_id")
+            calibration_result = {
+                "factors": cal_factors,
+                "picp_before_overall": picp_before_overall,
+                "picp_after_overall": picp_after_overall,
+                "picp_per_city_before": picp_before_city,
+                "picp_per_city_after": picp_after_city,
+            }
+
+    # GAP-B: Event detection (drought SPEI <= -1.5 primary, -1.0 secondary)
+    def _event_metrics(actual_arr, pred_arr, threshold):
+        actual_event = actual_arr <= threshold
+        pred_event = pred_arr <= threshold
+        hits = int(np.sum(actual_event & pred_event))
+        misses = int(np.sum(actual_event & ~pred_event))
+        false_alarms = int(np.sum(~actual_event & pred_event))
+        pod = hits / (hits + misses) if (hits + misses) > 0 else None
+        far = false_alarms / (hits + false_alarms) if (hits + false_alarms) > 0 else None
+        precision = hits / (hits + false_alarms) if (hits + false_alarms) > 0 else None
+        recall = pod
+        f1 = (2 * precision * recall / (precision + recall)) if (precision and recall and (precision + recall) > 0) else None
+        csi = hits / (hits + misses + false_alarms) if (hits + misses + false_alarms) > 0 else None
+        return {"hits": hits, "misses": misses, "false_alarms": false_alarms, "pod": pod, "far": far, "f1": f1, "csi": csi}
+
+    event_detection = {}
+    for thresh_name, thresh_val in [("severe_1.5", -1.5), ("moderate_1.0", -1.0)]:
+        # Overall (pooled all-horizon)
+        ev_overall = _event_metrics(np.array(all_h_actuals), np.array(all_h_preds), thresh_val)
+        # Per city (step-0 from df)
+        ev_per_city = {}
+        for city in cities:
+            sub = df[df["city_id"].astype(str) == city]
+            ev_per_city[city] = _event_metrics(sub["actual"].values, sub["pred_p50"].values, thresh_val)
+        event_detection[thresh_name] = {"overall_all_horizons": ev_overall, "per_city_step0": ev_per_city}
+
+    # GAP-B: Event detection plot
+    try:
+        fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+        for ax_i, (thresh_name, thresh_val) in enumerate([("severe_1.5", -1.5), ("moderate_1.0", -1.0)]):
+            ax = axes[ax_i]
+            met_names = ["pod", "far", "f1", "csi"]
+            x = np.arange(len(cities))
+            width = 0.2
+            for j, mn in enumerate(met_names):
+                vals = [event_detection[thresh_name]["per_city_step0"][c].get(mn) or 0.0 for c in cities]
+                ax.bar(x + j * width, vals, width, label=mn.upper())
+            ax.set_xticks(x + 1.5 * width)
+            ax.set_xticklabels(cities, rotation=15, ha="right")
+            ax.set_ylim(0, 1.05)
+            ax.set_title(f"Event Detection (SPEI<={thresh_val})")
+            ax.legend(fontsize=8)
+            ax.grid(True, alpha=0.3, axis="y")
+        fig.tight_layout()
+        fig.savefig(out_dir / "12_event_detection.png", dpi=150, bbox_inches="tight")
+        plt.close(fig)
+    except Exception as exc:
+        _log(f"12_event_detection plot skipped: {exc}", log_fp)
+
     metrics_payload = {
         "schema_version": EXPECTED_SCHEMA_VERSION,
         "entity_key": entity_col,
@@ -373,6 +486,9 @@ def run(checkpoint_path: str, out_dir: Path, log_fp):
         "test_period": "year >= 2024",
         "prediction_length": pred_len,
         "overall": overall,
+        "overall_note": "t+1 (step-0)",
+        "overall_all_horizons": overall_all_horizons,
+        "skill_score": skill_score,
         "picp_overall": picp_overall,
         "picp_per_entity": picp_per_entity,
         "picp_per_city": picp_per_city,
@@ -385,6 +501,8 @@ def run(checkpoint_path: str, out_dir: Path, log_fp):
         "naive_per_entity": naive_per_entity,
         "naive_per_city": naive_per_city,
         "per_horizon": horizon_rows,
+        "calibration": calibration_result,
+        "event_detection": event_detection,
     }
     with open(out_dir / "metrics_summary.json", "w", encoding="utf-8") as f:
         json.dump(metrics_payload, f, indent=2)
