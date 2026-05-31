@@ -9,6 +9,53 @@ Aturan eksekusi: edit semua sekaligus, lalu **audit ulang persis prosedur awal**
 
 ---
 
+## STATUS EKSEKUSI (update 2026-05-31, pasca commit 0dfd47e + audit ulang swarm + run test_pipeline)
+
+Legend: ✅ selesai & terverifikasi · 🟡 selesai tapi belum tervalidasi runtime · ⛔ belum/terblokir · 🐞 menimbulkan bug/regresi baru
+
+### ✅ SUDAH (terverifikasi: syntax/import/LSP bersih + baca kode)
+- **C1** SPEI fit train-only (`spei.py` `fit_mask`, `preprocess.py:278`) — leakage-safe. *(tapi lihat 🐞 W1)*
+- **Q4/H1** 8 variabel ter-wire di `ingest.py` REQUIRED_VARIABLES + `preprocess.py` WEATHER_COLS + `dataset.py` (TVU=11). Konsisten di **kode**.
+- **S1/S2** `dataset.py` `static_categoricals=[super_node_id]` saja (city_id dibuang). *(tapi lihat 🐞 W2)*
+- **GAP-A** `src/evaluation/calibration.py` kalibrasi per-kota fit-on-validation (leakage-safe), terintegrasi `full_evaluation.py:411`.
+- **GAP-B** deteksi event POD/FAR/F1/CSI ambang −1.5/−1.0 (`full_evaluation.py`). *(tapi lihat 🐞 W3)*
+- **M1** `overall_all_horizons` + `skill_score` + label `overall`="t+1 (step-0)".
+- **M2** except SPEI dipersempit + warning. **M3** `SPEI_3_diff=.diff()` tanpa fillna(0). **M4** `ffill(limit=7)`+warning.
+- **H3** `train.py` baca `top_k` dari meta (tak ada hardcode ==5).
+- **GPU** `train.py` `precision="bf16-mixed"` + guard CUDA (`allow_cpu`) + `log_interval=-1` + `accumulate_grad_batches` + log device.
+- **Backup** `results_archive_enc30_20260531/` dibuat; raw 5-var diarsip.
+- Push commit `0dfd47e` → origin/main.
+
+### ⛔ BELUM / TERBLOKIR
+- **C2 (retrain enc=90 8-var)** ⛔ TERBLOKIR kuota Open-Meteo: ingest baru 19/45 node (Nganjuk+Tuban hilang). Lanjut via `scripts/resume_8var_pipeline.py` saat kuota reset.
+- **R1** `data/processed/spei_dataset.parquet` MASIH versi LAMA (5-var + masih ada SPEI_6) → belum di-regenerate. Pipeline **gagal end-to-end** sampai ini dibereskan (TEST 4 FAIL).
+- **Regenerate `results/`** ⛔ menunggu model 8-var nyata.
+- **Audit ulang final "robust"** ⛔ belum bisa disertifikasi (lihat 🐞).
+
+### 🐞 REGRESI RE-AUDIT — SUDAH DIPERBAIKI (commit 395e54d)
+- **R2 [CRITICAL]** ✅ FIXED — `src/models/tft.py::load_tft_checkpoint()` (safe fallback `weights_only=False` utk ckpt lokal tepercaya); 6 situs load produksi dirutekan ulang. Terverifikasi: ckpt nyata berhasil di-load.
+- **W1 [CRITICAL]** ✅ FIXED — `spei.py` hard-clamp `clip(lower=eps)` DIHAPUS; andalkan ekstrapolasi CDF fisk. Terverifikasi: 259 ekstrem/555 parah event tetap ada, C1 invariance 0.0, tanpa NaN.
+- **W2 [HIGH]** ✅ FIXED — `test_pipeline.py` kini assert `city_id` TIDAK di static_categoricals (S1/S2).
+- **B2/B3 [HIGH]** ✅ FIXED — `full_evaluation.py::_with_warmup()` prepend enc_len ke slice test+val (metrik/PICP tak bias).
+- **W3 [MEDIUM]** ✅ FIXED — plot event `None→NaN` (bukan 0.0).
+- **C3 [MEDIUM]** ✅ FIXED — floor kalibrasi 0.1→0.5. Terverifikasi: PICP 0.22→0.80 (sintetik).
+- **C4 [MEDIUM]** ✅ FIXED — `max_epochs` diselaraskan ke 60 (train.py + main.py).
+- Stale ckpt (21) diarsip ke `logs/archive_stale_ckpts_20260531/`; `logs/checkpoints/` bersih agar run produksi tak ambigu.
+
+### 🐞 (catatan asli re-audit — sudah ditindak di atas)
+- **R2 [CRITICAL runtime]** `load_from_checkpoint` patah di torch 2.7 (`weights_only=True` default tolak `EncoderNormalizer`). FAIL di: `full_evaluation.py:166`, `evaluate.py:127`, `test_pipeline.py:341`, `src/evaluation/metrics.py:8`, `src/visualization/generate_visualizations.py:93`, `scripts/detailed_actual_vs_predict.py:232`. Fix: `torch.serialization.add_safe_globals([EncoderNormalizer])` atau `weights_only=False`.
+- **W1 [CRITICAL] B1 — distorsi ekor SPEI** `spei.py:76` `shifted_month.clip(lower=eps)`: nilai kekeringan val/test lebih ekstrem dari min-train dipaksa ke eps → SPEI ekstrem identik. C1 menukar leakage dgn hilang info ekor (justru target deteksi kekeringan parah). Fix: jangan hard-clamp; biarkan ekor CDF fisk extrapolasi / PWM.
+- **W2 [HIGH] B5 — test usang** `test_pipeline.py:299` masih `assert "city_id" in static_categoricals` (dihapus S1/S2) → FAIL palsu permanen. Fix: hapus/balik assertion.
+- **B2/B3 [HIGH] warmup encoder hilang di eval** `full_evaluation.py:176` (test `year>=2024`) & `:386` (val `year==2023`) tanpa prepend 90 hari warmup (train.py pakai). ~90 hari pertama test/val tak terpakai → metrik & kalibrasi bias. Fix: prepend warmup spt `train.py` `val_start_idx`.
+- **W3 [MEDIUM] C2-plot** `full_evaluation.py:464` `.get(mn) or 0.0`: FAR `None` (kota tanpa event) jadi 0.0 = "sempurna palsu". Fix: None→NaN, skip bar.
+- **C3 [MEDIUM]** `calibration.py:29` floor 0.1 izinkan interval menyusut ekstrem. Fix: naikkan ke ~0.5.
+- **C4 [MEDIUM]** `max_epochs` tak konsisten: 80 (`train.py` default) vs 60 (`run_experiment`) vs 20 (script). Samakan.
+
+### CATATAN
+Cek statis (syntax/import/LSP/skema kode) **bersih**. Tidak ada output palsu/hardcoded/dummy. Tapi pipeline **belum robust runtime**: gagal end-to-end karena R1 (parquet lama) + R2 (load checkpoint). Sertifikasi "robust" ditunda sampai R1+R2+W1+W2+B2/B3 beres dan model 8-var terlatih.
+
+---
+
 ## 0. KEPUTUSAN TERKONFIRMASI (dari klarifikasi judul asli)
 
 Judul asli: **"Peramalan Multi-Horizon Indeks Kekeringan Lahan Pertanian (SPEI) di Sentra Padi Jawa Timur Menggunakan Temporal Fusion Transformer (TFT)"**.

@@ -42,3 +42,7 @@ logs/lightning_logs/
 
 # Archived artifacts
 # (old checkpoints, stale eval runs, etc.)
+*.ckpt
+logs/checkpoints/
+logs/archive_*/
+results_archive_*/
