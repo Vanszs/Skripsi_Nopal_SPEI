@@ -70,25 +70,32 @@ def calculate_spei(series, scale=3, fit_mask=None):
 
             shifted_data = valid_data + shift
 
-            # Apply the same train-derived shift to ALL rows of this month.
-            # NOTE: do NOT hard-clamp shifted_month to a positive floor — that would
-            # collapse the drought tail (val/test deficits below train-min all map to
-            # the same extreme SPEI), destroying severe-drought signal (W1). fisk.cdf
-            # is defined on (0, inf); values <= 0 yield cdf=0 -> clipped below to a
-            # small prob -> very negative (but distinct-ordered) SPEI, preserving the tail.
-            shifted_month = month_data + shift
-
             # Fit Log-Logistic (fisk) distribution — SPEI standard
             params = fisk.fit(shifted_data, floc=0)
 
-            # Calculate CDF on shifted data (transform applies to ALL rows).
-            # fisk.cdf returns 0 for non-positive inputs; the clip below keeps the
-            # z-transform finite while retaining monotonic ordering of the tail.
-            cdf = fisk.cdf(shifted_month, *params)
+            # Transform ALL rows to SPEI z-scores.
+            # W1: values below the fitted support (unprecedented droughts drier than
+            # the train record) must stay DISTINCT and ordered — they are the key
+            # target of severe-drought forecasting. fisk.cdf saturates to 0 there, and
+            # clipping the probability would map the whole deep tail to one z. Instead
+            # we extrapolate z LINEARLY below the lower support point x_eps (where
+            # cdf=eps_p), continuous at the boundary and monotone all the way down.
+            sm = np.asarray(month_data + shift, dtype=float)
+            eps_p = 1e-6
+            scale = float(params[-1]) if params[-1] > 0 else 1.0
+            x_eps = float(fisk.ppf(eps_p, *params))  # x where cdf == eps_p
+            z_floor = float(norm.ppf(eps_p))
 
-            # Clip CDF to avoid infinity in z-score transform
-            cdf = np.clip(cdf, 1e-6, 1 - 1e-6)
+            cdf = fisk.cdf(sm, *params)
+            cdf = np.clip(cdf, eps_p, 1 - eps_p)
             z_score = norm.ppf(cdf)
+
+            # Deep-tail extrapolation (methodological note: SPEI is undefined outside
+            # the fitted support; we extend monotonically to preserve ordering).
+            below = sm <= x_eps
+            if np.any(below):
+                z_score = np.asarray(z_score, dtype=float)
+                z_score[below] = z_floor + (sm[below] - x_eps) / scale
 
             spei_values.loc[month_mask] = z_score
 
