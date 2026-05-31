@@ -45,12 +45,11 @@ Perhitungan defisit air (P âˆ’ ETâ‚€),
 akumulasi rolling window,
 fitting distribusi Log-Logistic (fisk),
 standardisasi Z-score
-â†’ SPEI-3 dan SPEI-6;
+â†’ SPEI-3;
 note right
   Distribusi: Log-Logistic
   Kalibrasi: per bulan kalender
-  Window: 90 hari (SPEI-3),
-  180 hari (SPEI-6)
+  Window: 90 hari (SPEI-3)
 end note
 
 :== **Tahap 4: Pembentukan Dataset**
@@ -168,7 +167,7 @@ package "Input Data Multivariat" as inputs {
   component [Variabel Iklim\nprecipitation_log, ETâ‚€,\nsoil_moisture, temp_max,\ntemp_min, water_deficit] as climate_var
   component [Variabel Temporal\ntime_idx, month_sin,\nmonth_cos] as temporal_var
   component [Variabel Spasial\nlocation_id (kategorikal),\nelevation (kontinu)] as spatial_var
-  component [Variabel Target\nSPEI-3, SPEI-6] as target_var
+  component [Variabel Target\nSPEI-3] as target_var
 }
 
 ' === Modul Pembentukan Dataset ===
@@ -279,7 +278,7 @@ rectangle "**Timeline Input-Output**" as timeline {
   note bottom of encoder
     **Input Encoder (90 timestep):**
     â”€â”€ Time-Varying Unknown â”€â”€
-    â€¢ SPEI-3, SPEI-6
+    â€¢ SPEI-3
     â€¢ water_deficit
     â€¢ precipitation_log
     â€¢ et0_fao_evapotranspiration
@@ -574,8 +573,7 @@ stop
 | No | Nama Variabel | Jenis Variabel | Deskripsi | Sumber Data |
 |----|---------------|----------------|-----------|-------------|
 | 1 | SPEI-3 | Target / Unknown | Standardized Precipitation-Evapotranspiration Index skala 3 bulan (rolling window 90 hari), dihitung menggunakan distribusi Log-Logistic | Dihitung dari data Open-Meteo |
-| 2 | SPEI-6 | Unknown | Standardized Precipitation-Evapotranspiration Index skala 6 bulan (rolling window 180 hari) | Dihitung dari data Open-Meteo |
-| 3 | `precipitation_log` | Iklim / Unknown | Transformasi logaritmik presipitasi harian: log(1 + precipitation_sum) dalam satuan mm | Open-Meteo Archive API |
+| 2 | `precipitation_log` | Iklim / Unknown | Transformasi logaritmik presipitasi harian: log(1 + precipitation_sum) dalam satuan mm | Open-Meteo Archive API |
 | 4 | `et0_fao_evapotranspiration` | Iklim / Unknown | Evapotranspirasi referensi harian berdasarkan persamaan FAO Penman-Monteith (mm) | Open-Meteo Archive API |
 | 5 | `water_deficit` | Iklim / Unknown | Defisit air harian: presipitasi dikurangi evapotranspirasi referensi (P âˆ’ ETâ‚€) dalam mm | Dihitung dari data Open-Meteo |
 | 6 | `soil_moisture` | Iklim / Unknown | Rata-rata kelembaban tanah harian pada kedalaman 0â€“7 cm (mÂ³/mÂ³) | Open-Meteo Archive API |
@@ -599,9 +597,8 @@ stop
 | 4 | `month_sin` | Time-Varying Known Real | Komponen sinus dari encoding siklus bulanan. Bersama `month_cos`, menangkap pola musiman secara kontinu tanpa diskontinuitas. Dapat dihitung untuk masa depan. |
 | 5 | `month_cos` | Time-Varying Known Real | Komponen kosinus dari encoding siklus bulanan. Melengkapi `month_sin` untuk representasi siklus musiman yang lengkap. |
 | 6 | SPEI-3 | Time-Varying Unknown Real | Variabel target utama. Hanya tersedia pada window encoder (historis); model harus memprediksinya untuk window decoder (masa depan). |
-| 7 | SPEI-6 | Time-Varying Unknown Real | Indeks kekeringan skala lebih panjang sebagai fitur pendukung. Memberikan konteks tren kekeringan jangka menengah. |
-| 8 | `water_deficit` | Time-Varying Unknown Real | Defisit air harian (P âˆ’ ETâ‚€). Merupakan komponen fundamental dalam perhitungan SPEI dan indikator langsung keseimbangan air. |
-| 9 | `precipitation_log` | Time-Varying Unknown Real | Presipitasi harian setelah transformasi logaritmik. Mengurangi skewness distribusi presipitasi yang sangat miring ke kanan. |
+| 7 | `water_deficit` | Time-Varying Unknown Real | Defisit air harian (P − ET₀). Merupakan komponen fundamental dalam perhitungan SPEI dan indikator langsung keseimbangan air. |
+| 8 | `precipitation_log` | Time-Varying Unknown Real | Presipitasi harian setelah transformasi logaritmik. Mengurangi skewness distribusi presipitasi yang sangat miring ke kanan. |
 | 10 | `et0_fao_evapotranspiration` | Time-Varying Unknown Real | Evapotranspirasi referensi FAO. Merepresentasikan permintaan atmosfer terhadap air, dipengaruhi oleh radiasi dan suhu. |
 | 11 | `soil_moisture` | Time-Varying Unknown Real | Kelembaban tanah permukaan. Indikator kondisi hidrologi aktual yang merespons presipitasi dan evaporasi. |
 | 12 | `temperature_2m_max` | Time-Varying Unknown Real | Suhu udara maksimum harian. Memengaruhi laju evapotranspirasi dan intensitas kekeringan meteorologis. |

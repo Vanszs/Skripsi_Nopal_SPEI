@@ -435,7 +435,7 @@ def evaluate_model(
 if __name__ == "__main__":
     import argparse
 
-    default_ckpt = _checkpoint_from_run_config() or "logs/checkpoints/enc30-epoch=0-val_loss=0.2000.ckpt"
+    default_ckpt = _checkpoint_from_run_config() or "logs/checkpoints/enc90-epoch=0-val_loss=0.2000.ckpt"
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--checkpoint",

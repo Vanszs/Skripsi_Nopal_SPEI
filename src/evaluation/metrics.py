@@ -14,11 +14,10 @@ def calculate_metrics(actuals, predictions):
     """
     Calculate RMSE and MAE.
     predictions: Tensor of shape (batch, horizons, quantiles)
-    Default QuantileLoss quantiles: [0.02, 0.1, 0.25, 0.5, 0.75, 0.9, 0.98]
-    P50 (median) is at index 3.
+    QuantileLoss quantiles: [0.1, 0.5, 0.9]
+    P50 (median) is at index 1.
     """
-    # P50 (median) at index 3 of default QuantileLoss: [0.02, 0.1, 0.25, 0.5, 0.75, 0.9, 0.98]
-    p50_pred = predictions[:, :, 3]
+    p50_pred = predictions[:, :, 1]
     
     mse = torch.mean((actuals - p50_pred) ** 2)
     rmse = torch.sqrt(mse)

@@ -4,7 +4,7 @@ from pytorch_forecasting import TimeSeriesDataSet
 from pytorch_forecasting.data.encoders import EncoderNormalizer
 from sklearn.preprocessing import StandardScaler
 
-MAX_ENCODER_LENGTH = 30
+MAX_ENCODER_LENGTH = 90
 MAX_PREDICTION_LENGTH = 30
 MODEL_GROUP_COL = "super_node_id"
 
@@ -42,7 +42,6 @@ def _validate_schema(data: pd.DataFrame):
         "schema_version",
         "time_idx",
         "SPEI_3",
-        "SPEI_6",
         "SPEI_3_diff",
         "water_deficit",
         "precipitation_log",
@@ -94,7 +93,6 @@ def create_dataset(
         "lon": ArrayStandardScaler(),
         "month_sin": ArrayStandardScaler(),
         "month_cos": ArrayStandardScaler(),
-        "SPEI_6": ArrayStandardScaler(),
         "SPEI_3_diff": ArrayStandardScaler(),
         "water_deficit": ArrayStandardScaler(),
         "precipitation_log": ArrayStandardScaler(),
@@ -122,7 +120,6 @@ def create_dataset(
         ],
         time_varying_unknown_reals=[
             "SPEI_3",
-            "SPEI_6",
             "SPEI_3_diff",
             "water_deficit",
             "precipitation_log",

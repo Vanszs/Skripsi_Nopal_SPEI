@@ -30,7 +30,7 @@ OUTPUT_DIR = "results/actual_vs_predict_analysis"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 TIMESTAMP = datetime.now().strftime('%Y%m%d_%H%M%S')
 OUTPUT_FILE = os.path.join(OUTPUT_DIR, f"detailed_analysis_{TIMESTAMP}.txt")
-PREFERRED_ENCODER = 30
+PREFERRED_ENCODER = 90
 
 warnings.filterwarnings(
     "ignore",
@@ -53,7 +53,7 @@ def log(message: str = ""):
         f.write(str(message) + "\n")
 
 
-def _resolve_checkpoint(checkpoint_dir: str, preferred_encoder: int = 30) -> str:
+def _resolve_checkpoint(checkpoint_dir: str, preferred_encoder: int = 90) -> str:
     run_cfg = os.path.join("logs", "run_config.json")
     if os.path.exists(run_cfg):
         try:
@@ -78,11 +78,11 @@ def _resolve_checkpoint(checkpoint_dir: str, preferred_encoder: int = 30) -> str
         return os.path.join(checkpoint_dir, min(preferred, key=parse_val_loss))
     return os.path.join(checkpoint_dir, min(checkpoints, key=parse_val_loss))
 
-def calculate_quantile_coverage(actuals, predictions, quantile_idx_low=1, quantile_idx_high=5):
+def calculate_quantile_coverage(actuals, predictions, quantile_idx_low=0, quantile_idx_high=2):
     """
     Calculate quantile coverage (Prediction Interval Coverage Probability - PICP)
     predictions: shape (batch, horizon, quantiles)
-    Default: P10 (idx=1) and P90 (idx=5) for 80% interval
+    Default: P10 (idx=0) and P90 (idx=2) for 80% interval
     """
     p_low = predictions[:, :, quantile_idx_low]
     p_high = predictions[:, :, quantile_idx_high]
@@ -91,7 +91,7 @@ def calculate_quantile_coverage(actuals, predictions, quantile_idx_low=1, quanti
     coverage = within_interval.mean().item()
     return coverage
 
-def calculate_interval_sharpness(predictions, quantile_idx_low=1, quantile_idx_high=5):
+def calculate_interval_sharpness(predictions, quantile_idx_low=0, quantile_idx_high=2):
     """
     Calculate interval sharpness (average interval width)
     Narrower intervals are sharper (better if coverage is maintained)
@@ -102,7 +102,7 @@ def calculate_interval_sharpness(predictions, quantile_idx_low=1, quantile_idx_h
     interval_width = (p_high - p_low).mean().item()
     return interval_width
 
-def calculate_calibration_error(actuals, predictions, quantiles=[0.02, 0.1, 0.25, 0.5, 0.75, 0.9, 0.98]):
+def calculate_calibration_error(actuals, predictions, quantiles=[0.1, 0.5, 0.9]):
     """
     Calculate calibration error for each quantile
     A well-calibrated model should have X% of observations below the X-th quantile prediction
@@ -118,7 +118,7 @@ def calculate_calibration_error(actuals, predictions, quantiles=[0.02, 0.1, 0.25
         }
     return calibration
 
-def calculate_metrics_per_horizon(actuals, predictions, horizons, quantile_idx_p50=3):
+def calculate_metrics_per_horizon(actuals, predictions, horizons, quantile_idx_p50=1):
     """
     Calculate metrics for each forecast horizon separately
     """
@@ -146,7 +146,7 @@ def calculate_metrics_per_horizon(actuals, predictions, horizons, quantile_idx_p
     
     return pd.DataFrame(horizon_metrics)
 
-def analyze_drought_classification(actuals, predictions, quantile_idx_p50=3):
+def analyze_drought_classification(actuals, predictions, quantile_idx_p50=1):
     """
     Analyze drought event classification accuracy using canonical SPEI thresholds
     from src.data.spei (McKee et al., 1993 / WMO standard).
@@ -235,9 +235,7 @@ def main():
     quantiles = [float(q) for q in getattr(model.loss, "quantiles", [0.1, 0.5, 0.9])]
     q_idx = {
         "p10": int(np.argmin(np.abs(np.array(quantiles) - 0.10))),
-        "p25": int(np.argmin(np.abs(np.array(quantiles) - 0.25))),
         "p50": int(np.argmin(np.abs(np.array(quantiles) - 0.50))),
-        "p75": int(np.argmin(np.abs(np.array(quantiles) - 0.75))),
         "p90": int(np.argmin(np.abs(np.array(quantiles) - 0.90))),
     }
     log(f"Checkpoint encoder length : {ckpt_enc_len}")
@@ -364,18 +362,14 @@ def main():
     
     # Prediction Interval Coverage
     coverage_80 = calculate_quantile_coverage(actuals, preds, q_idx["p10"], q_idx["p90"])
-    coverage_50 = calculate_quantile_coverage(actuals, preds, q_idx["p25"], q_idx["p75"])
-    
+
     sharpness_80 = calculate_interval_sharpness(preds, q_idx["p10"], q_idx["p90"])
-    sharpness_50 = calculate_interval_sharpness(preds, q_idx["p25"], q_idx["p75"])
     
     log("Prediction Interval Coverage Probability (PICP):")
     log(f"  80% Interval (P10-P90): {coverage_80:.4f} (Expected: 0.80)")
-    log(f"  50% Interval (P25-P75): {coverage_50:.4f} (Expected: 0.50)")
     log("")
     log("Interval Sharpness (Average Width):")
     log(f"  80% Interval: {sharpness_80:.4f}")
-    log(f"  50% Interval: {sharpness_50:.4f}")
     log("")
     
     # Calibration
@@ -483,13 +477,9 @@ def main():
                 "sample_id": i,
                 "horizon": h + 1,
                 "actual": actuals[i, h].item(),
-                "pred_p02": preds[i, h, 0].item() if preds.shape[2] > 0 else np.nan,
                 "pred_p10": preds[i, h, q_idx["p10"]].item(),
-                "pred_p25": preds[i, h, q_idx["p25"]].item(),
                 "pred_p50": preds[i, h, q_idx["p50"]].item(),
-                "pred_p75": preds[i, h, q_idx["p75"]].item(),
                 "pred_p90": preds[i, h, q_idx["p90"]].item(),
-                "pred_p98": preds[i, h, -1].item(),
             })
     
     export_df = pd.DataFrame(export_data)

@@ -104,9 +104,9 @@ try:
     from src.training.train import train_pipeline
     from src.evaluation.metrics import load_model, calculate_metrics
     print(f"{PASS} All src imports OK")
-    print(f"{PASS} MAX_ENCODER_LENGTH = {MAX_ENCODER_LENGTH}  (expected 30)")
+    print(f"{PASS} MAX_ENCODER_LENGTH = {MAX_ENCODER_LENGTH}  (expected 90)")
     print(f"{PASS} MAX_PREDICTION_LENGTH = {MAX_PREDICTION_LENGTH}  (expected 30)")
-    assert MAX_ENCODER_LENGTH == 30, "MAX_ENCODER_LENGTH should be 30!"
+    assert MAX_ENCODER_LENGTH == 90, "MAX_ENCODER_LENGTH should be 90!"
     assert MAX_PREDICTION_LENGTH == 30, "MAX_PREDICTION_LENGTH should be 30!"
 except Exception as e:
     print(f"{FAIL} Import error: {e}")
@@ -161,7 +161,7 @@ try:
         "elevation",
         "lat",
         "lon",
-        "SPEI_3", "SPEI_6", "SPEI_3_diff", "water_deficit",
+        "SPEI_3", "SPEI_3_diff", "water_deficit",
         "precipitation_log", "et0_fao_evapotranspiration",
         "soil_moisture", "temperature_2m_max", "temperature_2m_min",
         "month_sin", "month_cos",
@@ -300,7 +300,7 @@ try:
     print(f"  {tag}  city_id in static_categoricals")
 
     # key features present
-    for feat in ["SPEI_6", "water_deficit", "SPEI_3", "SPEI_3_diff"]:
+    for feat in ["water_deficit", "SPEI_3", "SPEI_3_diff"]:
         tag = PASS if feat in train_ds.time_varying_unknown_reals else FAIL
         print(f"  {tag}  {feat} in time_varying_unknown_reals")
 
@@ -347,7 +347,7 @@ try:
     print(f"  learning_rate     : {model.hparams.learning_rate}")
 
     ckpt_encoder_len = int(getattr(model.hparams, "max_encoder_length", 90))
-    ckpt_pred_len    = int(getattr(model.hparams, "max_prediction_length", 30))
+    ckpt_pred_len = int(getattr(model.hparams, "max_prediction_length", 30))
     print(f"  ckpt encoder_len  : {ckpt_encoder_len}")
     print(f"  ckpt pred_len     : {ckpt_pred_len}")
 
@@ -372,22 +372,19 @@ try:
         )
 
     p = preds.output.prediction.cpu()
-    print(f"{PASS} Predictions shape: {p.shape}  (expected: [N, 30, 7])")
+    print(f"{PASS} Predictions shape: {p.shape}  (expected: [N, 30, 3])")
 
-    # Check quantile dimension = 7
-    tag = PASS if p.shape[2] == 7 else FAIL
-    print(f"  {tag}  Quantile dim = {p.shape[2]}  (expected 7)")
+    tag = PASS if p.shape[2] == 3 else FAIL
+    print(f"  {tag}  Quantile dim = {p.shape[2]}  (expected 3)")
 
-    # Check P50 index=3 range sensible for SPEI
-    p50 = p[:, :, 3].numpy()
+    p50 = p[:, :, 1].numpy()
     p50_min, p50_max = p50.min(), p50.max()
     in_range = (-5 < p50_min) and (p50_max < 5)
     tag = PASS if in_range else WARN
     print(f"  {tag}  P50 range: [{p50_min:.3f}, {p50_max:.3f}]  (expected within -5..5)")
 
-    # Monotone quantiles: P10 < P50 < P90 should hold on average
-    p10 = p[:, :, 1].numpy()
-    p90 = p[:, :, 5].numpy()
+    p10 = p[:, :, 0].numpy()
+    p90 = p[:, :, 2].numpy()
     crossing = ((p10 > p50) | (p50 > p90)).mean()
     tag = PASS if crossing < 0.05 else WARN
     print(f"  {tag}  Quantile crossing rate P10>P50 or P50>P90: {crossing:.3%}  (expected <5%)")

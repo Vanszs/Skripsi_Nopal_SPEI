@@ -2,13 +2,13 @@
 
 ## 1. Objek dan Lingkup Proyek
 
-Objek penelitian pada proyek ini adalah sistem peramalan kekeringan berbasis indeks **SPEI-3** (Standardized Precipitation Evapotranspiration Index, skala 3 bulan) dengan horizon prediksi **30 hari**. Fokus utama sistem bukan sekadar memprediksi curah hujan, tetapi memodelkan kondisi keseimbangan air (surplus-defisit) yang lebih relevan untuk pemantauan kekeringan.
+Objek penelitian pada proyek ini adalah sistem peramalan kekeringan berbasis indeks **SPEI-3** (Standardized Precipitation Evapotranspiration Index, skala 3 bulan) dengan encoder window **90 hari** (3 bulan, sesuai skala SPEI-3) dan horizon prediksi **30 hari**. Fokus utama sistem bukan sekadar memprediksi curah hujan, tetapi memodelkan kondisi keseimbangan air (surplus-defisit) yang lebih relevan untuk pemantauan kekeringan.
 
-Secara spasial, studi dibatasi pada lima wilayah di Jawa Timur, yaitu **Bojonegoro, Lamongan, Nganjuk, Ngawi, dan Tuban**. Secara temporal, data yang diproses saat ini mencakup periode **2005-01-01 hingga 2026-01-01** (data harian). Batasan ini sengaja dipilih agar model dibangun pada data historis panjang, namun tetap dievaluasi pada periode modern (2024 ke atas) yang merepresentasikan penggunaan operasional.
+Secara spasial, studi dibatasi pada lima wilayah di Jawa Timur, yaitu **Bojonegoro** (-7.155, 111.88), **Lamongan** (-7.128, 112.316), **Nganjuk** (-7.604, 111.905), **Ngawi** (-7.403, 111.445), dan **Tuban** (-6.895, 112.045). Konfigurasi koordinat pusat kota disimpan dalam `data/config/city_centers.json`. Secara temporal, data yang diproses mencakup periode **2005-01-01 hingga 2026-01-01** (data harian). Batasan ini sengaja dipilih agar model dibangun pada data historis panjang, namun tetap dievaluasi pada periode modern (2024 ke atas) yang merepresentasikan penggunaan operasional.
 
-Arsitektur spasial yang digunakan adalah **super-node per kota**. Setiap kota tidak lagi direpresentasikan oleh satu titik tunggal, tetapi melalui proses dua tahap: (1) membentuk kandidat node grid di sekitar pusat kota, lalu (2) memilih lima node paling representatif dan mengagregasikannya menjadi satu entitas model (super-node). Pendekatan ini dipilih karena data iklim pada satu titik dapat bersifat noisy; dengan agregasi node yang secara perilaku mirip, sistem menjadi lebih robust tanpa kehilangan konteks lokal kota.
+Arsitektur spasial yang digunakan adalah **super-node per kota**. Setiap kota tidak lagi direpresentasikan oleh satu titik tunggal, tetapi melalui proses dua tahap: (1) membentuk 9 kandidat node grid di sekitar pusat kota menggunakan offset tetap (`DEFAULT_NODE_OFFSETS`), lalu (2) memilih lima node paling representatif dan mengagregasikannya menjadi satu entitas model (super-node). Pendekatan ini dipilih karena data iklim pada satu titik dapat bersifat noisy; dengan agregasi node yang secara perilaku mirip, sistem menjadi lebih robust tanpa kehilangan konteks lokal kota.
 
-Konteks penggunaan sistem adalah **dukungan analisis risiko kekeringan** untuk pemantauan tren kelembapan-kekeringan jangka pendek (30 hari), bukan untuk pengambilan keputusan hidrologi tingkat bendungan secara langsung. Dengan demikian, output utama sistem adalah seri prediksi SPEI dan probabilitas rentang ketidakpastian (quantile), yang kemudian dapat diinterpretasikan ke kelas kondisi kering-normal-basah.
+Konteks penggunaan sistem adalah **dukungan analisis risiko kekeringan** untuk pemantauan tren kelembapan-kekeringan jangka pendek (30 hari), bukan untuk pengambilan keputusan hidrologi tingkat bendungan secara langsung. Dengan demikian, output utama sistem adalah seri prediksi SPEI dan probabilitas rentang ketidakpastian (quantile P10/P50/P90), yang kemudian dapat diinterpretasikan ke kelas kondisi kering-normal-basah.
 
 ## 2. Jenis dan Sumber Data
 
@@ -23,7 +23,21 @@ Data yang digunakan merupakan **data sekunder time series multivariat** dengan r
   - `temperature_2m_max`
   - `temperature_2m_min`
 
-Konfigurasi kota diambil dari berkas lokal `data/config/city_centers.json`, kemudian sistem membangun kandidat grid node menggunakan offset spasial tetap di sekitar pusat kota. Hasil struktur data saat ini adalah sebagai berikut:
+Konfigurasi kota diambil dari berkas lokal `data/config/city_centers.json`, kemudian sistem membangun kandidat grid node menggunakan offset spasial tetap di sekitar pusat kota. Offset yang digunakan (`DEFAULT_NODE_OFFSETS` di `src/data/ingest.py` baris 16–26) adalah:
+
+| Indeks | Lat Offset | Lon Offset | Keterangan |
+|--------|-----------|-----------|------------|
+| n00 | 0.00 | 0.00 | Pusat kota |
+| n01 | +0.12 | 0.00 | Utara (~13 km) |
+| n02 | -0.12 | 0.00 | Selatan (~13 km) |
+| n03 | 0.00 | +0.12 | Timur (~13 km) |
+| n04 | 0.00 | -0.12 | Barat (~13 km) |
+| n05 | +0.08 | +0.08 | Timur Laut |
+| n06 | +0.08 | -0.08 | Barat Laut |
+| n07 | -0.08 | +0.08 | Tenggara |
+| n08 | -0.08 | -0.08 | Barat Daya |
+
+Hasil struktur data saat ini adalah sebagai berikut:
 
 - **Raw dataset**: `data/raw/weather_history_east_java.parquet`
   - Jumlah baris: **345.195**
@@ -51,8 +65,8 @@ Pipeline dirancang agar **reproducible**, **leakage-safe**, dan dapat dievaluasi
 Tahap ingest dimulai dari daftar pusat kota. Untuk setiap kota, sistem membentuk 9 kandidat node menggunakan pola offset tetap (`DEFAULT_NODE_OFFSETS`). Setiap node diberi identitas deterministik dan collision-safe:
 
 1. `node_local_id` dibentuk dari indeks offset (`n00`, `n01`, dst.).
-2. `node_id` dibangun dari kombinasi `city_id + node_local_id + hash(lat,lon)`.
-3. Data harian tiap node diambil dari Open-Meteo API dengan mekanisme retry terhadap error jaringan, rate limit (HTTP 429), dan server error (5xx).
+2. `node_id` dibangun dari format `"{city_id}__{node_local_id}__{coord_token}"` di mana `coord_token` adalah 8 karakter pertama SHA-1 hash dari `"{lat:.6f},{lon:.6f}"` (baris 75–78 `src/data/ingest.py`). Skema ini menjamin identitas deterministik dan collision-safe.
+3. Data harian tiap node diambil dari Open-Meteo API dengan mekanisme retry: maksimum 6 percobaan (baris 202), sleep `max(1, int(Retry-After))` untuk HTTP 429, sleep `3*(attempt+1)` untuk HTTP 5xx, dan sleep `2*(attempt+1)` untuk exception umum.
 
 Alasan desain ini adalah menjaga dua hal sekaligus: cakupan spasial memadai (lebih dari satu titik per kota) dan konsistensi identitas node agar tidak terjadi pencampuran sequence antar-node.
 
@@ -69,29 +83,29 @@ Langkah operasional:
    Nilai variabel cuaca diisi dengan **forward fill** per `raw_node_id`. Forward-only dipilih agar nilai masa depan tidak bocor ke masa lalu.
 
 3. **Seleksi node berbasis kemiripan (train-only)**  
-   Seleksi node dilakukan hanya pada data hingga `2022-12-31` (`selection_end_date`).  
-   Untuk setiap node di suatu kota:
-   - Dibangun profil node dari seri variabel cuaca.
-   - Dibangun profil kota pembanding dengan skema **leave-one-node-out** (node yang dinilai tidak ikut rata-rata pembanding).
-   - Dihitung `behavior_score` dari rerata korelasi antar-variabel cuaca.
-   - Dihitung `distance_score = 1/(1+jarak_km)` terhadap pusat kota.
-   - Dibentuk `hybrid_score = 0.7*behavior_score + 0.3*distance_score`.
+    Seleksi node dilakukan hanya pada data hingga `2022-12-31` (`SELECTION_END_DATE`, baris 12 `src/data/preprocess.py`).  
+    Untuk setiap node di suatu kota:
+    - Dibangun profil node dari seri 5 variabel cuaca (`WEATHER_COLS`).
+    - Dibangun profil kota pembanding dengan skema **leave-one-node-out** (node yang dinilai tidak ikut rata-rata pembanding).
+    - Dihitung `behavior_score` dari rerata Pearson correlation antar-variabel cuaca (`np.nanmean(corr_scores)`); jika kosong, diisi `-1.0` (baris 89–99 `src/data/preprocess.py`).
+    - Dihitung `distance_score = 1/(1+jarak_km)` terhadap pusat kota menggunakan jarak haversine (baris 102–103).
+    - Dibentuk `hybrid_score = 0.7*behavior_score + 0.3*distance_score` (baris 104).
 
 4. **Pemilihan top-5 deterministik**  
-   Node dipilih berdasarkan urutan stabil: `hybrid_score desc`, `behavior_score desc`, `distance_score desc`, `raw_node_id asc`.  
-   Seed dan fingerprint metadata disimpan agar hasil seleksi dapat direplikasi.
+    Node dipilih berdasarkan urutan stabil: `hybrid_score desc`, `behavior_score desc`, `distance_score desc`, `raw_node_id asc`. `DEFAULT_TOP_K = 5` (baris 13 `src/data/preprocess.py`). Seed dan fingerprint metadata (SHA-256) disimpan agar hasil seleksi dapat direplikasi.
 
 5. **Agregasi menjadi super-node**  
-   Lima node terpilih per kota digabung per `(city_id, time)` dengan agregasi mean untuk variabel cuaca dan atribut spasial (`lat`, `lon`, `elevation`).  
-   Hasilnya diberi `super_node_id = SN_<city_id>` dan `selected_node_count = 5`.
+    Lima node terpilih per kota digabung per `(city_id, time)` dengan agregasi mean untuk variabel cuaca dan atribut spasial (`lat`, `lon`, `elevation`).  
+    Hasilnya diberi `super_node_id` dengan format `f"SN_{city_id}"` (baris 259 `src/data/preprocess.py`) dan `selected_node_count = 5`.
 
 6. **Feature engineering akhir**  
-   Setelah super-node terbentuk, sistem menghitung:
-   - `water_deficit`
-   - `SPEI_3`, `SPEI_6`
-   - `SPEI_3_diff`
-   - `time_idx`, `month_sin`, `month_cos`
-   - `precipitation_log`
+     Setelah super-node terbentuk, sistem menghitung (baris 267–279 `src/data/preprocess.py`):
+     - `water_deficit = precipitation_sum - et0_fao_evapotranspiration` (baris 267)
+     - `SPEI_3` melalui fitting distribusi Fisk (log-logistic) per bulan kalender (baris 269)
+     - `SPEI_3_diff = SPEI_3.diff().fillna(0.0)` (baris 270)
+     - `time_idx = (time - time.min()).dt.days` (baris 275)
+     - `month_sin = sin(2*pi*month/12)`, `month_cos = cos(2*pi*month/12)` (baris 277–278)
+     - `precipitation_log = log1p(precipitation_sum)` (baris 279)
 
 7. **Quality gate akhir**  
    Sistem memastikan tidak ada duplikasi `(super_node_id, time)`, tidak ada pelanggaran `selected_node_count`, dan membersihkan NaN/inf.
@@ -113,16 +127,16 @@ Implementasi dibagi modular:
 
 - `src/data/ingest.py`: akuisisi data node-level.
 - `src/data/preprocess.py`: seleksi node train-only + agregasi super-node + fitur SPEI.
-- `src/models/dataset.py`: pembentukan `TimeSeriesDataSet` dengan `group_ids = super_node_id`.
-- `src/models/tft.py`: konstruksi arsitektur TFT (`output_size=7` quantile).
-- `src/training/train.py`: training, checkpointing, dan logging run metadata.
+- `src/models/dataset.py`: pembentukan `TimeSeriesDataSet` dengan `group_ids = super_node_id`, `MAX_ENCODER_LENGTH = 90`.
+- `src/models/tft.py`: konstruksi arsitektur TFT (`output_size=3` quantile, `QuantileLoss(quantiles=[0.1, 0.5, 0.9])`).
+- `src/training/train.py`: training, checkpointing, dan logging run metadata (default `max_encoder_length=90`, `hidden_size=64`, `dropout=0.20`, `attention_head_size=2`).
 - `evaluate.py` / `full_evaluation.py`: evaluasi numerik, baseline comparison, visualisasi.
 - `main.py`: orkestrasi ingest → preprocess → train dengan guard skema versi.
 
 ### 3.5 Proses Prediksi
 
-Model memproduksi prediksi quantile untuk horizon 30 hari (`P02, P10, P25, P50, P75, P90, P98`).  
-Untuk evaluasi point forecast, digunakan median (`P50`).  
+Model memproduksi prediksi quantile untuk horizon 30 hari dengan 3 quantile: **P10** (quantile 0.1), **P50** (quantile 0.5, median), dan **P90** (quantile 0.9).  
+Untuk evaluasi point forecast, digunakan median (`P50`, index 1 pada output tensor).  
 Untuk evaluasi ketidakpastian, digunakan interval `P10-P90` (nominal 80% coverage).
 
 ### 3.6 Evaluasi dan Validasi Hasil
@@ -130,8 +144,8 @@ Untuk evaluasi ketidakpastian, digunakan interval `P10-P90` (nominal 80% coverag
 Evaluasi dilakukan pada periode `year >= 2024`, dengan pembagian data:
 
 - Train: `year < 2023` (31.975 baris)
-- Validasi: `year == 2023` (1.825 baris)
-- Test: `year >= 2024` (3.660 baris)
+- Validasi: `year == 2023` (1.975 baris)
+- Test: `year >= 2024` (3.365 baris)
 
 Selain metrik agregat, evaluasi juga dibuat per super-node dan per kota agar perbandingan dengan baseline historis tetap konsisten.
 
@@ -168,10 +182,24 @@ Interpretasi: nilai negatif menunjukkan kondisi kering, positif menunjukkan kond
 
 Set data dibentuk dengan:
 - `group_ids = super_node_id` (menjaga batas sequence antarkota),
-- `max_encoder_length = 30`,
+- `max_encoder_length = 90` (3 bulan, sesuai skala SPEI-3),
 - `max_prediction_length = 30`,
-- fitur statis: `city_id`, `super_node_id`, `elevation`, `lat`, `lon`,
-- fitur dinamis known/unknown sesuai skema dataset.
+- static categorical: `["super_node_id", "city_id"]`,
+- static real: `["elevation", "lat", "lon"]`,
+- time-varying known real: `["time_idx", "month_sin", "month_cos"]`,
+- time-varying unknown real: `["SPEI_3", "SPEI_3_diff", "water_deficit", "precipitation_log", "et0_fao_evapotranspiration", "soil_moisture", "temperature_2m_max", "temperature_2m_min"]`,
+- `target_normalizer = EncoderNormalizer(transformation=None)`.
+
+Hyperparameter default model TFT (berdasarkan `src/models/tft.py` dan `src/training/train.py`):
+- `hidden_size = 64`
+- `dropout = 0.20`
+- `attention_head_size = 2`
+- `hidden_continuous_size = 10`
+- `learning_rate = 3e-4`
+- `weight_decay = 1e-4`
+- `gradient_clip_val = 0.5`
+- `batch_size = 32`
+- `EarlyStopping patience = 30`
 
 Loss utama adalah **Quantile Loss (Pinball Loss)**:
 
@@ -179,10 +207,11 @@ Loss utama adalah **Quantile Loss (Pinball Loss)**:
 L_q(y, \hat{y}_q) = \max \left(q(y-\hat{y}_q), (q-1)(y-\hat{y}_q)\right)
 \]
 
-Loss total adalah agregasi untuk seluruh quantile yang dipakai (`[0.02, 0.1, 0.25, 0.5, 0.75, 0.9, 0.98]`).
+Loss total adalah agregasi untuk seluruh quantile yang dipakai (`[0.1, 0.5, 0.9]`).
 
 Konsekuensi metodologisnya:
-- model tidak hanya mempelajari nilai tengah, tetapi distribusi prediksi,
+- model tidak hanya mempelajari nilai tengah, tetapi distribusi prediksi pada tiga titik kuantil (P10, P50, P90),
+- interval P10-P90 memberikan estimasi ketidakpastian dengan nominal 80% coverage,
 - hasil dapat digunakan untuk risk-aware decision (misalnya interval ketidakpastian).
 
 ### 4.3 Cara Output Dihasilkan dan Digunakan
@@ -246,8 +275,9 @@ Model dinyatakan berhasil secara operasional jika memenuhi kondisi berikut:
 
 ### 5.4 Ringkasan Hasil Evaluasi Terkini (Snapshot Proyek)
 
-Berdasarkan artefak evaluasi terbaru (`results/evaluation_metrics_detailed.json`) pada checkpoint:
-`enc30-run20260422_034701-epoch=5-val_loss=0.1845.ckpt`, diperoleh:
+> **Catatan**: Hasil evaluasi berikut berasal dari checkpoint konfigurasi sebelumnya (`enc30`, 7 quantile). Setelah perubahan konfigurasi ke `encoder=90`, 3 quantile (`[0.1, 0.5, 0.9]`), diperlukan retraining untuk mendapatkan hasil evaluasi baru.
+
+Checkpoint: `enc30-run20260422_034701-epoch=5-val_loss=0.1845.ckpt`
 
 - RMSE: **0,1649**
 - MAE: **0,1052**
@@ -258,7 +288,17 @@ Berdasarkan artefak evaluasi terbaru (`results/evaluation_metrics_detailed.json`
 - Naive RMSE: **0,1675**
 - Horizon win terhadap naive: **30/30** (berdasarkan `full_evaluation` terbaru)
 
-Hasil ini menunjukkan model sudah memberikan peningkatan dibanding baseline persistence, dengan kalibrasi interval yang masih dapat diterima untuk penggunaan analitik.
+Per-kota (model raw):
+
+| Kota | RMSE | MAE | R² | Bias | Pearson r | PICP |
+|------|------|-----|----|------|-----------|------|
+| Bojonegoro | 0,1751 | 0,1145 | 0,9559 | 0,0423 | 0,9798 | 0,8648 |
+| Lamongan | 0,1282 | 0,0863 | 0,9582 | 0,0390 | 0,9809 | 0,8945 |
+| Nganjuk | 0,2067 | 0,1271 | 0,9462 | 0,0373 | 0,9739 | 0,8886 |
+| Ngawi | 0,1711 | 0,1135 | 0,9560 | 0,0296 | 0,9793 | 0,8960 |
+| Tuban | 0,1296 | 0,0845 | 0,9296 | 0,0393 | 0,9675 | 0,8603 |
+
+Hasil ini menunjukkan model sudah memberikan peningkatan dibanding baseline persistence pada konfigurasi sebelumnya, dengan kalibrasi interval yang masih dapat diterima untuk penggunaan analitik.
 
 ---
 
@@ -267,5 +307,5 @@ Hasil ini menunjukkan model sudah memberikan peningkatan dibanding baseline pers
 Dokumentasi ini menggunakan asumsi yang konsisten dengan implementasi saat ini:
 
 1. Resolusi SPEI dihitung dari data harian dengan pendekatan skala bulan \(\approx 30\) hari.
-2. Fokus prediksi adalah SPEI-3 (target utama), sementara SPEI-6 dipakai sebagai fitur pendukung.
+2. Fokus prediksi adalah SPEI-3 (satu-satunya target dan indeks yang digunakan).
 3. Sistem ditujukan untuk analisis risiko kekeringan jangka pendek 30 hari, bukan simulasi hidrologi proses-fisik penuh.

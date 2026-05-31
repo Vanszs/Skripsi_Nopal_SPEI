@@ -62,7 +62,7 @@ def eval_split(split_data, split_name):
         for i in range(pv.shape[0]):
             t = int(tv[i, 0])
             if t not in step0:
-                step0[t] = float(pv[i, 0, 3])
+                step0[t] = float(pv[i, 0, 1])
         for t in sorted(step0):
             all_rows.append({"time_idx": t, entity_col: ent, "pred_p50": step0[t]})
 
@@ -133,6 +133,6 @@ print(
     f"  center mean/std: {tscale[:,0].mean():.4f}/{tscale[:,0].std():.4f} | "
     f"scale mean/std: {tscale[:,1].mean():.4f}/{tscale[:,1].std():.4f}"
 )
-normalized_pred = (pv[:, 0, 3] - tscale[:, 0]) / tscale[:, 1]
-print(f"  pred_p50 denorm mean/std: {pv[:,0,3].mean():.4f}/{pv[:,0,3].std():.4f}")
+normalized_pred = (pv[:, 0, 1] - tscale[:, 0]) / tscale[:, 1]
+print(f"  pred_p50 denorm mean/std: {pv[:,0,1].mean():.4f}/{pv[:,0,1].std():.4f}")
 print(f"  pred_p50 norm   mean/std: {normalized_pred.mean():.4f}/{normalized_pred.std():.4f}")

@@ -268,8 +268,8 @@ def _write_md_report(metrics: dict, eval_dir: Path, enc: int, elapsed_train: flo
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--encoder", type=int, default=30,
-                        help="max_encoder_length for training (default: 30)")
+    parser.add_argument("--encoder", type=int, default=90,
+                        help="max_encoder_length for training (default: 90)")
     parser.add_argument("--epochs",  type=int, default=60,
                         help="max training epochs (default: 60)")
     parser.add_argument("--batch",   type=int, default=32)

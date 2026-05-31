@@ -63,7 +63,7 @@ def generate_visualization():
     for i in range(p_values.shape[0]):
         for step in range(30):
             t_idx = int(t_values[i, step])
-            val = p_values[i, step, 3] # P50
+            val = p_values[i, step, 1] # P50
             ensemble[t_idx].append(val)
             
     results = []

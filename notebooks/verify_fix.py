@@ -84,8 +84,8 @@ ensemble_dict = defaultdict(list)
 for i in range(p_values.shape[0]):
     for step in range(30):
         t_idx = int(t_values[i, step])
-        # P50 is index 3
-        val = p_values[i, step, 3]
+        # P50 is index 1
+        val = p_values[i, step, 1]
         ensemble_dict[t_idx].append(val)
 
 # Average

@@ -49,7 +49,7 @@ Seminar proposal adalah ujian kelayakan **rencana penelitian** (Bab 1â€“3).
 | Sub-bab | Isi | Kedalaman |
 |---------|-----|-----------|
 | **2.1 Kekeringan dan Dampaknya** | Definisi kekeringan meteorologis; dampak pada produksi padi; konteks Jawa Timur | Deskriptif, 1â€“2 halaman |
-| **2.2 Indeks Kekeringan SPEI** | Konsep SPEI (Standardized Precipitation-Evapotranspiration Index); perbedaan dengan SPI; skala temporal (SPEI-3, SPEI-6); distribusi Log-Logistic; klasifikasi 9 kelas WMO | Teori cukup mendalam (rumus, tabel klasifikasi) |
+| **2.2 Indeks Kekeringan SPEI** | Konsep SPEI (Standardized Precipitation-Evapotranspiration Index); perbedaan dengan SPI; skala temporal SPEI-3; distribusi Log-Logistic; klasifikasi 9 kelas WMO | Teori cukup mendalam (rumus, tabel klasifikasi) |
 | **2.3 Time Series Forecasting** | Evolusi metode: statistik klasik (ARIMA) â†’ machine learning â†’ deep learning (RNN, LSTM, Transformer) | Ringkasan evolusi, bukan tutorial |
 | **2.4 Temporal Fusion Transformer (TFT)** | Arsitektur TFT: Variable Selection Network, Gated Residual Network, LSTM Encoder-Decoder, Multi-Head Attention, Quantile Regression | Jelaskan *konsep* tiap komponen dan mengapa cocok untuk masalah ini |
 | **2.5 Penelitian Terdahulu** | Tabel perbandingan 5â€“10 paper terkait (SPEI forecasting, TFT applications) dengan kolom: penulis, tahun, metode, data, hasil, kelebihan/kekurangan | Tabel + narasi gap |
@@ -68,7 +68,7 @@ Seminar proposal adalah ujian kelayakan **rencana penelitian** (Bab 1â€“3).
 | **3.1 Jenis Penelitian** | Penelitian kuantitatif eksperimental | 1 paragraf |
 | **3.2 Sumber dan Jenis Data** | Open-Meteo Archive API; data iklim harian; N kabupaten (config-driven); periode 2005â€“2025 | Tabel variabel yang akan digunakan |
 | **3.3 Preprocessing Data** | Interpolasi, transformasi logaritmik presipitasi, encoding fitur temporal (month_sin/cos) | Alur langkah, belum perlu kode |
-| **3.4 Komputasi SPEI** | Defisit air (Pâˆ’ETâ‚€), rolling window, fitting distribusi Log-Logistic, standardisasi â†’ SPEI-3 & SPEI-6 | Rumus + flowchart proses |
+| **3.4 Komputasi SPEI** | Defisit air (Pâˆ’ETâ‚€), rolling window, fitting distribusi Log-Logistic, standardisasi â†’ SPEI-3 | Rumus + flowchart proses |
 | **3.5 Pembagian Dataset** | Train (<2023), Validation (2023), Test (â‰¥2024); scaler fit hanya pada training | Diagram split timeline |
 | **3.6 Rancangan Model TFT** | Konfigurasi input: static, time-varying known, time-varying unknown; encoder/decoder window; quantile output | Tabel konfigurasi fitur |
 | **3.7 Rencana Training** | Loss function (Quantile Loss), optimizer, early stopping, rencana hyperparameter tuning | Deskripsi rencana, bukan hasil |
@@ -145,9 +145,9 @@ flowchart TD
 
     subgraph "Tahap 3: Komputasi SPEI"
         C1["Hitung defisit air<br/>(Presipitasi âˆ’ ETâ‚€)"]
-        C2["Rolling window<br/>90 hari (SPEI-3) / 180 hari (SPEI-6)"]
+        C2["Rolling window<br/>90 hari (SPEI-3)"]
         C3["Fitting distribusi Log-Logistic"]
-        C4["Standardisasi Z-score<br/>â†’ SPEI-3, SPEI-6"]
+        C4["Standardisasi Z-score<br/>â†’ SPEI-3"]
     end
 
     subgraph "Tahap 4: Pembentukan Dataset"
@@ -178,7 +178,7 @@ flowchart TD
     subgraph INPUT["Input Multivariat"]
         S["<b>Static</b><br/>location_id<br/>elevation"]
         K["<b>Time-Varying Known</b><br/>time_idx<br/>month_sin, month_cos"]
-        U["<b>Time-Varying Unknown</b><br/>SPEI-3, SPEI-6<br/>water_deficit, precipitation_log<br/>ETâ‚€, soil_moisture<br/>temp_max, temp_min"]
+        U["<b>Time-Varying Unknown</b><br/>SPEI-3<br/>water_deficit, precipitation_log<br/>ETâ‚€, soil_moisture<br/>temp_max, temp_min"]
     end
 
     subgraph TFT["Temporal Fusion Transformer"]
@@ -246,7 +246,6 @@ flowchart LR
     subgraph UNKNOWN["Time-Varying Unknown<br/>(hanya di encoder)"]
         direction TB
         U1["SPEI-3 â† target"]
-        U2["SPEI-6"]
         U3["water_deficit"]
         U4["precipitation_log"]
         U5["et0_fao_evapotranspiration"]
@@ -335,7 +334,6 @@ flowchart TD
 | Variabel | Tipe | Sumber | Peran di Model |
 |----------|------|--------|----------------|
 | SPEI-3 | Time-varying unknown | Dihitung dari data iklim | **Target utama** |
-| SPEI-6 | Time-varying unknown | Dihitung dari data iklim | Fitur pendukung |
 | precipitation_log | Time-varying unknown | Open-Meteo API | Curah hujan (log-transformed) |
 | et0_fao_evapotranspiration | Time-varying unknown | Open-Meteo API | Evapotranspirasi potensial |
 | soil_moisture | Time-varying unknown | Open-Meteo API | Kelembaban tanah |

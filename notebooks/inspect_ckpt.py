@@ -26,7 +26,7 @@ try:
     print(f"hidden_size: {model.hparams.hidden_size}")
     
     # Check if this matches optimization target
-    target_encoder = 30
+    target_encoder = 90
     target_lr = 0.0001
     target_dropout = 0.15
     

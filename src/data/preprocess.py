@@ -267,7 +267,6 @@ def preprocess_pipeline(
         group["water_deficit"] = calculate_water_deficit(group)
         indexed = group.set_index("time")
         group["SPEI_3"] = calculate_spei(indexed["water_deficit"], scale=3).values
-        group["SPEI_6"] = calculate_spei(indexed["water_deficit"], scale=6).values
         group["SPEI_3_diff"] = group["SPEI_3"].diff().fillna(0.0)
         processed.append(group)
     df_processed = pd.concat(processed, ignore_index=True)
@@ -280,7 +279,7 @@ def preprocess_pipeline(
     df_processed["precipitation_log"] = np.log1p(df_processed["precipitation_sum"])
 
     df_processed.replace([np.inf, -np.inf], np.nan, inplace=True)
-    df_clean = df_processed.dropna(subset=["SPEI_3", "SPEI_6", "water_deficit"]).reset_index(
+    df_clean = df_processed.dropna(subset=["SPEI_3", "water_deficit"]).reset_index(
         drop=True
     )
 
