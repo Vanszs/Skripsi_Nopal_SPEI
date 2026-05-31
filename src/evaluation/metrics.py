@@ -3,9 +3,12 @@ import pandas as pd
 import numpy as np
 from pytorch_forecasting import TemporalFusionTransformer
 
+from src.models.tft import load_tft_checkpoint
+
+
 def load_model(checkpoint_path):
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    model = TemporalFusionTransformer.load_from_checkpoint(checkpoint_path)
+    model = load_tft_checkpoint(checkpoint_path, map_location=device)
     model.to(device)
     model.eval()
     return model

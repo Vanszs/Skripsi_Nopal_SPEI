@@ -70,15 +70,20 @@ def calculate_spei(series, scale=3, fit_mask=None):
 
             shifted_data = valid_data + shift
 
-            # Clamp all month data so val/test values below train min don't produce NaN
-            eps = 1e-6
+            # Apply the same train-derived shift to ALL rows of this month.
+            # NOTE: do NOT hard-clamp shifted_month to a positive floor — that would
+            # collapse the drought tail (val/test deficits below train-min all map to
+            # the same extreme SPEI), destroying severe-drought signal (W1). fisk.cdf
+            # is defined on (0, inf); values <= 0 yield cdf=0 -> clipped below to a
+            # small prob -> very negative (but distinct-ordered) SPEI, preserving the tail.
             shifted_month = month_data + shift
-            shifted_month = shifted_month.clip(lower=eps)
 
             # Fit Log-Logistic (fisk) distribution — SPEI standard
             params = fisk.fit(shifted_data, floc=0)
 
-            # Calculate CDF on shifted data (transform applies to ALL rows)
+            # Calculate CDF on shifted data (transform applies to ALL rows).
+            # fisk.cdf returns 0 for non-positive inputs; the clip below keeps the
+            # z-transform finite while retaining monotonic ordering of the tail.
             cdf = fisk.cdf(shifted_month, *params)
 
             # Clip CDF to avoid infinity in z-score transform

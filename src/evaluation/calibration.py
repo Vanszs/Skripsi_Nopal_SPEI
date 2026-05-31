@@ -29,7 +29,7 @@ def fit_per_city_interval_calibration(
         abs_norm_resid = np.abs(grp["actual"].values[mask] - center.values[mask]) / half_width.values[mask]
         # Factor = quantile of abs_norm_resid at nominal level
         factor = float(np.quantile(abs_norm_resid, nominal))
-        factors[str(city)] = max(factor, 0.1)  # floor to avoid collapse
+        factors[str(city)] = max(factor, 0.5)  # floor 0.5: avoid extreme interval shrinkage (C3)
     return factors
 
 

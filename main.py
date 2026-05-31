@@ -78,7 +78,7 @@ def _raw_has_required_coverage(path, city_config_path, min_nodes_per_city):
 def main():
     parser = argparse.ArgumentParser(description="Run schema-v2 pipeline")
     parser.add_argument("--skip-train", action="store_true", help="Skip training step")
-    parser.add_argument("--max-epochs", type=int, default=20, help="Training epochs")
+    parser.add_argument("--max-epochs", type=int, default=60, help="Training epochs")
     parser.add_argument("--seed", type=int, default=42, help="Global seed")
     parser.add_argument(
         "--city-config",

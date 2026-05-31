@@ -23,6 +23,7 @@ from datetime import datetime
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from pytorch_forecasting import TemporalFusionTransformer, TimeSeriesDataSet
 from src.models.dataset import create_dataset, MAX_ENCODER_LENGTH, MAX_PREDICTION_LENGTH
+from src.models.tft import load_tft_checkpoint
 from src.data.spei import classify_spei as _classify_spei_canonical
 
 # Configuration
@@ -229,7 +230,7 @@ def main():
     model_path = _resolve_checkpoint(checkpoint_dir, preferred_encoder=PREFERRED_ENCODER)
     log(f"Loading: {model_path}")
     
-    model = TemporalFusionTransformer.load_from_checkpoint(model_path, map_location="cpu")
+    model = load_tft_checkpoint(model_path, map_location="cpu")
     model.eval()
     
     ckpt_enc_len = int(getattr(model.hparams, "max_encoder_length", MAX_ENCODER_LENGTH))

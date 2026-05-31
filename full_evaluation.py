@@ -47,6 +47,7 @@ from src.evaluation.calibration import (
     fit_per_city_interval_calibration,
 )
 from src.models.dataset import MODEL_GROUP_COL, create_dataset
+from src.models.tft import load_tft_checkpoint
 
 EXPECTED_SCHEMA_VERSION = 2
 sns.set_theme(style="whitegrid", font_scale=1.0)
@@ -163,7 +164,7 @@ def run(checkpoint_path: str, out_dir: Path, log_fp):
     _log(f"Entities  : {data[entity_col].nunique()}", log_fp)
     _log(f"Cities    : {data['city_id'].nunique()}", log_fp)
 
-    model = TemporalFusionTransformer.load_from_checkpoint(checkpoint_path, map_location="cpu")
+    model = load_tft_checkpoint(checkpoint_path, map_location="cpu")
     model.eval()
     quantiles, qidx = _quantile_index_map(model)
 
@@ -185,7 +186,16 @@ def run(checkpoint_path: str, out_dir: Path, log_fp):
 
     train_ds = create_dataset(train_data, max_encoder_length=enc_len, max_prediction_length=pred_len)
 
-    # Build ground truth lookup for horizon metrics.
+    # B2/B3: prepend enc_len days of history before each eval slice so the earliest
+    # target dates have a full encoder window (mirrors train.py val_start_idx). Without
+    # this the first ~enc_len days of each entity are dropped -> biased metrics/PICP.
+    def _with_warmup(slice_df, entity):
+        ent_all = data[data[entity_col].astype(str) == entity]
+        start_idx = slice_df["time_idx"].min() - enc_len
+        return ent_all[(ent_all["time_idx"] >= start_idx)
+                       & (ent_all["time_idx"] <= slice_df["time_idx"].max())].copy()
+
+    # Build ground truth lookup for horizon metrics (test period only).
     actual_lookup = {
         (int(r.time_idx), str(getattr(r, entity_col))): float(r.SPEI_3)
         for r in test_data.itertuples(index=False)
@@ -195,7 +205,7 @@ def run(checkpoint_path: str, out_dir: Path, log_fp):
     horizon_preds = {h: {} for h in range(pred_len)}
     for ent in entities:
         _log(f"Processing {ent} ...", log_fp)
-        loc_data = test_data[test_data[entity_col].astype(str) == ent].copy()
+        loc_data = _with_warmup(test_data[test_data[entity_col].astype(str) == ent], ent)
         loc_ds = TimeSeriesDataSet.from_dataset(train_ds, loc_data, predict=False, stop_randomization=True)
         loader = loc_ds.to_dataloader(train=False, batch_size=64, num_workers=0)
         raw = model.predict(
@@ -391,7 +401,8 @@ def run(checkpoint_path: str, out_dir: Path, log_fp):
             if loc_val.empty:
                 continue
             try:
-                loc_val_ds = TimeSeriesDataSet.from_dataset(train_ds, loc_val, predict=False, stop_randomization=True)
+                loc_val_in = _with_warmup(loc_val, ent)
+                loc_val_ds = TimeSeriesDataSet.from_dataset(train_ds, loc_val_in, predict=False, stop_randomization=True)
                 val_loader = loc_val_ds.to_dataloader(train=False, batch_size=64, num_workers=0)
                 raw_val = model.predict(val_loader, mode="raw", return_x=True, trainer_kwargs={"accelerator": "cpu", "devices": 1})
                 pv_val = raw_val.output.prediction.cpu().numpy()
@@ -461,7 +472,14 @@ def run(checkpoint_path: str, out_dir: Path, log_fp):
             x = np.arange(len(cities))
             width = 0.2
             for j, mn in enumerate(met_names):
-                vals = [event_detection[thresh_name]["per_city_step0"][c].get(mn) or 0.0 for c in cities]
+                # W3: a None metric (e.g. FAR for a city with no events) must NOT
+                # become 0.0 (fake-perfect). Map None->NaN so the bar is skipped.
+                vals = [
+                    (lambda v: float(v) if v is not None else np.nan)(
+                        event_detection[thresh_name]["per_city_step0"][c].get(mn)
+                    )
+                    for c in cities
+                ]
                 ax.bar(x + j * width, vals, width, label=mn.upper())
             ax.set_xticks(x + 1.5 * width)
             ax.set_xticklabels(cities, rotation=15, ha="right")

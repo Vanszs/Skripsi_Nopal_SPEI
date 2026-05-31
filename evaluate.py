@@ -14,6 +14,7 @@ from pytorch_forecasting import TemporalFusionTransformer, TimeSeriesDataSet
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
 from src.models.dataset import MODEL_GROUP_COL, create_dataset
+from src.models.tft import load_tft_checkpoint
 
 EXPECTED_SCHEMA_VERSION = 2
 
@@ -124,7 +125,7 @@ def evaluate_model(
     print(f"Date Range: {data['time'].min()} to {data['time'].max()}")
 
     print(f"\nLoading model: {checkpoint_path}")
-    model = TemporalFusionTransformer.load_from_checkpoint(checkpoint_path, map_location="cpu")
+    model = load_tft_checkpoint(checkpoint_path, map_location="cpu")
     model.eval()
     model.to("cpu")
     quantiles, qidx = _quantile_index_map(model)

@@ -296,8 +296,10 @@ try:
         print(f"  {tag}  {feat} in static_reals")
     tag = PASS if MODEL_GROUP_COL in train_ds.static_categoricals else FAIL
     print(f"  {tag}  {MODEL_GROUP_COL} in static_categoricals")
-    tag = PASS if "city_id" in train_ds.static_categoricals else FAIL
-    print(f"  {tag}  city_id in static_categoricals")
+    # S1/S2: city_id is collinear with super_node_id and was intentionally dropped
+    # from static_categoricals to avoid redundant embeddings.
+    tag = PASS if "city_id" not in train_ds.static_categoricals else FAIL
+    print(f"  {tag}  city_id NOT in static_categoricals (S1/S2: single entity key)")
 
     # key features present
     for feat in ["water_deficit", "SPEI_3", "SPEI_3_diff"]:
@@ -333,12 +335,12 @@ except Exception as e:
 section("TEST 5: Model loading + inference")
 try:
     import os, torch
-    from pytorch_forecasting import TemporalFusionTransformer
+    from src.models.tft import load_tft_checkpoint
 
     best_ckpt = _resolve_checkpoint_path(PROCESSED_DATA_PATH)
     print(f"  Checkpoint: {best_ckpt}")
 
-    model = TemporalFusionTransformer.load_from_checkpoint(best_ckpt, map_location="cpu")
+    model = load_tft_checkpoint(best_ckpt, map_location="cpu")
     model.eval()
     print(f"{PASS} Model loaded")
     print(f"  hidden_size       : {model.hparams.hidden_size}")

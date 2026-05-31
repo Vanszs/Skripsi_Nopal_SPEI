@@ -3,6 +3,34 @@ from pytorch_forecasting.models.temporal_fusion_transformer.tuning import optimi
 from pytorch_forecasting.models.temporal_fusion_transformer import TemporalFusionTransformer
 from pytorch_forecasting.metrics import QuantileLoss
 
+
+def load_tft_checkpoint(checkpoint_path, map_location="cpu"):
+    """
+    Load a TFT checkpoint robustly across torch versions (R2 fix).
+
+    torch>=2.6 defaults torch.load(weights_only=True), which rejects the
+    EncoderNormalizer/scaler objects pickled in our checkpoints. These are
+    our own trusted local files, so we allow full unpickling.
+    """
+    try:
+        return TemporalFusionTransformer.load_from_checkpoint(
+            checkpoint_path, map_location=map_location
+        )
+    except Exception:
+        _orig_load = torch.load
+
+        def _trusted_load(*args, **kwargs):
+            kwargs["weights_only"] = False
+            return _orig_load(*args, **kwargs)
+
+        torch.load = _trusted_load
+        try:
+            return TemporalFusionTransformer.load_from_checkpoint(
+                checkpoint_path, map_location=map_location
+            )
+        finally:
+            torch.load = _orig_load
+
 def build_tft_model(
     training_dataset,
     hidden_size: int = 64,

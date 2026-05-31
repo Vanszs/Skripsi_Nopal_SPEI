@@ -13,6 +13,7 @@ from pytorch_forecasting import TemporalFusionTransformer, TimeSeriesDataSet
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
 from src.models.dataset import create_dataset
+from src.models.tft import load_tft_checkpoint
 
 # Configuration
 DATA_PATH = "data/processed/spei_dataset.parquet"
@@ -90,7 +91,7 @@ def generate_visualizations():
     print("3. Loading Model...")
     ckpt_path = find_checkpoint()
     print(f"Loading from: {ckpt_path}")
-    model = TemporalFusionTransformer.load_from_checkpoint(ckpt_path, map_location="cpu")
+    model = load_tft_checkpoint(ckpt_path, map_location="cpu")
     model.eval()
     
     print("4. Generating Predictions...")

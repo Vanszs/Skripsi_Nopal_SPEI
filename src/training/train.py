@@ -94,7 +94,7 @@ def _validate_training_schema(data: pd.DataFrame, meta_path: str = None):
 
 def train_pipeline(
     data_path="data/processed/spei_dataset.parquet",
-    max_epochs=80,
+    max_epochs=60,
     batch_size=32,
     max_encoder_length=90,
     hidden_size=64,
