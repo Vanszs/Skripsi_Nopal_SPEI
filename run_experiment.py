@@ -291,6 +291,12 @@ def main():
     parser.add_argument("--epochs",  type=int, default=60,
                         help="max training epochs (default: 60)")
     parser.add_argument("--batch",   type=int, default=32)
+    parser.add_argument("--dropout", type=float, default=0.40,
+                        help="dropout (default: 0.40, verified-robust)")
+    parser.add_argument("--weight-decay", type=float, default=1e-4,
+                        help="L2 weight decay (default: 1e-4)")
+    parser.add_argument("--seed", type=int, default=42,
+                        help="random seed (default: 42)")
     parser.add_argument("--skip-train", action="store_true",
                         help="Skip training, go straight to evaluation using best existing ckpt")
     args = parser.parse_args()
@@ -326,6 +332,9 @@ def main():
             max_epochs=args.epochs,
             batch_size=args.batch,
             max_encoder_length=enc,
+            dropout=args.dropout,
+            weight_decay=args.weight_decay,
+            seed=args.seed,
             run_id=datetime.now().strftime("%Y%m%d_%H%M%S"),
         )
         trained_ckpt = Path(best_ckpt)

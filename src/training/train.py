@@ -97,10 +97,10 @@ def train_pipeline(
     max_epochs=60,
     batch_size=32,
     max_encoder_length=90,
-    hidden_size=64,
-    dropout=0.20,
-    attention_head_size=2,
-    hidden_continuous_size=10,
+    hidden_size=48,
+    dropout=0.40,
+    attention_head_size=1,
+    hidden_continuous_size=8,
     learning_rate=3e-4,
     weight_decay=1e-4,
     gradient_clip_val=0.5,
@@ -207,7 +207,7 @@ def train_pipeline(
     )
 
     callbacks = [
-        EarlyStopping(monitor="val_loss", min_delta=1e-4, patience=30, verbose=False, mode="min"),
+        EarlyStopping(monitor="val_loss", min_delta=1e-4, patience=10, verbose=False, mode="min"),
         LearningRateMonitor(),
         ModelCheckpoint(
             dirpath="logs/checkpoints",

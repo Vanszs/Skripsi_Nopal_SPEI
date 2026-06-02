@@ -206,6 +206,7 @@ def main(
     resume_existing=True,
     persist_partial=True,
     max_retries=6,
+    request_delay=1.5,
 ):
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     city_centers = load_city_centers(city_config_path)
@@ -244,7 +245,7 @@ def main(
             df_node = fetch_node_data(node_meta, max_retries=max_retries)
             all_dfs.append(df_node)
             print(f"Fetched {len(df_node)} rows for {node_meta['raw_node_id']}")
-            time.sleep(1.5)
+            time.sleep(request_delay)
         except Exception as exc:
             print(f"CRITICAL: skipping {node_meta['raw_node_id']} due to {exc}")
 

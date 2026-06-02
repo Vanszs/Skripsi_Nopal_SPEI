@@ -33,10 +33,10 @@ def load_tft_checkpoint(checkpoint_path, map_location="cpu"):
 
 def build_tft_model(
     training_dataset,
-    hidden_size: int = 64,
-    dropout: float = 0.20,
-    attention_head_size: int = 2,
-    hidden_continuous_size: int = 10,
+    hidden_size: int = 48,
+    dropout: float = 0.40,
+    attention_head_size: int = 1,
+    hidden_continuous_size: int = 8,
     learning_rate: float = 3e-4,
     reduce_on_plateau_patience: int = 8,
     weight_decay: float = 1e-4,
@@ -48,16 +48,17 @@ def build_tft_model(
 
     Parameters are fully configurable to support ablation experiments:
 
-        hidden_size (default 64):
-            enc=90 baseline uses 64 to give the longer context window more
-            representational capacity without overfit risk.
-        dropout (default 0.20):
-            enc=90 baseline uses 0.20 since the longer encoder naturally
-            regularises via richer context.
-        attention_head_size (default 2):
-            2 heads to capture richer temporal attention patterns across the
-            90-day encoder window.
-        hidden_continuous_size (default 10):
+        hidden_size (default 48):
+            Proven-healthy capacity for the 5-entity dataset; larger sizes
+            (64) overfit from epoch 0 on so few groups.
+        dropout (default 0.40):
+            Strong dropout is the primary regularizer for this small-entity
+            setup; 0.40 reduces train-val gap further than 0.35 (verified
+            v32 vs v31) while maintaining healthy convergence.
+        attention_head_size (default 1):
+            Single head is sufficient and avoids extra memorization paths
+            over the 90-day encoder window.
+        hidden_continuous_size (default 8):
             Proportional to hidden_size; typically hidden_size // 6.
         learning_rate (default 3e-4):
             Stable compromise between 1e-4 (too slow) and 1e-3 (diverges).

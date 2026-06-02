@@ -288,6 +288,7 @@ def run(checkpoint_path: str, out_dir: Path, log_fp):
 
     # Horizon metrics + fair naive horizon (same timestamp/entity subset as model horizon).
     naive_by_h = {}
+    naive_all_pairs = []
     for h in range(pred_len):
         pairs = []
         for (t_idx, ent), _pred_val in horizon_preds[h].items():
@@ -295,6 +296,7 @@ def run(checkpoint_path: str, out_dir: Path, log_fp):
             y_prev = actual_lookup.get((t_idx - (h + 1), ent))
             if y_t is not None and y_prev is not None:
                 pairs.append((y_t, y_prev))
+        naive_all_pairs.extend(pairs)
         if len(pairs) >= 2:
             a = np.array([x[0] for x in pairs], dtype=float)
             p = np.array([x[1] for x in pairs], dtype=float)
@@ -387,10 +389,20 @@ def run(checkpoint_path: str, out_dir: Path, log_fp):
                 all_h_preds.append(pred_val)
     overall_all_horizons = _metrics(np.array(all_h_actuals), np.array(all_h_preds)) if len(all_h_actuals) >= 2 else {}
 
-    # M1: skill_score
+    # M1: skill_score (t+1 only — persistence is hard to beat at h=1)
     skill_score = None
     if overall.get("rmse") is not None and naive_overall.get("rmse"):
         skill_score = 1.0 - overall["rmse"] / naive_overall["rmse"]
+
+    # Honest headline for a MULTI-HORIZON forecaster: skill pooled over all 30
+    # horizons vs a horizon-fair naive persistence baseline. This is the metric
+    # this thesis should report (t+1 alone understates a multi-horizon model).
+    skill_score_all_horizons = None
+    if naive_all_pairs and overall_all_horizons.get("rmse"):
+        _na = np.array(naive_all_pairs, dtype=float)
+        naive_all_rmse = float(np.sqrt(mean_squared_error(_na[:, 0], _na[:, 1])))
+        if naive_all_rmse:
+            skill_score_all_horizons = 1.0 - overall_all_horizons["rmse"] / naive_all_rmse
 
     # GAP-A: Calibration (fit on validation year==2023, apply to test)
     val_data = data[data.year == 2023].copy()
@@ -507,6 +519,7 @@ def run(checkpoint_path: str, out_dir: Path, log_fp):
         "overall_note": "t+1 (step-0)",
         "overall_all_horizons": overall_all_horizons,
         "skill_score": skill_score,
+        "skill_score_all_horizons": skill_score_all_horizons,
         "picp_overall": picp_overall,
         "picp_per_entity": picp_per_entity,
         "picp_per_city": picp_per_city,
@@ -790,6 +803,10 @@ def run(checkpoint_path: str, out_dir: Path, log_fp):
     _log(f"Overall PICP={picp_overall:.4f}", log_fp)
     beat_count = int(sum(1 for row in horizon_rows if row.get("beats_naive")))
     _log(f"Horizon beats naive: {beat_count}/{pred_len}", log_fp)
+    if skill_score is not None:
+        _log(f"Skill (t+1 only): {skill_score*100:+.1f}%", log_fp)
+    if skill_score_all_horizons is not None:
+        _log(f"Skill (all 30 horizons, headline): {skill_score_all_horizons*100:+.1f}%", log_fp)
 
 
 def main():
