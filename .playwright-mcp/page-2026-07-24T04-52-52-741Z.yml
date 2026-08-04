@@ -1,0 +1,136 @@
+- generic [active] [ref=f8e1]:
+  - generic [ref=f8e3]:
+    - link "Langsung ke peta dan analisis" [ref=f8e4] [cursor=pointer]:
+      - /url: "#workspace"
+    - complementary "Navigasi utama" [ref=f8e5]:
+      - button "NusaPantau, halaman utama" [ref=f8e6] [cursor=pointer]:
+        - generic [ref=f8e10]: NP
+      - navigation [ref=f8e11]:
+        - button "Peta" [ref=f8e12] [cursor=pointer]
+        - button "Prediksi" [ref=f8e16] [cursor=pointer]
+        - button "Risiko" [ref=f8e20] [cursor=pointer]
+        - button "Metode" [ref=f8e24] [cursor=pointer]
+    - banner [ref=f8e28]:
+      - generic [ref=f8e29]:
+        - button [ref=f8e30] [cursor=pointer]:
+          - strong [ref=f8e31]: NusaPantau Kekeringan
+          - text: Proyeksi SPEI Jawa Timur
+        - generic [ref=f8e32]: DATA CONTOH
+      - generic [ref=f8e33]:
+        - textbox "Cari kabupaten" [ref=f8e38]
+        - button "Unduh laporan" [ref=f8e39] [cursor=pointer]
+    - main [ref=f8e43]:
+      - region "Peta dan analisis kekeringan" [ref=f8e44]:
+        - generic [ref=f8e45]:
+          - generic [ref=f8e46]:
+            - generic [ref=f8e47]:
+              - generic:
+                - generic:
+                  - button [ref=f8e48] [cursor=pointer]
+                  - button [ref=f8e50] [cursor=pointer]
+                  - button [ref=f8e52] [cursor=pointer]
+                  - button [ref=f8e54] [cursor=pointer]
+                  - button [ref=f8e56] [cursor=pointer]
+              - generic [ref=f8e58]:
+                - button "Zoom in" [ref=f8e59] [cursor=pointer]: +
+                - button "Zoom out" [ref=f8e60] [cursor=pointer]: −
+            - generic [ref=f8e61]: CHOROPLETH SPEI GRID • INDONESIA
+            - button "CENTER KAB. BOJONEGORO" [ref=f8e64] [cursor=pointer]
+            - generic [ref=f8e65]:
+              - generic [ref=f8e66]: SPEI INDEX SCALE
+              - generic [ref=f8e67]:
+                - generic "≤ -2.0 Extreme" [ref=f8e68]
+                - generic "-2.0 to -1.5 Severe" [ref=f8e69]
+                - generic "-1.5 to -1.0 Moderate" [ref=f8e70]
+                - generic "-1.0 to -0.5 Mild" [ref=f8e71]
+                - generic "-0.5 to 0.5 Normal" [ref=f8e72]
+                - generic "0.5 to 1.5 Wet" [ref=f8e73]
+                - generic "≥ 1.5 Very Wet" [ref=f8e74]
+              - generic [ref=f8e75]:
+                - generic [ref=f8e76]: "-3.0 (Drought)"
+                - generic [ref=f8e77]: +3.0 (Wet)
+          - generic [ref=f8e78]:
+            - text: PROYEK SKRIPSI
+            - heading "Perkiraan risiko kekeringan untuk lima wilayah studi." [level=1] [ref=f8e79]
+            - paragraph [ref=f8e80]: Pilih titik pada peta untuk membaca proyeksi SPEI dan rentang ketidakpastiannya.
+          - generic [ref=f8e81]: Contoh visual berbasis data uji, bukan peringatan operasional.
+        - region "Analisis wilayah terpilih" [ref=f8e82]:
+          - generic [ref=f8e83]:
+            - generic [ref=f8e84]:
+              - paragraph [ref=f8e85]: ANALISIS WILAYAH
+              - heading "Kab. Bojonegoro" [level=2] [ref=f8e86]
+              - generic [ref=f8e87]: Jawa Timur · -7.155, 111.880
+            - generic "Pilih horizon prediksi" [ref=f8e88]:
+              - button "+1 bln" [ref=f8e89] [cursor=pointer]
+              - button "+3 bln" [ref=f8e90] [cursor=pointer]
+              - button "+6 bln" [ref=f8e91] [cursor=pointer]
+              - button "+12 bln" [ref=f8e92] [cursor=pointer]
+          - generic [ref=f8e93]:
+            - generic [ref=f8e95]:
+              - generic [ref=f8e96]:
+                - generic [ref=f8e97]:
+                  - heading "TFT Quantile SPEI Fan-Chart (Kab. Bojonegoro)" [level=3] [ref=f8e100]
+                  - paragraph [ref=f8e101]: Probabilistic trajectory with 80% confidence interval (q0.10 - q0.90)
+                - generic [ref=f8e102]:
+                  - generic [ref=f8e103]:
+                    - button "+1M" [ref=f8e104] [cursor=pointer]
+                    - button "+3M" [ref=f8e105] [cursor=pointer]
+                    - button "+6M" [ref=f8e106] [cursor=pointer]
+                    - button "+12M" [ref=f8e107] [cursor=pointer]
+                  - button "BANDS" [ref=f8e108] [cursor=pointer]
+              - img [ref=f8e112]:
+                - generic [ref=f8e116]:
+                  - generic [ref=f8e117]: Jan
+                  - generic [ref=f8e119]: Feb
+                  - generic [ref=f8e121]: Mar
+                  - generic [ref=f8e123]: Apr
+                  - generic [ref=f8e125]: May
+                  - generic [ref=f8e127]: Jun
+                  - generic [ref=f8e129]: Aug (+2M)
+                  - generic [ref=f8e131]: Oct (+4M)
+                  - generic [ref=f8e133]: Dec (+6M)
+                  - generic [ref=f8e135]: Feb+1 (+8M)
+                  - generic [ref=f8e137]: Apr+1 (+10M)
+                  - generic [ref=f8e139]: Jun+1 (+12M)
+                - generic [ref=f8e142]:
+                  - generic [ref=f8e143]: "-2"
+                  - generic [ref=f8e145]: "-0.5"
+                  - generic [ref=f8e147]: "1"
+                - generic [ref=f8e149]: EXTREME (-2.0)
+                - generic [ref=f8e151]: SEVERE (-1.5)
+                - generic [ref=f8e153]: MODERATE (-0.5)
+              - generic [ref=f8e172]:
+                - generic [ref=f8e173]:
+                  - generic [ref=f8e174]: Historical SPEI
+                  - generic [ref=f8e176]: q50 Median
+                  - generic [ref=f8e178]: q10 - q90 Fan (80% CI)
+                - generic [ref=f8e180]:
+                  - generic [ref=f8e181]: "+3M Forecast:"
+                  - generic [ref=f8e182]: "q10: -2.45"
+                  - generic [ref=f8e183]: "|"
+                  - generic [ref=f8e184]: "q50: -1.98"
+                  - generic [ref=f8e185]: "|"
+                  - generic [ref=f8e186]: "q90: -1.35"
+            - generic [ref=f8e187]:
+              - generic [ref=f8e188]:
+                - generic [ref=f8e189]: Status +3 bulan
+                - strong [ref=f8e190]: Siaga
+                - generic [ref=f8e191]: SPEI median -1.98
+              - paragraph [ref=f8e192]: Prioritaskan distribusi air, tanaman tahan kering, dan kesiapan pompa irigasi.
+              - button "Buka rekomendasi" [ref=f8e193] [cursor=pointer]
+            - generic [ref=f8e194]:
+              - paragraph [ref=f8e195]: VALIDASI MODEL
+              - strong [ref=f8e196]: 86.5%
+              - text: skill score multi-seed
+              - generic [ref=f8e197]:
+                - generic [ref=f8e198]:
+                  - term [ref=f8e199]: RMSE
+                  - definition [ref=f8e200]: "0.285"
+                - generic [ref=f8e201]:
+                  - term [ref=f8e202]: MAE
+                  - definition [ref=f8e203]: "0.210"
+      - generic [ref=f8e204]:
+        - generic [ref=f8e205]: 5 kabupaten studi
+        - generic [ref=f8e206]: 4 wilayah berada di atas status normal pada contoh ini
+        - generic [ref=f8e207]: Riset TFT-SPEI · 2026
+  - generic [ref=f8e208]: "-0.5"

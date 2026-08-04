@@ -1,0 +1,125 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - link "Langsung ke peta dan analisis" [ref=e4] [cursor=pointer]:
+      - /url: "#workspace"
+    - complementary "Navigasi utama" [ref=e5]:
+      - button "NusaPantau, halaman utama" [ref=e6] [cursor=pointer]:
+        - generic [ref=e10]: NP
+      - navigation [ref=e11]:
+        - button "Peta" [ref=e12] [cursor=pointer]
+        - button "Prediksi" [ref=e16] [cursor=pointer]
+        - button "Risiko" [ref=e20] [cursor=pointer]
+        - button "Metode" [ref=e24] [cursor=pointer]
+    - banner [ref=e28]:
+      - generic [ref=e29]:
+        - button [ref=e30] [cursor=pointer]:
+          - strong [ref=e31]: NusaPantau Kekeringan
+          - text: Proyeksi SPEI Jawa Timur
+        - generic [ref=e32]: DATA PENELITIAN
+      - generic [ref=e33]:
+        - textbox "Cari kabupaten" [ref=e38]
+        - button "Unduh laporan" [ref=e39] [cursor=pointer]
+    - main [ref=e43]:
+      - status [ref=e44]: Memuat data penelitian...
+      - region "Peta dan analisis kekeringan" [ref=e45]:
+        - generic [ref=e46]:
+          - generic [ref=e47]:
+            - generic [ref=e49]:
+              - button "Zoom in" [ref=e50] [cursor=pointer]: +
+              - button "Zoom out" [ref=e51] [cursor=pointer]: −
+            - generic [ref=e52]: TITIK WILAYAH STUDI • JAWA TIMUR
+            - button "PUSATKAN MEMUAT WILAYAH..." [ref=e55] [cursor=pointer]
+            - generic [ref=e56]:
+              - generic [ref=e57]: SKALA SPEI · kering → basah
+              - generic [ref=e58]:
+                - generic "≤ -2.0 Extreme" [ref=e59]
+                - generic "-2.0 to -1.5 Severe" [ref=e60]
+                - generic "-1.5 to -1.0 Moderate" [ref=e61]
+                - generic "-1.0 to -0.5 Mild" [ref=e62]
+                - generic "-0.5 to 0.5 Normal" [ref=e63]
+                - generic "0.5 to 1.5 Wet" [ref=e64]
+                - generic "≥ 1.5 Very Wet" [ref=e65]
+              - generic [ref=e66]:
+                - generic [ref=e67]: "-3.0 (Drought)"
+                - generic [ref=e68]: +3.0 (Wet)
+          - generic [ref=e69]:
+            - text: PROYEK SKRIPSI
+            - heading "Perkiraan risiko kekeringan untuk lima wilayah studi." [level=1] [ref=e70]
+            - paragraph [ref=e71]: Pilih titik pada peta untuk membaca proyeksi SPEI dan rentang ketidakpastiannya.
+          - generic [ref=e72]: Memuat data penelitian.... Bukan peringatan operasional.
+        - region "Analisis wilayah terpilih" [ref=e73]:
+          - generic [ref=e74]:
+            - generic [ref=e75]:
+              - paragraph [ref=e76]: ANALISIS WILAYAH
+              - heading "Memuat wilayah..." [level=2] [ref=e77]
+              - generic [ref=e78]: Jawa Timur · -7.250, 112.750
+            - generic "Pilih horizon prediksi" [ref=e79]:
+              - button "+1 bln" [ref=e80] [cursor=pointer]
+              - button "+3 bln" [ref=e81] [cursor=pointer]
+              - button "+6 bln" [ref=e82] [cursor=pointer]
+              - button "+12 bln" [ref=e83] [cursor=pointer]
+          - generic [ref=e84]:
+            - generic [ref=e86]:
+              - generic [ref=e87]:
+                - generic [ref=e88]:
+                  - heading "Prediksi SPEI dengan rentang kemungkinan (Memuat wilayah...)" [level=3] [ref=e91]
+                  - paragraph [ref=e92]: Garis putus-putus = nilai tengah; pita = rentang kemungkinan 80%.
+                - generic [ref=e93]:
+                  - generic [ref=e94]:
+                    - button "+1M" [ref=e95] [cursor=pointer]
+                    - button "+3M" [ref=e96] [cursor=pointer]
+                    - button "+6M" [ref=e97] [cursor=pointer]
+                    - button "+12M" [ref=e98] [cursor=pointer]
+                  - button "PITA" [ref=e99] [cursor=pointer]
+              - img [ref=e103]:
+                - generic [ref=e107]:
+                  - generic [ref=e108]: Jul (+1M)
+                  - generic [ref=e110]: Aug (+2M)
+                  - generic [ref=e112]: Oct (+4M)
+                  - generic [ref=e114]: Dec (+6M)
+                  - generic [ref=e116]: Feb+1 (+8M)
+                  - generic [ref=e118]: Apr+1 (+10M)
+                  - generic [ref=e120]: Jun+1 (+12M)
+                - generic [ref=e123]:
+                  - generic [ref=e124]: "-2.5"
+                  - generic [ref=e126]: "-1.5"
+                  - generic [ref=e128]: "0"
+                  - generic [ref=e130]: "1"
+                - generic [ref=e132]: EXTREME (-2.0)
+                - generic [ref=e134]: SEVERE (-1.5)
+                - generic [ref=e136]: MODERATE (-0.5)
+              - generic [ref=e138]:
+                - generic [ref=e139]:
+                  - generic [ref=e140]: Historical SPEI
+                  - generic [ref=e142]: q50 Median
+                  - generic [ref=e144]: q10 - q90 Fan (80% CI)
+                - generic [ref=e146]:
+                  - generic [ref=e147]: "Hasil +3 bulan:"
+                  - generic [ref=e148]: "q10: 0"
+                  - generic [ref=e149]: "|"
+                  - generic [ref=e150]: "q50: 0"
+                  - generic [ref=e151]: "|"
+                  - generic [ref=e152]: "q90: 0"
+            - generic [ref=e153]:
+              - generic [ref=e154]:
+                - generic [ref=e155]: Status +3 bulan
+                - strong [ref=e156]: Normal
+                - generic [ref=e157]: SPEI median 0.00
+              - paragraph [ref=e158]: Pantau rutin dan pertahankan cadangan air untuk periode berikutnya.
+              - button "Buka rekomendasi" [ref=e159] [cursor=pointer]
+            - generic [ref=e160]:
+              - paragraph [ref=e161]: VALIDASI MODEL
+              - strong [ref=e162]: 19.9%
+              - text: skill score multi-seed
+              - generic [ref=e163]:
+                - generic [ref=e164]:
+                  - term [ref=e165]: RMSE
+                  - definition [ref=e166]: "0.438"
+                - generic [ref=e167]:
+                  - term [ref=e168]: MAE
+                  - definition [ref=e169]: "0.314"
+      - generic [ref=e170]:
+        - generic [ref=e171]: 0 kabupaten studi
+        - generic [ref=e172]: 0 wilayah berada di atas status normal pada contoh ini
+        - generic [ref=e173]: Riset TFT-SPEI · 2026
+  - generic [ref=e174]: "0"

@@ -1,0 +1,67 @@
+# .understandignore — patterns for files/dirs to exclude from analysis
+# Syntax: same as .gitignore (globs, # comments, ! negation, trailing / for dirs)
+# Lines below are active exclusions for this repo.
+
+# --- From .gitignore ---
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.env
+/data/
+/data/raw/
+/data/processed/
+# NOTE: src/data/ is real source code — do NOT exclude (must NOT add bare "data/")
+*.parquet
+*.csv
+/results/
+*.png
+*.jpg
+.vscode/
+.idea/
+debug_*.py
+inspect_results.py
+lightning_logs/
+notebooks/lightning_logs/
+logs/lightning_logs/
+/logs
+**/__pycache__/
+*.pyc
+*.ckpt
+logs/checkpoints/
+logs/archive_*/
+results_archive_*/
+
+# --- Built-in defaults ---
+node_modules/
+.git/
+dist/
+build/
+out/
+coverage/
+.next/
+.cache/
+.turbo/
+*.lock
+*.min.js
+*.min.css
+*.map
+*.generated.*
+LICENSE
+.editorconfig
+.prettierrc
+.eslintrc*
+*.log
+
+# --- This repo: bulky artifacts ---
+lightning_logs/
+/logs/
+/results/
+/data/
+*.docx
+*.pdf
+*.ckpt
+*.parquet
+*.png
+*.jpg

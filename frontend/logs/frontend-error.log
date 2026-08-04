@@ -1,0 +1,21 @@
+2026-07-26T18:33:23: /media/DiskE/SKRIPSI/Skripsi_Nopal/frontend/node_modules/.bin/vite:2
+2026-07-26T18:33:23: basedir=$(dirname "$(echo "$0" | sed -e 's,\\,/,g')")
+2026-07-26T18:33:23:           ^^^^^^^
+2026-07-26T18:33:23: 
+2026-07-26T18:33:23: SyntaxError: missing ) after argument list
+2026-07-26T18:33:23:     at wrapSafe (node:internal/modules/cjs/loader:1763:18)
+2026-07-26T18:33:23:     at Module._compile (node:internal/modules/cjs/loader:1804:20)
+2026-07-26T18:33:23:     at Object..js (node:internal/modules/cjs/loader:1961:10)
+2026-07-26T18:33:23:     at Module.load (node:internal/modules/cjs/loader:1553:32)
+2026-07-26T18:33:23:     at Module._load (node:internal/modules/cjs/loader:1355:12)
+2026-07-26T18:33:23:     at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+2026-07-26T18:33:23:     at loadCJSModuleWithModuleLoad (node:internal/modules/esm/translators:326:3)
+2026-07-26T18:33:23:     at ModuleWrap.<anonymous> (node:internal/modules/esm/translators:231:7)
+2026-07-26T18:33:23:     at ModuleJob.run (node:internal/modules/esm/module_job:437:25)
+2026-07-26T18:33:23:     at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+2026-07-26T18:35:22: 6:35:22 PM [vite] http proxy error: /api/v1/study/regions
+2026-07-26T18:35:22: Error: connect ECONNREFUSED 127.0.0.1:8000
+2026-07-26T18:35:22:     at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1705:16)
+2026-07-26T18:40:49: 6:40:49 PM [vite] http proxy error: /api/v1/study/regions
+2026-07-26T18:40:49: Error: connect ECONNREFUSED 127.0.0.1:8000
+2026-07-26T18:40:49:     at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1705:16)

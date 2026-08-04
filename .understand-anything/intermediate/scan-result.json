@@ -1,0 +1,397 @@
+{
+  "scriptCompleted": true,
+  "files": [
+    {
+      "path": "_diag2.py",
+      "language": "python",
+      "sizeLines": 138,
+      "fileCategory": "code"
+    },
+    {
+      "path": "_tft_docx_extracted.txt",
+      "language": "txt",
+      "sizeLines": 81,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agent/rules/agent.md",
+      "language": "markdown",
+      "sizeLines": 49,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".github/copilot-instructions.md",
+      "language": "markdown",
+      "sizeLines": 48,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".kiro/settings/lsp.json",
+      "language": "json",
+      "sizeLines": 204,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".understand-anything/.understandignore",
+      "language": "unknown",
+      "sizeLines": 67,
+      "fileCategory": "code"
+    },
+    {
+      "path": ".understand-anything/config.json",
+      "language": "json",
+      "sizeLines": 1,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".understand-anything/intermediate/batches.json",
+      "language": "json",
+      "sizeLines": 648,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".understand-anything/intermediate/scan-result.json",
+      "language": "json",
+      "sizeLines": 396,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".understand-anything/tmp/scan-project.mjs",
+      "language": "javascript",
+      "sizeLines": 802,
+      "fileCategory": "code"
+    },
+    {
+      "path": "dataset_sample.md",
+      "language": "markdown",
+      "sizeLines": 21,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/ALL_IN_ONE_AUDIT_REPORT.md",
+      "language": "markdown",
+      "sizeLines": 198,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/COMPREHENSIVE_DOCUMENTATION.md",
+      "language": "markdown",
+      "sizeLines": 469,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/CROSSCHECK_STATUS_SCHEMA_V2.md",
+      "language": "markdown",
+      "sizeLines": 128,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/diagram_dan_tabel_penelitian.md",
+      "language": "markdown",
+      "sizeLines": 694,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/DOKUMENTASI_METODE_PENELITIAN_TFT_SPEI_SUPERNODE.md",
+      "language": "markdown",
+      "sizeLines": 311,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/LIMITATIONS.md",
+      "language": "markdown",
+      "sizeLines": 161,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/MIGRATION_CHECKLIST_STATUS_VERIFIED.md",
+      "language": "markdown",
+      "sizeLines": 113,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/PANDUAN_SEMINAR_PROPOSAL.md",
+      "language": "markdown",
+      "sizeLines": 435,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/PLAN_FIX_AUDIT.md",
+      "language": "markdown",
+      "sizeLines": 247,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/PLAN_FIX_ROBUST.md",
+      "language": "markdown",
+      "sizeLines": 311,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/THESIS_READINESS_REPORT.md",
+      "language": "markdown",
+      "sizeLines": 279,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "evaluate.py",
+      "language": "python",
+      "sizeLines": 478,
+      "fileCategory": "code"
+    },
+    {
+      "path": "full_evaluation.py",
+      "language": "python",
+      "sizeLines": 839,
+      "fileCategory": "code"
+    },
+    {
+      "path": "last.convo.txt",
+      "language": "txt",
+      "sizeLines": 726,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "main.py",
+      "language": "python",
+      "sizeLines": 174,
+      "fileCategory": "code"
+    },
+    {
+      "path": "notebooks/inspect_ckpt.py",
+      "language": "python",
+      "sizeLines": 45,
+      "fileCategory": "code"
+    },
+    {
+      "path": "notebooks/TFT_SPEI_Evaluation.ipynb",
+      "language": "ipynb",
+      "sizeLines": 1512,
+      "fileCategory": "code"
+    },
+    {
+      "path": "notebooks/verify_fix.py",
+      "language": "python",
+      "sizeLines": 137,
+      "fileCategory": "code"
+    },
+    {
+      "path": "notebooks/visualize_fix.py",
+      "language": "python",
+      "sizeLines": 125,
+      "fileCategory": "code"
+    },
+    {
+      "path": "now_percentage.md",
+      "language": "markdown",
+      "sizeLines": 121,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "requirements.txt",
+      "language": "txt",
+      "sizeLines": 12,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "run_evaluation.py",
+      "language": "python",
+      "sizeLines": 57,
+      "fileCategory": "code"
+    },
+    {
+      "path": "run_experiment.py",
+      "language": "python",
+      "sizeLines": 405,
+      "fileCategory": "code"
+    },
+    {
+      "path": "scripts/detailed_actual_vs_predict.py",
+      "language": "python",
+      "sizeLines": 493,
+      "fileCategory": "code"
+    },
+    {
+      "path": "scripts/generate_leaflet_final_grid.py",
+      "language": "python",
+      "sizeLines": 214,
+      "fileCategory": "code"
+    },
+    {
+      "path": "scripts/plot_final_grid_cartopy_google.py",
+      "language": "python",
+      "sizeLines": 113,
+      "fileCategory": "code"
+    },
+    {
+      "path": "scripts/plot_final_grid_map.py",
+      "language": "python",
+      "sizeLines": 177,
+      "fileCategory": "code"
+    },
+    {
+      "path": "scripts/resume_8var_pipeline.py",
+      "language": "python",
+      "sizeLines": 65,
+      "fileCategory": "code"
+    },
+    {
+      "path": "scripts/run_full_pipeline.py",
+      "language": "python",
+      "sizeLines": 132,
+      "fileCategory": "code"
+    },
+    {
+      "path": "scripts/smoke_e2e_v2.py",
+      "language": "python",
+      "sizeLines": 142,
+      "fileCategory": "code"
+    },
+    {
+      "path": "scripts/visualize_predictions.py",
+      "language": "python",
+      "sizeLines": 200,
+      "fileCategory": "code"
+    },
+    {
+      "path": "sonar_audit/reports/audit_report.txt",
+      "language": "txt",
+      "sizeLines": 202,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "sonar_audit/run_audit.py",
+      "language": "python",
+      "sizeLines": 1019,
+      "fileCategory": "code"
+    },
+    {
+      "path": "sonar_evautation.txt",
+      "language": "txt",
+      "sizeLines": 348,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "sonar_output_expectayion.txt",
+      "language": "txt",
+      "sizeLines": 491,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "src/__init__.py",
+      "language": "python",
+      "sizeLines": 1,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/data/__init__.py",
+      "language": "python",
+      "sizeLines": 1,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/data/ingest.py",
+      "language": "python",
+      "sizeLines": 337,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/data/preprocess.py",
+      "language": "python",
+      "sizeLines": 325,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/data/spei.py",
+      "language": "python",
+      "sizeLines": 127,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/evaluation/__init__.py",
+      "language": "python",
+      "sizeLines": 1,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/evaluation/calibration.py",
+      "language": "python",
+      "sizeLines": 59,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/evaluation/metrics.py",
+      "language": "python",
+      "sizeLines": 135,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/models/__init__.py",
+      "language": "python",
+      "sizeLines": 1,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/models/dataset.py",
+      "language": "python",
+      "sizeLines": 147,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/models/tft.py",
+      "language": "python",
+      "sizeLines": 86,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/training/__init__.py",
+      "language": "python",
+      "sizeLines": 1,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/training/train.py",
+      "language": "python",
+      "sizeLines": 285,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/visualization/__init__.py",
+      "language": "python",
+      "sizeLines": 1,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/visualization/generate_visualizations.py",
+      "language": "python",
+      "sizeLines": 210,
+      "fileCategory": "code"
+    },
+    {
+      "path": "test_pipeline.py",
+      "language": "python",
+      "sizeLines": 462,
+      "fileCategory": "code"
+    }
+  ],
+  "totalFiles": 62,
+  "filteredByIgnore": 126,
+  "estimatedComplexity": "moderate",
+  "stats": {
+    "filesScanned": 62,
+    "byCategory": {
+      "code": 37,
+      "docs": 21,
+      "config": 4
+    },
+    "byLanguage": {
+      "python": 34,
+      "txt": 6,
+      "markdown": 15,
+      "json": 4,
+      "unknown": 1,
+      "javascript": 1,
+      "ipynb": 1
+    }
+  }
+}

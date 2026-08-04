@@ -1,0 +1,3307 @@
+{
+  "version": "1.0.0",
+  "gitCommitHash": "87eae914ad6e296bfc98b85939be7641139248b4",
+  "generatedAt": "2026-07-23T13:29:04.930Z",
+  "files": {
+    "_diag2.py": {
+      "filePath": "_diag2.py",
+      "contentHash": "7c9bc08bad5d02a6871e957ff6d2e5e8043f8338e345844011a8686dc9c39e26",
+      "functions": [
+        {
+          "name": "eval_split",
+          "params": [
+            "split_data",
+            "split_name"
+          ],
+          "exported": true,
+          "lineCount": 35
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "warnings",
+          "specifiers": [
+            "warnings"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        },
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "pytorch_forecasting",
+          "specifiers": [
+            "TemporalFusionTransformer",
+            "TimeSeriesDataSet"
+          ]
+        },
+        {
+          "source": "sklearn.metrics",
+          "specifiers": [
+            "mean_squared_error"
+          ]
+        },
+        {
+          "source": "src.models.dataset",
+          "specifiers": [
+            "MODEL_GROUP_COL",
+            "create_dataset"
+          ]
+        }
+      ],
+      "exports": [
+        "eval_split"
+      ],
+      "totalLines": 139,
+      "hasStructuralAnalysis": true
+    },
+    "_tft_docx_extracted.txt": {
+      "filePath": "_tft_docx_extracted.txt",
+      "contentHash": "3522a1e6148d0471050ff422dc5bde93d6519da762b6a8998c6c9f0c48f34bf5",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 82,
+      "hasStructuralAnalysis": false
+    },
+    ".agent/rules/agent.md": {
+      "filePath": ".agent/rules/agent.md",
+      "contentHash": "fb8cc12fd2e7d7fb2ceb7facd14128541c621c34467c050e058f7debb99131ca",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 50,
+      "hasStructuralAnalysis": true
+    },
+    ".github/copilot-instructions.md": {
+      "filePath": ".github/copilot-instructions.md",
+      "contentHash": "a5e28f4827e904c8b9c0c0252b0b2d0d4195388a590aaca2e76ff964adb3d7fa",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 49,
+      "hasStructuralAnalysis": true
+    },
+    ".kiro/settings/lsp.json": {
+      "filePath": ".kiro/settings/lsp.json",
+      "contentHash": "69aaab5b2c07f6f47866c30330cbbbf323f859ca05b039f4afbc9ab72d12de28",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 205,
+      "hasStructuralAnalysis": true
+    },
+    ".understand-anything/.understandignore": {
+      "filePath": ".understand-anything/.understandignore",
+      "contentHash": "1767a093d000c5d39f0f023be02635819ca5633ece6d18aba2e0233ca4fb6fb0",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 68,
+      "hasStructuralAnalysis": false
+    },
+    ".understand-anything/config.json": {
+      "filePath": ".understand-anything/config.json",
+      "contentHash": "f78d91dc3a5d45730ba940f98b0ac44d3c1f31a306211c658ed6ca77a0db5025",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 2,
+      "hasStructuralAnalysis": true
+    },
+    ".understand-anything/intermediate/batches.json": {
+      "filePath": ".understand-anything/intermediate/batches.json",
+      "contentHash": "b91f98b1699db2a684a2d2ce7e812572871b604abbadc88036b8b2a572acef6d",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 649,
+      "hasStructuralAnalysis": true
+    },
+    ".understand-anything/intermediate/scan-result.json": {
+      "filePath": ".understand-anything/intermediate/scan-result.json",
+      "contentHash": "cfea4b851974641db466b478e028adc740d7b40e559c34c76629600c4eb27979",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 397,
+      "hasStructuralAnalysis": true
+    },
+    ".understand-anything/tmp/scan-project.mjs": {
+      "filePath": ".understand-anything/tmp/scan-project.mjs",
+      "contentHash": "9cef3c5f947214d139c3264fd5376d1715f5cbfcaf7dec0a497bf553953ec0a0",
+      "functions": [
+        {
+          "name": "detectLanguage",
+          "params": [
+            "filePath"
+          ],
+          "exported": true,
+          "lineCount": 28
+        },
+        {
+          "name": "dotfileKey",
+          "params": [
+            "base"
+          ],
+          "exported": false,
+          "lineCount": 5
+        },
+        {
+          "name": "detectCategory",
+          "params": [
+            "filePath"
+          ],
+          "exported": true,
+          "lineCount": 45
+        },
+        {
+          "name": "estimateComplexity",
+          "params": [
+            "totalFiles"
+          ],
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "toPosix",
+          "params": [
+            "p"
+          ],
+          "exported": false,
+          "lineCount": 3
+        },
+        {
+          "name": "enumerateViaGit",
+          "params": [
+            "projectRoot"
+          ],
+          "exported": false,
+          "lineCount": 23
+        },
+        {
+          "name": "enumerateViaWalk",
+          "params": [
+            "projectRoot"
+          ],
+          "exported": false,
+          "lineCount": 46
+        },
+        {
+          "name": "enumerateFiles",
+          "params": [
+            "projectRoot"
+          ],
+          "exported": false,
+          "lineCount": 8
+        },
+        {
+          "name": "buildDefaultsOnlyFilter",
+          "params": [],
+          "exported": false,
+          "lineCount": 11
+        },
+        {
+          "name": "hasUserIgnoreFile",
+          "params": [
+            "projectRoot"
+          ],
+          "exported": false,
+          "lineCount": 6
+        },
+        {
+          "name": "countLines",
+          "params": [
+            "absPath",
+            "posixPath"
+          ],
+          "exported": false,
+          "lineCount": 18
+        },
+        {
+          "name": "main",
+          "params": [],
+          "exported": false,
+          "lineCount": 121
+        },
+        {
+          "name": "isCliEntry",
+          "params": [],
+          "exported": false,
+          "lineCount": 10
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "node:module",
+          "specifiers": [
+            "createRequire"
+          ]
+        },
+        {
+          "source": "node:path",
+          "specifiers": [
+            "dirname",
+            "resolve",
+            "join",
+            "basename",
+            "extname",
+            "relative",
+            "sep"
+          ]
+        },
+        {
+          "source": "node:url",
+          "specifiers": [
+            "fileURLToPath",
+            "pathToFileURL"
+          ]
+        },
+        {
+          "source": "node:fs",
+          "specifiers": [
+            "existsSync",
+            "readFileSync",
+            "readdirSync",
+            "realpathSync",
+            "statSync",
+            "writeFileSync"
+          ]
+        },
+        {
+          "source": "node:child_process",
+          "specifiers": [
+            "spawnSync"
+          ]
+        }
+      ],
+      "exports": [
+        "detectLanguage",
+        "detectCategory",
+        "estimateComplexity"
+      ],
+      "totalLines": 803,
+      "hasStructuralAnalysis": true
+    },
+    "dataset_sample.md": {
+      "filePath": "dataset_sample.md",
+      "contentHash": "362d520395aaf98a022a559247e2d73a61357dab64f95f7b9e64c39cfd56c512",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 22,
+      "hasStructuralAnalysis": true
+    },
+    "docs/ALL_IN_ONE_AUDIT_REPORT.md": {
+      "filePath": "docs/ALL_IN_ONE_AUDIT_REPORT.md",
+      "contentHash": "2c982619c7d799969d50d7538b3e35da341359c7df2f20570db7c540aca23095",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 199,
+      "hasStructuralAnalysis": true
+    },
+    "docs/COMPREHENSIVE_DOCUMENTATION.md": {
+      "filePath": "docs/COMPREHENSIVE_DOCUMENTATION.md",
+      "contentHash": "7f853d5b4b5bbf77e049fd6330c3df9e19e500b6eb67e10fe9df6b2d0f7fb5e7",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 470,
+      "hasStructuralAnalysis": true
+    },
+    "docs/CROSSCHECK_STATUS_SCHEMA_V2.md": {
+      "filePath": "docs/CROSSCHECK_STATUS_SCHEMA_V2.md",
+      "contentHash": "6faac7cd52e13c40472a1b0c3473d1a1abd43d62b3ab0adbd26547360faf9fe0",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 129,
+      "hasStructuralAnalysis": true
+    },
+    "docs/diagram_dan_tabel_penelitian.md": {
+      "filePath": "docs/diagram_dan_tabel_penelitian.md",
+      "contentHash": "7a05aa2a75a8acd390a42759601e163bc7331e92afa7301ad7e800a9738e3530",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 695,
+      "hasStructuralAnalysis": true
+    },
+    "docs/DOKUMENTASI_METODE_PENELITIAN_TFT_SPEI_SUPERNODE.md": {
+      "filePath": "docs/DOKUMENTASI_METODE_PENELITIAN_TFT_SPEI_SUPERNODE.md",
+      "contentHash": "751eab8f5f2142fe4595804a99e2334854f6210f477c3bbd8e594a6f0f43d378",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 312,
+      "hasStructuralAnalysis": true
+    },
+    "docs/LIMITATIONS.md": {
+      "filePath": "docs/LIMITATIONS.md",
+      "contentHash": "4e52a06d88139430beafb7098c245f139809175b7bb4f84a26e84d6b4e46d5b9",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 162,
+      "hasStructuralAnalysis": true
+    },
+    "docs/MIGRATION_CHECKLIST_STATUS_VERIFIED.md": {
+      "filePath": "docs/MIGRATION_CHECKLIST_STATUS_VERIFIED.md",
+      "contentHash": "5d8138ac4c111998267fa31290c410e4462e7e23a6975853861b36bac07320b6",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 114,
+      "hasStructuralAnalysis": true
+    },
+    "docs/PANDUAN_SEMINAR_PROPOSAL.md": {
+      "filePath": "docs/PANDUAN_SEMINAR_PROPOSAL.md",
+      "contentHash": "4c25fb293f8baed19c05e2c3719537dd04e2683ef9d357df1a5eb34f587399d0",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 436,
+      "hasStructuralAnalysis": true
+    },
+    "docs/PLAN_FIX_AUDIT.md": {
+      "filePath": "docs/PLAN_FIX_AUDIT.md",
+      "contentHash": "dd8f86048b1a2b51f871fc75044d536988f6ee9a69917a57c4a4771db7abc6c9",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 248,
+      "hasStructuralAnalysis": true
+    },
+    "docs/PLAN_FIX_ROBUST.md": {
+      "filePath": "docs/PLAN_FIX_ROBUST.md",
+      "contentHash": "e61eee613ccb5850d1500304a3ad5800f3acb481f71cae7d4d97f12b24eadd0e",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 312,
+      "hasStructuralAnalysis": true
+    },
+    "docs/THESIS_READINESS_REPORT.md": {
+      "filePath": "docs/THESIS_READINESS_REPORT.md",
+      "contentHash": "7c454ea958a3722066930a5db8709c6347837e3d8c46f8667225f7676c687ef4",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 280,
+      "hasStructuralAnalysis": true
+    },
+    "evaluate.py": {
+      "filePath": "evaluate.py",
+      "contentHash": "af06085f8f602d147326a8e873937a8ea7fcd46959fe7a9c4996c2cd8981e0d0",
+      "functions": [
+        {
+          "name": "_metrics",
+          "params": [
+            "actual",
+            "pred"
+          ],
+          "exported": true,
+          "lineCount": 9
+        },
+        {
+          "name": "_entity_col",
+          "params": [
+            "data"
+          ],
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "_quantile_index_map",
+          "params": [
+            "model"
+          ],
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "_checkpoint_from_run_config",
+          "params": [],
+          "exported": true,
+          "lineCount": 12
+        },
+        {
+          "name": "evaluate_model",
+          "params": [
+            "checkpoint_path",
+            "test_year_start",
+            "data_path"
+          ],
+          "exported": true,
+          "lineCount": 378
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "json",
+          "specifiers": [
+            "json"
+          ]
+        },
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        },
+        {
+          "source": "warnings",
+          "specifiers": [
+            "warnings"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "matplotlib.pyplot",
+          "specifiers": [
+            "plt"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        },
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "pytorch_forecasting",
+          "specifiers": [
+            "TemporalFusionTransformer",
+            "TimeSeriesDataSet"
+          ]
+        },
+        {
+          "source": "sklearn.metrics",
+          "specifiers": [
+            "mean_absolute_error",
+            "mean_squared_error",
+            "r2_score"
+          ]
+        },
+        {
+          "source": "src.models.dataset",
+          "specifiers": [
+            "MODEL_GROUP_COL",
+            "create_dataset"
+          ]
+        },
+        {
+          "source": "src.models.tft",
+          "specifiers": [
+            "load_tft_checkpoint"
+          ]
+        }
+      ],
+      "exports": [
+        "_metrics",
+        "_entity_col",
+        "_quantile_index_map",
+        "_checkpoint_from_run_config",
+        "evaluate_model"
+      ],
+      "totalLines": 479,
+      "hasStructuralAnalysis": true
+    },
+    "full_evaluation.py": {
+      "filePath": "full_evaluation.py",
+      "contentHash": "52550c8dc0c31f36e9a61eda796b8da46d82f0136af688bb2163e17cb029401e",
+      "functions": [
+        {
+          "name": "_metrics",
+          "params": [
+            "actual",
+            "pred"
+          ],
+          "returnType": "dict",
+          "exported": true,
+          "lineCount": 13
+        },
+        {
+          "name": "_log",
+          "params": [
+            "msg",
+            "fp"
+          ],
+          "exported": true,
+          "lineCount": 5
+        },
+        {
+          "name": "_broad",
+          "params": [
+            "c"
+          ],
+          "returnType": "str",
+          "exported": true,
+          "lineCount": 2
+        },
+        {
+          "name": "_entity_col",
+          "params": [
+            "df"
+          ],
+          "returnType": "str",
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "_palette",
+          "params": [
+            "keys"
+          ],
+          "exported": true,
+          "lineCount": 3
+        },
+        {
+          "name": "_grid",
+          "params": [
+            "n",
+            "max_cols"
+          ],
+          "exported": true,
+          "lineCount": 4
+        },
+        {
+          "name": "_best_checkpoint",
+          "params": [
+            "ckpt_dir"
+          ],
+          "returnType": "Path",
+          "exported": true,
+          "lineCount": 13
+        },
+        {
+          "name": "_checkpoint_from_run_config",
+          "params": [],
+          "returnType": "Path | None",
+          "exported": true,
+          "lineCount": 12
+        },
+        {
+          "name": "_quantile_index_map",
+          "params": [
+            "model"
+          ],
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "run",
+          "params": [
+            "checkpoint_path",
+            "out_dir",
+            "log_fp"
+          ],
+          "exported": true,
+          "lineCount": 672
+        },
+        {
+          "name": "main",
+          "params": [],
+          "exported": true,
+          "lineCount": 24
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "argparse",
+          "specifiers": [
+            "argparse"
+          ]
+        },
+        {
+          "source": "json",
+          "specifiers": [
+            "json"
+          ]
+        },
+        {
+          "source": "math",
+          "specifiers": [
+            "math"
+          ]
+        },
+        {
+          "source": "re",
+          "specifiers": [
+            "re"
+          ]
+        },
+        {
+          "source": "sys",
+          "specifiers": [
+            "sys"
+          ]
+        },
+        {
+          "source": "warnings",
+          "specifiers": [
+            "warnings"
+          ]
+        },
+        {
+          "source": "datetime",
+          "specifiers": [
+            "datetime"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "matplotlib",
+          "specifiers": [
+            "matplotlib"
+          ]
+        },
+        {
+          "source": "matplotlib.pyplot",
+          "specifiers": [
+            "plt"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        },
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        },
+        {
+          "source": "seaborn",
+          "specifiers": [
+            "sns"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "sklearn.metrics",
+          "specifiers": [
+            "mean_absolute_error",
+            "mean_squared_error",
+            "r2_score"
+          ]
+        },
+        {
+          "source": "pytorch_forecasting",
+          "specifiers": [
+            "TemporalFusionTransformer",
+            "TimeSeriesDataSet"
+          ]
+        },
+        {
+          "source": "src.data.spei",
+          "specifiers": [
+            "classify_spei"
+          ]
+        },
+        {
+          "source": "src.evaluation.calibration",
+          "specifiers": [
+            "apply_calibration",
+            "compute_picp",
+            "fit_per_city_interval_calibration"
+          ]
+        },
+        {
+          "source": "src.models.dataset",
+          "specifiers": [
+            "MODEL_GROUP_COL",
+            "create_dataset"
+          ]
+        },
+        {
+          "source": "src.models.tft",
+          "specifiers": [
+            "load_tft_checkpoint"
+          ]
+        }
+      ],
+      "exports": [
+        "_metrics",
+        "_log",
+        "_broad",
+        "_entity_col",
+        "_palette",
+        "_grid",
+        "_best_checkpoint",
+        "_checkpoint_from_run_config",
+        "_quantile_index_map",
+        "run",
+        "main"
+      ],
+      "totalLines": 840,
+      "hasStructuralAnalysis": true
+    },
+    "last.convo.txt": {
+      "filePath": "last.convo.txt",
+      "contentHash": "54c4bd8444a7083b0b5579c6dbd46961ffee8cdbe59bcbebc2d77b1cc90ebf2f",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 727,
+      "hasStructuralAnalysis": false
+    },
+    "main.py": {
+      "filePath": "main.py",
+      "contentHash": "d0f0769f7959e2bd53ef2b5d7563180a3a9e068851ccac42af0e8713bb0e1d14",
+      "functions": [
+        {
+          "name": "_is_schema_v2",
+          "params": [
+            "path",
+            "required_cols"
+          ],
+          "exported": true,
+          "lineCount": 13
+        },
+        {
+          "name": "_load_city_registry",
+          "params": [
+            "city_config_path"
+          ],
+          "exported": true,
+          "lineCount": 8
+        },
+        {
+          "name": "_raw_has_required_coverage",
+          "params": [
+            "path",
+            "city_config_path",
+            "min_nodes_per_city"
+          ],
+          "exported": true,
+          "lineCount": 31
+        },
+        {
+          "name": "main",
+          "params": [],
+          "exported": true,
+          "lineCount": 93
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        },
+        {
+          "source": "sys",
+          "specifiers": [
+            "sys"
+          ]
+        },
+        {
+          "source": "argparse",
+          "specifiers": [
+            "argparse"
+          ]
+        },
+        {
+          "source": "json",
+          "specifiers": [
+            "json"
+          ]
+        },
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        },
+        {
+          "source": "src.data.ingest",
+          "specifiers": [
+            "ingest_data"
+          ]
+        },
+        {
+          "source": "src.data.preprocess",
+          "specifiers": [
+            "preprocess_pipeline"
+          ]
+        },
+        {
+          "source": "src.training.train",
+          "specifiers": [
+            "train_pipeline"
+          ]
+        }
+      ],
+      "exports": [
+        "_is_schema_v2",
+        "_load_city_registry",
+        "_raw_has_required_coverage",
+        "main"
+      ],
+      "totalLines": 175,
+      "hasStructuralAnalysis": true
+    },
+    "notebooks/inspect_ckpt.py": {
+      "filePath": "notebooks/inspect_ckpt.py",
+      "contentHash": "61512ae5919299a5a0d10e79035234be2582072d6f7a1cd47e92c1c3a2d6eb0d",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        },
+        {
+          "source": "sys",
+          "specifiers": [
+            "sys"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "pytorch_forecasting",
+          "specifiers": [
+            "TemporalFusionTransformer"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 46,
+      "hasStructuralAnalysis": true
+    },
+    "notebooks/TFT_SPEI_Evaluation.ipynb": {
+      "filePath": "notebooks/TFT_SPEI_Evaluation.ipynb",
+      "contentHash": "c6fe800eb8d9b5e10dc3e071b1a0dc794fb04ad4dffa5937fb11d0375d0ef392",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 1513,
+      "hasStructuralAnalysis": false
+    },
+    "notebooks/verify_fix.py": {
+      "filePath": "notebooks/verify_fix.py",
+      "contentHash": "2ae75f069ae30bbc6962d524feef267fa4808683ffc55f8da5b31a301b48ff92",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        },
+        {
+          "source": "sys",
+          "specifiers": [
+            "sys"
+          ]
+        },
+        {
+          "source": "warnings",
+          "specifiers": [
+            "warnings"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        },
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        },
+        {
+          "source": "collections",
+          "specifiers": [
+            "defaultdict"
+          ]
+        },
+        {
+          "source": "pytorch_forecasting",
+          "specifiers": [
+            "TemporalFusionTransformer",
+            "TimeSeriesDataSet"
+          ]
+        },
+        {
+          "source": "src.models.dataset",
+          "specifiers": [
+            "MODEL_GROUP_COL",
+            "create_dataset",
+            "MAX_ENCODER_LENGTH",
+            "MAX_PREDICTION_LENGTH"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 138,
+      "hasStructuralAnalysis": true
+    },
+    "notebooks/visualize_fix.py": {
+      "filePath": "notebooks/visualize_fix.py",
+      "contentHash": "7fe48e9e96ba511bc834d6132f69b7c2ae44d99747d5a1cf06f3273dab9e82ec",
+      "functions": [
+        {
+          "name": "generate_visualization",
+          "params": [],
+          "exported": true,
+          "lineCount": 97
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        },
+        {
+          "source": "sys",
+          "specifiers": [
+            "sys"
+          ]
+        },
+        {
+          "source": "warnings",
+          "specifiers": [
+            "warnings"
+          ]
+        },
+        {
+          "source": "matplotlib.pyplot",
+          "specifiers": [
+            "plt"
+          ]
+        },
+        {
+          "source": "seaborn",
+          "specifiers": [
+            "sns"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        },
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        },
+        {
+          "source": "collections",
+          "specifiers": [
+            "defaultdict"
+          ]
+        },
+        {
+          "source": "pytorch_forecasting",
+          "specifiers": [
+            "TemporalFusionTransformer",
+            "TimeSeriesDataSet"
+          ]
+        },
+        {
+          "source": "src.models.dataset",
+          "specifiers": [
+            "MODEL_GROUP_COL",
+            "create_dataset",
+            "MAX_ENCODER_LENGTH",
+            "MAX_PREDICTION_LENGTH"
+          ]
+        }
+      ],
+      "exports": [
+        "generate_visualization"
+      ],
+      "totalLines": 126,
+      "hasStructuralAnalysis": true
+    },
+    "now_percentage.md": {
+      "filePath": "now_percentage.md",
+      "contentHash": "8e6626f0916b264ece5fabf55f6141f5115b0e6e90260c8c87f2154cac7a23e3",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 122,
+      "hasStructuralAnalysis": true
+    },
+    "requirements.txt": {
+      "filePath": "requirements.txt",
+      "contentHash": "c297aca8b3adc95ba2b6b0f692a50116d695b7f3d220286469a7e14174d81137",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 13,
+      "hasStructuralAnalysis": false
+    },
+    "run_evaluation.py": {
+      "filePath": "run_evaluation.py",
+      "contentHash": "db02814dd888b1532c62eee416a56181757b4938c49349fe20d5d296f5417735",
+      "functions": [
+        {
+          "name": "main",
+          "params": [],
+          "exported": true,
+          "lineCount": 31
+        }
+      ],
+      "classes": [
+        {
+          "name": "Tee",
+          "methods": [
+            "__init__",
+            "write",
+            "flush"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 12
+        }
+      ],
+      "imports": [
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        },
+        {
+          "source": "sys",
+          "specifiers": [
+            "sys"
+          ]
+        },
+        {
+          "source": "datetime",
+          "specifiers": [
+            "datetime"
+          ]
+        },
+        {
+          "source": "contextlib",
+          "specifiers": [
+            "redirect_stdout",
+            "redirect_stderr"
+          ]
+        },
+        {
+          "source": "evaluate",
+          "specifiers": [
+            "evaluate_model"
+          ]
+        }
+      ],
+      "exports": [
+        "Tee",
+        "main"
+      ],
+      "totalLines": 58,
+      "hasStructuralAnalysis": true
+    },
+    "run_experiment.py": {
+      "filePath": "run_experiment.py",
+      "contentHash": "be4d8f7565014ce5441b67a2ba13d5660aadf5d8e79b13a199f69af3e3ef3d1d",
+      "functions": [
+        {
+          "name": "_banner",
+          "params": [
+            "msg"
+          ],
+          "exported": true,
+          "lineCount": 3
+        },
+        {
+          "name": "_run",
+          "params": [
+            "cmd",
+            "label"
+          ],
+          "exported": true,
+          "lineCount": 19
+        },
+        {
+          "name": "_best_checkpoint",
+          "params": [
+            "enc"
+          ],
+          "returnType": "Path",
+          "exported": true,
+          "lineCount": 18
+        },
+        {
+          "name": "_checkpoint_from_run_config",
+          "params": [],
+          "returnType": "Path | None",
+          "exported": true,
+          "lineCount": 12
+        },
+        {
+          "name": "_latest_eval_dir",
+          "params": [],
+          "returnType": "Path",
+          "exported": true,
+          "lineCount": 5
+        },
+        {
+          "name": "_load_metrics",
+          "params": [
+            "eval_dir"
+          ],
+          "returnType": "dict",
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "_write_md_report",
+          "params": [
+            "metrics",
+            "eval_dir",
+            "enc",
+            "elapsed_train"
+          ],
+          "exported": true,
+          "lineCount": 170
+        },
+        {
+          "name": "main",
+          "params": [],
+          "exported": true,
+          "lineCount": 115
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "argparse",
+          "specifiers": [
+            "argparse"
+          ]
+        },
+        {
+          "source": "json",
+          "specifiers": [
+            "json"
+          ]
+        },
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        },
+        {
+          "source": "re",
+          "specifiers": [
+            "re"
+          ]
+        },
+        {
+          "source": "shutil",
+          "specifiers": [
+            "shutil"
+          ]
+        },
+        {
+          "source": "subprocess",
+          "specifiers": [
+            "subprocess"
+          ]
+        },
+        {
+          "source": "sys",
+          "specifiers": [
+            "sys"
+          ]
+        },
+        {
+          "source": "time",
+          "specifiers": [
+            "time"
+          ]
+        },
+        {
+          "source": "datetime",
+          "specifiers": [
+            "datetime"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        }
+      ],
+      "exports": [
+        "_banner",
+        "_run",
+        "_best_checkpoint",
+        "_checkpoint_from_run_config",
+        "_latest_eval_dir",
+        "_load_metrics",
+        "_write_md_report",
+        "main"
+      ],
+      "totalLines": 406,
+      "hasStructuralAnalysis": true
+    },
+    "scripts/detailed_actual_vs_predict.py": {
+      "filePath": "scripts/detailed_actual_vs_predict.py",
+      "contentHash": "99b79de69b4fe28dfb1ad9f8e9bacd6727456c2a0f288ae2498379fb8f7167fb",
+      "functions": [
+        {
+          "name": "log",
+          "params": [
+            "message"
+          ],
+          "exported": true,
+          "lineCount": 5
+        },
+        {
+          "name": "_resolve_checkpoint",
+          "params": [
+            "checkpoint_dir",
+            "preferred_encoder"
+          ],
+          "returnType": "str",
+          "exported": true,
+          "lineCount": 24
+        },
+        {
+          "name": "calculate_quantile_coverage",
+          "params": [
+            "actuals",
+            "predictions",
+            "quantile_idx_low",
+            "quantile_idx_high"
+          ],
+          "exported": true,
+          "lineCount": 12
+        },
+        {
+          "name": "calculate_interval_sharpness",
+          "params": [
+            "predictions",
+            "quantile_idx_low",
+            "quantile_idx_high"
+          ],
+          "exported": true,
+          "lineCount": 10
+        },
+        {
+          "name": "calculate_calibration_error",
+          "params": [
+            "actuals",
+            "predictions",
+            "quantiles"
+          ],
+          "exported": true,
+          "lineCount": 15
+        },
+        {
+          "name": "calculate_metrics_per_horizon",
+          "params": [
+            "actuals",
+            "predictions",
+            "horizons",
+            "quantile_idx_p50"
+          ],
+          "exported": true,
+          "lineCount": 27
+        },
+        {
+          "name": "analyze_drought_classification",
+          "params": [
+            "actuals",
+            "predictions",
+            "quantile_idx_p50"
+          ],
+          "exported": true,
+          "lineCount": 38
+        },
+        {
+          "name": "main",
+          "params": [],
+          "exported": true,
+          "lineCount": 302
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        },
+        {
+          "source": "sys",
+          "specifiers": [
+            "sys"
+          ]
+        },
+        {
+          "source": "json",
+          "specifiers": [
+            "json"
+          ]
+        },
+        {
+          "source": "re",
+          "specifiers": [
+            "re"
+          ]
+        },
+        {
+          "source": "warnings",
+          "specifiers": [
+            "warnings"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        },
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        },
+        {
+          "source": "datetime",
+          "specifiers": [
+            "datetime"
+          ]
+        },
+        {
+          "source": "pytorch_forecasting",
+          "specifiers": [
+            "TemporalFusionTransformer",
+            "TimeSeriesDataSet"
+          ]
+        },
+        {
+          "source": "src.models.dataset",
+          "specifiers": [
+            "create_dataset",
+            "MAX_ENCODER_LENGTH",
+            "MAX_PREDICTION_LENGTH"
+          ]
+        },
+        {
+          "source": "src.models.tft",
+          "specifiers": [
+            "load_tft_checkpoint"
+          ]
+        },
+        {
+          "source": "src.data.spei",
+          "specifiers": [
+            "_classify_spei_canonical"
+          ]
+        }
+      ],
+      "exports": [
+        "log",
+        "_resolve_checkpoint",
+        "calculate_quantile_coverage",
+        "calculate_interval_sharpness",
+        "calculate_calibration_error",
+        "calculate_metrics_per_horizon",
+        "analyze_drought_classification",
+        "main"
+      ],
+      "totalLines": 494,
+      "hasStructuralAnalysis": true
+    },
+    "scripts/generate_leaflet_final_grid.py": {
+      "filePath": "scripts/generate_leaflet_final_grid.py",
+      "contentHash": "9f28fa3140bfeea7af07cc87ce992e749e0fd3312c7f300a62e8b78ea41bb8bf",
+      "functions": [
+        {
+          "name": "_square_bounds",
+          "params": [
+            "lat",
+            "lon",
+            "side_km"
+          ],
+          "returnType": "list[list[float]]",
+          "exported": true,
+          "lineCount": 13
+        },
+        {
+          "name": "_build_payload",
+          "params": [
+            "df"
+          ],
+          "returnType": "dict",
+          "exported": true,
+          "lineCount": 32
+        },
+        {
+          "name": "_html",
+          "params": [
+            "payload"
+          ],
+          "returnType": "str",
+          "exported": true,
+          "lineCount": 124
+        },
+        {
+          "name": "main",
+          "params": [],
+          "exported": true,
+          "lineCount": 10
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "json",
+          "specifiers": [
+            "json"
+          ]
+        },
+        {
+          "source": "math",
+          "specifiers": [
+            "math"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        }
+      ],
+      "exports": [
+        "_square_bounds",
+        "_build_payload",
+        "_html",
+        "main"
+      ],
+      "totalLines": 215,
+      "hasStructuralAnalysis": true
+    },
+    "scripts/plot_final_grid_cartopy_google.py": {
+      "filePath": "scripts/plot_final_grid_cartopy_google.py",
+      "contentHash": "f8b244474c008e83827f5e68ba723593d91e77c1c1f53b15f3c7f943d69f1b44",
+      "functions": [
+        {
+          "name": "_cell_half_deltas_deg",
+          "params": [
+            "lat",
+            "side_km"
+          ],
+          "returnType": "tuple[float, float]",
+          "exported": true,
+          "lineCount": 5
+        },
+        {
+          "name": "_extent_for_points",
+          "params": [
+            "df",
+            "pad_deg"
+          ],
+          "returnType": "tuple[float, float, float, float]",
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "_draw_squares",
+          "params": [
+            "ax",
+            "df"
+          ],
+          "exported": true,
+          "lineCount": 22
+        },
+        {
+          "name": "_render_map",
+          "params": [
+            "df",
+            "title",
+            "out_path",
+            "zoom"
+          ],
+          "exported": true,
+          "lineCount": 17
+        },
+        {
+          "name": "main",
+          "params": [],
+          "exported": true,
+          "lineCount": 17
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "math",
+          "specifiers": [
+            "math"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "cartopy.crs",
+          "specifiers": [
+            "ccrs"
+          ]
+        },
+        {
+          "source": "matplotlib",
+          "specifiers": [
+            "matplotlib"
+          ]
+        },
+        {
+          "source": "matplotlib.pyplot",
+          "specifiers": [
+            "plt"
+          ]
+        },
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        },
+        {
+          "source": "cartopy.io.img_tiles",
+          "specifiers": [
+            "GoogleTiles"
+          ]
+        },
+        {
+          "source": "shapely.geometry",
+          "specifiers": [
+            "box"
+          ]
+        },
+        {
+          "source": "shapely.ops",
+          "specifiers": [
+            "unary_union"
+          ]
+        }
+      ],
+      "exports": [
+        "_cell_half_deltas_deg",
+        "_extent_for_points",
+        "_draw_squares",
+        "_render_map",
+        "main"
+      ],
+      "totalLines": 114,
+      "hasStructuralAnalysis": true
+    },
+    "scripts/plot_final_grid_map.py": {
+      "filePath": "scripts/plot_final_grid_map.py",
+      "contentHash": "e4db7ceb80b449e9e4b3573a5a03d4700f46b5edb0c885f6d36d1279669c52c1",
+      "functions": [
+        {
+          "name": "_build_candidates_df",
+          "params": [
+            "city_config_path"
+          ],
+          "returnType": "pd.DataFrame",
+          "exported": true,
+          "lineCount": 17
+        },
+        {
+          "name": "_plot_overview",
+          "params": [
+            "candidates",
+            "selected",
+            "out_path"
+          ],
+          "exported": true,
+          "lineCount": 45
+        },
+        {
+          "name": "_plot_per_city",
+          "params": [
+            "candidates",
+            "selected",
+            "out_path"
+          ],
+          "exported": true,
+          "lineCount": 70
+        },
+        {
+          "name": "main",
+          "params": [],
+          "exported": true,
+          "lineCount": 13
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "matplotlib.pyplot",
+          "specifiers": [
+            "plt"
+          ]
+        },
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        },
+        {
+          "source": "src.data.ingest",
+          "specifiers": [
+            "build_city_nodes",
+            "load_city_centers"
+          ]
+        }
+      ],
+      "exports": [
+        "_build_candidates_df",
+        "_plot_overview",
+        "_plot_per_city",
+        "main"
+      ],
+      "totalLines": 178,
+      "hasStructuralAnalysis": true
+    },
+    "scripts/resume_8var_pipeline.py": {
+      "filePath": "scripts/resume_8var_pipeline.py",
+      "contentHash": "9d9958eb14e720d62b208a2bdca73bcad054a122ef46ea37ee19939c2f416b62",
+      "functions": [
+        {
+          "name": "_run",
+          "params": [
+            "cmd"
+          ],
+          "exported": true,
+          "lineCount": 3
+        },
+        {
+          "name": "main",
+          "params": [],
+          "exported": true,
+          "lineCount": 31
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "subprocess",
+          "specifiers": [
+            "subprocess"
+          ]
+        },
+        {
+          "source": "sys",
+          "specifiers": [
+            "sys"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        }
+      ],
+      "exports": [
+        "_run",
+        "main"
+      ],
+      "totalLines": 66,
+      "hasStructuralAnalysis": true
+    },
+    "scripts/run_full_pipeline.py": {
+      "filePath": "scripts/run_full_pipeline.py",
+      "contentHash": "d4ccf9c40b84f66517e46e5ec941b5556c4c771adecd1101847ccfb870d03bb2",
+      "functions": [
+        {
+          "name": "_run",
+          "params": [
+            "cmd"
+          ],
+          "exported": true,
+          "lineCount": 3
+        },
+        {
+          "name": "_quota_blocked",
+          "params": [],
+          "returnType": "bool",
+          "exported": true,
+          "lineCount": 13
+        },
+        {
+          "name": "_coverage_complete",
+          "params": [],
+          "returnType": "bool",
+          "exported": true,
+          "lineCount": 9
+        },
+        {
+          "name": "ingest_until_complete",
+          "params": [
+            "wait_on_quota",
+            "retry_minutes",
+            "request_delay"
+          ],
+          "exported": true,
+          "lineCount": 34
+        },
+        {
+          "name": "main",
+          "params": [],
+          "exported": true,
+          "lineCount": 32
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "argparse",
+          "specifiers": [
+            "argparse"
+          ]
+        },
+        {
+          "source": "subprocess",
+          "specifiers": [
+            "subprocess"
+          ]
+        },
+        {
+          "source": "sys",
+          "specifiers": [
+            "sys"
+          ]
+        },
+        {
+          "source": "time",
+          "specifiers": [
+            "time"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        },
+        {
+          "source": "requests",
+          "specifiers": [
+            "requests"
+          ]
+        }
+      ],
+      "exports": [
+        "_run",
+        "_quota_blocked",
+        "_coverage_complete",
+        "ingest_until_complete",
+        "main"
+      ],
+      "totalLines": 133,
+      "hasStructuralAnalysis": true
+    },
+    "scripts/smoke_e2e_v2.py": {
+      "filePath": "scripts/smoke_e2e_v2.py",
+      "contentHash": "79a22110e15d5c83b9a1922c85eba022895ed408c8b4813b81475aed5dd7e8d9",
+      "functions": [
+        {
+          "name": "generate_synthetic_raw",
+          "params": [
+            "path",
+            "seed"
+          ],
+          "exported": true,
+          "lineCount": 46
+        },
+        {
+          "name": "main",
+          "params": [],
+          "exported": true,
+          "lineCount": 62
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "argparse",
+          "specifiers": [
+            "argparse"
+          ]
+        },
+        {
+          "source": "json",
+          "specifiers": [
+            "json"
+          ]
+        },
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "sys",
+          "specifiers": [
+            "sys"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        },
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        },
+        {
+          "source": "src.data.preprocess",
+          "specifiers": [
+            "preprocess_pipeline"
+          ]
+        },
+        {
+          "source": "src.models.dataset",
+          "specifiers": [
+            "MODEL_GROUP_COL",
+            "create_dataset"
+          ]
+        },
+        {
+          "source": "src.training.train",
+          "specifiers": [
+            "train_pipeline"
+          ]
+        }
+      ],
+      "exports": [
+        "generate_synthetic_raw",
+        "main"
+      ],
+      "totalLines": 143,
+      "hasStructuralAnalysis": true
+    },
+    "scripts/visualize_predictions.py": {
+      "filePath": "scripts/visualize_predictions.py",
+      "contentHash": "0181c2b89aa4ce63cedc8a48ab4e7f992126e3b2813c4818d625390cd44b96a7",
+      "functions": [
+        {
+          "name": "_resolve_csv_path",
+          "params": [
+            "csv_path_arg"
+          ],
+          "returnType": "Path",
+          "exported": true,
+          "lineCount": 13
+        },
+        {
+          "name": "subplot_grid",
+          "params": [
+            "n",
+            "max_cols"
+          ],
+          "exported": true,
+          "lineCount": 4
+        },
+        {
+          "name": "add_axes_grid",
+          "params": [
+            "rows",
+            "cols",
+            "figsize"
+          ],
+          "exported": true,
+          "lineCount": 4
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "argparse",
+          "specifiers": [
+            "argparse"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "math",
+          "specifiers": [
+            "math"
+          ]
+        },
+        {
+          "source": "matplotlib.pyplot",
+          "specifiers": [
+            "plt"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        },
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        },
+        {
+          "source": "sklearn.metrics",
+          "specifiers": [
+            "ConfusionMatrixDisplay",
+            "confusion_matrix"
+          ]
+        }
+      ],
+      "exports": [
+        "_resolve_csv_path",
+        "subplot_grid",
+        "add_axes_grid"
+      ],
+      "totalLines": 201,
+      "hasStructuralAnalysis": true
+    },
+    "sonar_audit/reports/audit_report.txt": {
+      "filePath": "sonar_audit/reports/audit_report.txt",
+      "contentHash": "c9158bf375c019e565c84e27738d8f805ba8a6f1cf2821971fe9d2e881310994",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 203,
+      "hasStructuralAnalysis": false
+    },
+    "sonar_audit/run_audit.py": {
+      "filePath": "sonar_audit/run_audit.py",
+      "contentHash": "7705dff62c3baaeef73539019c1be452fba4e9a29431a3b8cb0c19bc7b281837",
+      "functions": [],
+      "classes": [
+        {
+          "name": "AuditResult",
+          "methods": [
+            "__init__",
+            "complete"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 14
+        },
+        {
+          "name": "SonarAudit",
+          "methods": [
+            "__init__",
+            "load_model_and_data",
+            "audit_section_1_config",
+            "audit_section_2_data",
+            "audit_section_3_bias_rmse",
+            "audit_section_4_lag",
+            "audit_section_5_variance",
+            "audit_section_6_shocks",
+            "audit_section_7_smoothness",
+            "audit_section_8_visuals",
+            "audit_section_9_scorecard",
+            "audit_section_10_regression",
+            "audit_section_11_recommendations",
+            "run_full_audit",
+            "generate_report"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 957
+        }
+      ],
+      "imports": [
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        },
+        {
+          "source": "sys",
+          "specifiers": [
+            "sys"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        },
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "matplotlib.pyplot",
+          "specifiers": [
+            "plt"
+          ]
+        },
+        {
+          "source": "datetime",
+          "specifiers": [
+            "datetime"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "scipy",
+          "specifiers": [
+            "stats"
+          ]
+        },
+        {
+          "source": "scipy.signal",
+          "specifiers": [
+            "correlate"
+          ]
+        },
+        {
+          "source": "sklearn.metrics",
+          "specifiers": [
+            "mean_squared_error",
+            "mean_absolute_error",
+            "r2_score"
+          ]
+        },
+        {
+          "source": "pytorch_forecasting",
+          "specifiers": [
+            "TemporalFusionTransformer",
+            "TimeSeriesDataSet"
+          ]
+        },
+        {
+          "source": "src.models.dataset",
+          "specifiers": [
+            "create_dataset",
+            "MAX_ENCODER_LENGTH",
+            "MAX_PREDICTION_LENGTH"
+          ]
+        }
+      ],
+      "exports": [
+        "AuditResult",
+        "SonarAudit"
+      ],
+      "totalLines": 1020,
+      "hasStructuralAnalysis": true
+    },
+    "sonar_evautation.txt": {
+      "filePath": "sonar_evautation.txt",
+      "contentHash": "3f89465601c1227e74d1a7dd2e7456566aecde157dc88039bb0401974505e54b",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 349,
+      "hasStructuralAnalysis": false
+    },
+    "sonar_output_expectayion.txt": {
+      "filePath": "sonar_output_expectayion.txt",
+      "contentHash": "7c44c6562af7d4db485bc902c1cc0c86e852849e0ced9c3a0ca4d5a563cab458",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 492,
+      "hasStructuralAnalysis": false
+    },
+    "src/__init__.py": {
+      "filePath": "src/__init__.py",
+      "contentHash": "6d2b9e0c83c90c0362b4c61a3a92cca147f2260e433aab9dd088dbf557a8228b",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 2,
+      "hasStructuralAnalysis": true
+    },
+    "src/data/__init__.py": {
+      "filePath": "src/data/__init__.py",
+      "contentHash": "2fcc72c10c7a3e89a2322dbc734bf56e33584cc0eee9f11cae259761c5ccb58f",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 2,
+      "hasStructuralAnalysis": true
+    },
+    "src/data/ingest.py": {
+      "filePath": "src/data/ingest.py",
+      "contentHash": "801f611e745581f2d9c7586e6197848fe9a54888642cf3c54112ea90d9745db2",
+      "functions": [
+        {
+          "name": "load_city_centers",
+          "params": [
+            "config_path"
+          ],
+          "exported": true,
+          "lineCount": 14
+        },
+        {
+          "name": "haversine_km",
+          "params": [
+            "lat1",
+            "lon1",
+            "lat2",
+            "lon2"
+          ],
+          "exported": true,
+          "lineCount": 9
+        },
+        {
+          "name": "build_city_nodes",
+          "params": [
+            "city_id",
+            "center_lat",
+            "center_lon",
+            "node_offsets"
+          ],
+          "exported": true,
+          "lineCount": 25
+        },
+        {
+          "name": "fetch_node_data",
+          "params": [
+            "node_meta",
+            "max_retries"
+          ],
+          "exported": true,
+          "lineCount": 81
+        },
+        {
+          "name": "_validate_city_coverage",
+          "params": [
+            "df",
+            "city_centers",
+            "min_nodes_per_city"
+          ],
+          "exported": true,
+          "lineCount": 18
+        },
+        {
+          "name": "main",
+          "params": [
+            "output_path",
+            "city_config_path",
+            "min_nodes_per_city",
+            "strict_coverage",
+            "resume_existing",
+            "persist_partial",
+            "max_retries",
+            "request_delay"
+          ],
+          "exported": true,
+          "lineCount": 133
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        },
+        {
+          "source": "time",
+          "specifiers": [
+            "time"
+          ]
+        },
+        {
+          "source": "json",
+          "specifiers": [
+            "json"
+          ]
+        },
+        {
+          "source": "hashlib",
+          "specifiers": [
+            "hashlib"
+          ]
+        },
+        {
+          "source": "math",
+          "specifiers": [
+            "asin",
+            "cos",
+            "radians",
+            "sin",
+            "sqrt"
+          ]
+        },
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        },
+        {
+          "source": "requests",
+          "specifiers": [
+            "requests"
+          ]
+        }
+      ],
+      "exports": [
+        "load_city_centers",
+        "haversine_km",
+        "build_city_nodes",
+        "fetch_node_data",
+        "_validate_city_coverage",
+        "main"
+      ],
+      "totalLines": 338,
+      "hasStructuralAnalysis": true
+    },
+    "src/data/preprocess.py": {
+      "filePath": "src/data/preprocess.py",
+      "contentHash": "c897e14859cadcd87db036ee8fb2406f93ed62dc922db439d66293ea9a943be5",
+      "functions": [
+        {
+          "name": "haversine_km",
+          "params": [
+            "lat1",
+            "lon1",
+            "lat2",
+            "lon2"
+          ],
+          "exported": true,
+          "lineCount": 9
+        },
+        {
+          "name": "_validate_raw_schema",
+          "params": [
+            "df"
+          ],
+          "exported": true,
+          "lineCount": 22
+        },
+        {
+          "name": "_interpolate_per_node",
+          "params": [
+            "df"
+          ],
+          "exported": true,
+          "lineCount": 15
+        },
+        {
+          "name": "_compute_similarity",
+          "params": [
+            "df_train"
+          ],
+          "exported": true,
+          "lineCount": 49
+        },
+        {
+          "name": "_select_top_k_nodes",
+          "params": [
+            "similarity_df",
+            "top_k"
+          ],
+          "exported": true,
+          "lineCount": 19
+        },
+        {
+          "name": "preprocess_pipeline",
+          "params": [
+            "input_path",
+            "output_path",
+            "selection_artifact_path",
+            "selection_metadata_path",
+            "top_k",
+            "selection_end_date",
+            "seed"
+          ],
+          "exported": true,
+          "lineCount": 170
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        },
+        {
+          "source": "json",
+          "specifiers": [
+            "json"
+          ]
+        },
+        {
+          "source": "hashlib",
+          "specifiers": [
+            "hashlib"
+          ]
+        },
+        {
+          "source": "math",
+          "specifiers": [
+            "asin",
+            "cos",
+            "radians",
+            "sin",
+            "sqrt"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        },
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        },
+        {
+          "source": ".spei",
+          "specifiers": [
+            "calculate_spei",
+            "calculate_water_deficit"
+          ]
+        }
+      ],
+      "exports": [
+        "haversine_km",
+        "_validate_raw_schema",
+        "_interpolate_per_node",
+        "_compute_similarity",
+        "_select_top_k_nodes",
+        "preprocess_pipeline"
+      ],
+      "totalLines": 326,
+      "hasStructuralAnalysis": true
+    },
+    "src/data/spei.py": {
+      "filePath": "src/data/spei.py",
+      "contentHash": "3c3e11acb3930f5db1f5a486b959c85b61862295a87a7bbecea70b0459d069f3",
+      "functions": [
+        {
+          "name": "calculate_water_deficit",
+          "params": [
+            "df"
+          ],
+          "exported": true,
+          "lineCount": 7
+        },
+        {
+          "name": "calculate_spei",
+          "params": [
+            "series",
+            "scale",
+            "fit_mask"
+          ],
+          "exported": true,
+          "lineCount": 95
+        },
+        {
+          "name": "classify_spei",
+          "params": [
+            "value"
+          ],
+          "exported": true,
+          "lineCount": 14
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "warnings",
+          "specifiers": [
+            "warnings"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        },
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        },
+        {
+          "source": "scipy.stats",
+          "specifiers": [
+            "fisk",
+            "norm"
+          ]
+        }
+      ],
+      "exports": [
+        "calculate_water_deficit",
+        "calculate_spei",
+        "classify_spei"
+      ],
+      "totalLines": 128,
+      "hasStructuralAnalysis": true
+    },
+    "src/evaluation/__init__.py": {
+      "filePath": "src/evaluation/__init__.py",
+      "contentHash": "7561eef31b05ecd21506296ba3cdec9f25260644aebb5ce5902016c7db7e5b56",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 2,
+      "hasStructuralAnalysis": true
+    },
+    "src/evaluation/calibration.py": {
+      "filePath": "src/evaluation/calibration.py",
+      "contentHash": "b81bd2e7d66402da8e913fa1f97c2fb41d9e978be5a5c9d6fac91a91a26786e3",
+      "functions": [
+        {
+          "name": "fit_per_city_interval_calibration",
+          "params": [
+            "df_val",
+            "city_col",
+            "nominal"
+          ],
+          "returnType": "dict",
+          "exported": true,
+          "lineCount": 25
+        },
+        {
+          "name": "apply_calibration",
+          "params": [
+            "df",
+            "factors",
+            "city_col"
+          ],
+          "returnType": "pd.DataFrame",
+          "exported": true,
+          "lineCount": 13
+        },
+        {
+          "name": "compute_picp",
+          "params": [
+            "df",
+            "city_col"
+          ],
+          "returnType": "tuple[float, dict]",
+          "exported": true,
+          "lineCount": 9
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        },
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        }
+      ],
+      "exports": [
+        "fit_per_city_interval_calibration",
+        "apply_calibration",
+        "compute_picp"
+      ],
+      "totalLines": 60,
+      "hasStructuralAnalysis": true
+    },
+    "src/evaluation/metrics.py": {
+      "filePath": "src/evaluation/metrics.py",
+      "contentHash": "30723ecf2d86cb5e23bf93c97c0098506a664f0ac4f1fc67a3bd151993f35d15",
+      "functions": [
+        {
+          "name": "load_model",
+          "params": [
+            "checkpoint_path"
+          ],
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "calculate_metrics",
+          "params": [
+            "actuals",
+            "predictions"
+          ],
+          "exported": true,
+          "lineCount": 17
+        },
+        {
+          "name": "get_variable_importance",
+          "params": [
+            "model",
+            "dataset"
+          ],
+          "exported": true,
+          "lineCount": 8
+        },
+        {
+          "name": "plot_variable_importance",
+          "params": [
+            "model",
+            "dataloader",
+            "save_path"
+          ],
+          "exported": true,
+          "lineCount": 48
+        },
+        {
+          "name": "plot_attention_weights",
+          "params": [
+            "model",
+            "dataloader",
+            "save_path",
+            "sample_idx"
+          ],
+          "exported": true,
+          "lineCount": 41
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        },
+        {
+          "source": "pytorch_forecasting",
+          "specifiers": [
+            "TemporalFusionTransformer"
+          ]
+        },
+        {
+          "source": "src.models.tft",
+          "specifiers": [
+            "load_tft_checkpoint"
+          ]
+        }
+      ],
+      "exports": [
+        "load_model",
+        "calculate_metrics",
+        "get_variable_importance",
+        "plot_variable_importance",
+        "plot_attention_weights"
+      ],
+      "totalLines": 136,
+      "hasStructuralAnalysis": true
+    },
+    "src/models/__init__.py": {
+      "filePath": "src/models/__init__.py",
+      "contentHash": "531c24ac1c0de1315a1fb03a10f4c863dd358dd44713b2f8acba28135dc578cb",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 2,
+      "hasStructuralAnalysis": true
+    },
+    "src/models/dataset.py": {
+      "filePath": "src/models/dataset.py",
+      "contentHash": "1b6d2e90a7daf6ee3a54d692992bc022d81ab7e2b928d9a7b8defbf7a3f1a3ba",
+      "functions": [
+        {
+          "name": "_validate_schema",
+          "params": [
+            "data"
+          ],
+          "exported": true,
+          "lineCount": 30
+        },
+        {
+          "name": "create_dataset",
+          "params": [
+            "data",
+            "max_encoder_length",
+            "max_prediction_length"
+          ],
+          "exported": true,
+          "lineCount": 76
+        }
+      ],
+      "classes": [
+        {
+          "name": "ArrayStandardScaler",
+          "methods": [
+            "_to_2d_array",
+            "fit",
+            "partial_fit",
+            "transform",
+            "inverse_transform"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 26
+        }
+      ],
+      "imports": [
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        },
+        {
+          "source": "pytorch_forecasting",
+          "specifiers": [
+            "TimeSeriesDataSet"
+          ]
+        },
+        {
+          "source": "pytorch_forecasting.data.encoders",
+          "specifiers": [
+            "EncoderNormalizer"
+          ]
+        },
+        {
+          "source": "sklearn.preprocessing",
+          "specifiers": [
+            "StandardScaler"
+          ]
+        }
+      ],
+      "exports": [
+        "ArrayStandardScaler",
+        "_validate_schema",
+        "create_dataset"
+      ],
+      "totalLines": 148,
+      "hasStructuralAnalysis": true
+    },
+    "src/models/tft.py": {
+      "filePath": "src/models/tft.py",
+      "contentHash": "995197c6ea0fc37f3b011abe855d8cca56a1cbcf2efa8196e15275ceca181bcd",
+      "functions": [
+        {
+          "name": "load_tft_checkpoint",
+          "params": [
+            "checkpoint_path",
+            "map_location"
+          ],
+          "exported": true,
+          "lineCount": 26
+        },
+        {
+          "name": "build_tft_model",
+          "params": [
+            "training_dataset",
+            "hidden_size",
+            "dropout",
+            "attention_head_size",
+            "hidden_continuous_size",
+            "learning_rate",
+            "reduce_on_plateau_patience",
+            "weight_decay",
+            "log_interval",
+            "**kwargs"
+          ],
+          "exported": true,
+          "lineCount": 53
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "pytorch_forecasting.models.temporal_fusion_transformer.tuning",
+          "specifiers": [
+            "optimize_hyperparameters"
+          ]
+        },
+        {
+          "source": "pytorch_forecasting.models.temporal_fusion_transformer",
+          "specifiers": [
+            "TemporalFusionTransformer"
+          ]
+        },
+        {
+          "source": "pytorch_forecasting.metrics",
+          "specifiers": [
+            "QuantileLoss"
+          ]
+        }
+      ],
+      "exports": [
+        "load_tft_checkpoint",
+        "build_tft_model"
+      ],
+      "totalLines": 87,
+      "hasStructuralAnalysis": true
+    },
+    "src/training/__init__.py": {
+      "filePath": "src/training/__init__.py",
+      "contentHash": "44d77708e50262bdbbe86059dbb580d99770a7397150209e47b3c7dee884b488",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 2,
+      "hasStructuralAnalysis": true
+    },
+    "src/training/train.py": {
+      "filePath": "src/training/train.py",
+      "contentHash": "ec02a3c09e13fc33a6c9620ce6574fcfd6ab7a77c2582b0c8cfc18fcb4213e14",
+      "functions": [
+        {
+          "name": "_validate_training_schema",
+          "params": [
+            "data",
+            "meta_path"
+          ],
+          "exported": true,
+          "lineCount": 41
+        },
+        {
+          "name": "train_pipeline",
+          "params": [
+            "data_path",
+            "max_epochs",
+            "batch_size",
+            "max_encoder_length",
+            "hidden_size",
+            "dropout",
+            "attention_head_size",
+            "hidden_continuous_size",
+            "learning_rate",
+            "weight_decay",
+            "gradient_clip_val",
+            "seed",
+            "run_config_path",
+            "suppress_library_warnings",
+            "strict_determinism",
+            "run_id",
+            "allow_cpu",
+            "accumulate_grad_batches",
+            "precision"
+          ],
+          "exported": true,
+          "lineCount": 187
+        }
+      ],
+      "classes": [
+        {
+          "name": "EpochSummaryCallback",
+          "methods": [
+            "on_train_epoch_start",
+            "on_validation_epoch_end"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 24
+        }
+      ],
+      "imports": [
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        },
+        {
+          "source": "time",
+          "specifiers": [
+            "time"
+          ]
+        },
+        {
+          "source": "json",
+          "specifiers": [
+            "json"
+          ]
+        },
+        {
+          "source": "warnings",
+          "specifiers": [
+            "warnings"
+          ]
+        },
+        {
+          "source": "datetime",
+          "specifiers": [
+            "datetime"
+          ]
+        },
+        {
+          "source": "lightning",
+          "specifiers": [
+            "L"
+          ]
+        },
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "lightning.pytorch.callbacks",
+          "specifiers": [
+            "Callback",
+            "EarlyStopping",
+            "LearningRateMonitor",
+            "ModelCheckpoint"
+          ]
+        },
+        {
+          "source": "lightning.pytorch.loggers",
+          "specifiers": [
+            "TensorBoardLogger"
+          ]
+        },
+        {
+          "source": "pytorch_forecasting",
+          "specifiers": [
+            "TimeSeriesDataSet"
+          ]
+        },
+        {
+          "source": "src.models.dataset",
+          "specifiers": [
+            "MODEL_GROUP_COL",
+            "create_dataset"
+          ]
+        },
+        {
+          "source": "src.models.tft",
+          "specifiers": [
+            "build_tft_model"
+          ]
+        }
+      ],
+      "exports": [
+        "EpochSummaryCallback",
+        "_validate_training_schema",
+        "train_pipeline"
+      ],
+      "totalLines": 286,
+      "hasStructuralAnalysis": true
+    },
+    "src/visualization/__init__.py": {
+      "filePath": "src/visualization/__init__.py",
+      "contentHash": "10006e48839a38890f921abd7f71578099767fda75b9714ac1ae4094d5a058fe",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 2,
+      "hasStructuralAnalysis": true
+    },
+    "src/visualization/generate_visualizations.py": {
+      "filePath": "src/visualization/generate_visualizations.py",
+      "contentHash": "adfe8d248581b6124b062627da28430bbfb53e1d28efa2bfed3ba6d7b2bf95bb",
+      "functions": [
+        {
+          "name": "ensure_dir",
+          "params": [
+            "directory"
+          ],
+          "exported": true,
+          "lineCount": 3
+        },
+        {
+          "name": "load_data",
+          "params": [],
+          "exported": true,
+          "lineCount": 8
+        },
+        {
+          "name": "find_checkpoint",
+          "params": [],
+          "exported": true,
+          "lineCount": 18
+        },
+        {
+          "name": "generate_visualizations",
+          "params": [],
+          "exported": true,
+          "lineCount": 151
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        },
+        {
+          "source": "sys",
+          "specifiers": [
+            "sys"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        },
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        },
+        {
+          "source": "matplotlib.pyplot",
+          "specifiers": [
+            "plt"
+          ]
+        },
+        {
+          "source": "seaborn",
+          "specifiers": [
+            "sns"
+          ]
+        },
+        {
+          "source": "scipy.stats",
+          "specifiers": [
+            "pearsonr"
+          ]
+        },
+        {
+          "source": "pytorch_forecasting",
+          "specifiers": [
+            "TemporalFusionTransformer",
+            "TimeSeriesDataSet"
+          ]
+        },
+        {
+          "source": "src.models.dataset",
+          "specifiers": [
+            "create_dataset"
+          ]
+        },
+        {
+          "source": "src.models.tft",
+          "specifiers": [
+            "load_tft_checkpoint"
+          ]
+        }
+      ],
+      "exports": [
+        "ensure_dir",
+        "load_data",
+        "find_checkpoint",
+        "generate_visualizations"
+      ],
+      "totalLines": 211,
+      "hasStructuralAnalysis": true
+    },
+    "test_pipeline.py": {
+      "filePath": "test_pipeline.py",
+      "contentHash": "e4d53d99f86539b93d93f47a371e0341124ea3da6c1330212f643766e4d5607a",
+      "functions": [
+        {
+          "name": "section",
+          "params": [
+            "title"
+          ],
+          "exported": true,
+          "lineCount": 5
+        },
+        {
+          "name": "_is_schema_v2",
+          "params": [
+            "path"
+          ],
+          "exported": true,
+          "lineCount": 9
+        },
+        {
+          "name": "_resolve_processed_data_path",
+          "params": [],
+          "exported": true,
+          "lineCount": 12
+        },
+        {
+          "name": "_resolve_checkpoint_path",
+          "params": [
+            "processed_data_path"
+          ],
+          "exported": true,
+          "lineCount": 36
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "sys",
+          "specifiers": [
+            "sys"
+          ]
+        },
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        },
+        {
+          "source": "json",
+          "specifiers": [
+            "json"
+          ]
+        },
+        {
+          "source": "traceback",
+          "specifiers": [
+            "traceback"
+          ]
+        },
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        }
+      ],
+      "exports": [
+        "section",
+        "_is_schema_v2",
+        "_resolve_processed_data_path",
+        "_resolve_checkpoint_path"
+      ],
+      "totalLines": 463,
+      "hasStructuralAnalysis": true
+    }
+  }
+}

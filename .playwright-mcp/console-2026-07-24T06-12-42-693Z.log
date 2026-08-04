@@ -1,0 +1,12 @@
+[  629888ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://127.0.0.1:3006/src/api.ts?t=1784874192456:0
+[  709967ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://127.0.0.1:3006/src/components/DroughtMap.tsx?t=1784874272542:0
+[  722369ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://127.0.0.1:3006/src/components/DroughtMap.tsx?t=1784874284959:0
+[  745614ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://127.0.0.1:3006/src/components/DroughtMap.tsx?t=1784874308207:0
+[  757250ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://127.0.0.1:3006/src/components/DroughtMap.tsx?t=1784874319854:0
+[  768285ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://127.0.0.1:3006/src/components/DroughtMap.tsx?t=1784874330878:0
+[  787002ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://127.0.0.1:3006/src/components/DroughtMap.tsx?t=1784874349550:0
+[  802426ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://127.0.0.1:3006/src/components/DroughtMap.tsx?t=1784874349550:0
+[  845791ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://127.0.0.1:3006/src/components/DroughtMap.tsx?t=1784874349550:0
+[  864908ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://127.0.0.1:3006/src/components/DroughtMap.tsx?t=1784874349550:0
+[  886816ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://127.0.0.1:3006/src/components/DroughtMap.tsx?t=1784874349550:0
+[  906212ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://127.0.0.1:3006/src/components/DroughtMap.tsx?t=1784874349550:0

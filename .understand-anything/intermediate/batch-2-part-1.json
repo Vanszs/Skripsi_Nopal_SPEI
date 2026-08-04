@@ -1,0 +1,822 @@
+{
+  "nodes": [
+    {
+      "id": "document:.agent/rules/agent.md",
+      "type": "document",
+      "name": "agent.md",
+      "filePath": ".agent/rules/agent.md",
+      "summary": "Agent rules (Indonesian) enforcing schema-v2 contract: city-driven config, train-only node selection, super_node_id grouping, anti-leakage constraints, and reproducibility artifacts.",
+      "tags": [
+        "agent-rules",
+        "schema-v2",
+        "anti-leakage",
+        "pipeline-contract",
+        "indonesian"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:.github/copilot-instructions.md",
+      "type": "document",
+      "name": "copilot-instructions.md",
+      "filePath": ".github/copilot-instructions.md",
+      "summary": "Copilot instructions mirroring agent.md: non-negotiable rules for raw schema v2, super_node_id grouping, config-driven cities, leakage safety, deterministic node selection, and reproducibility artifact persistence.",
+      "tags": [
+        "copilot",
+        "schema-v2",
+        "pipeline-contract",
+        "anti-leakage",
+        "reproducibility"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:.kiro/settings/lsp.json",
+      "type": "config",
+      "name": "lsp.json",
+      "filePath": ".kiro/settings/lsp.json",
+      "summary": "Kiro IDE LSP server bindings: pyright (Python), typescript-language-server, rust-analyzer, jdtls (Java), gopls (Go), solargraph (Ruby), clangd (C++).",
+      "tags": [
+        "lsp",
+        "kiro",
+        "ide-config",
+        "language-servers"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "config:.understand-anything/.understandignore",
+      "type": "config",
+      "name": ".understandignore",
+      "filePath": ".understand-anything/.understandignore",
+      "summary": "Analysis ignore patterns: excludes data/, logs/, results/, parquet, ckpt, png, jpg, pycache; preserves src/data/ as real source.",
+      "tags": [
+        "understand-ignore",
+        "gitignore-like",
+        "excludes-artifacts",
+        "scan-config"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:.understand-anything/config.json",
+      "type": "config",
+      "name": "config.json",
+      "filePath": ".understand-anything/config.json",
+      "summary": "Understand-anything project config: autoUpdate disabled, outputLanguage English.",
+      "tags": [
+        "understand-config",
+        "auto-update",
+        "output-language"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:.understand-anything/intermediate/batches.json",
+      "type": "config",
+      "name": "batches.json",
+      "filePath": ".understand-anything/intermediate/batches.json",
+      "summary": "Phase 1.5 batch assignments mapping the 62 files into 4 batches with pre-resolved import data and cross-batch neighbor info.",
+      "tags": [
+        "batches",
+        "phase-1-5",
+        "import-map",
+        "understand-internal"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "config:.understand-anything/intermediate/scan-result.json",
+      "type": "config",
+      "name": "scan-result.json",
+      "filePath": ".understand-anything/intermediate/scan-result.json",
+      "summary": "Phase 1 scan output: file inventory with detected languages, categories, line counts, and filtered-by-ignore counts.",
+      "tags": [
+        "scan-result",
+        "phase-1",
+        "file-inventory",
+        "understand-internal"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:.understand-anything/tmp/scan-project.mjs",
+      "type": "file",
+      "name": "scan-project.mjs",
+      "filePath": ".understand-anything/tmp/scan-project.mjs",
+      "summary": "ESM scanner used by Phase 1: enumerates files via git ls-files, applies .understandignore, detects language and fileCategory, counts lines, estimates project complexity. Owned by the bundled understand-anything plugin.",
+      "tags": [
+        "scan",
+        "es-module",
+        "phase-1",
+        "deterministic",
+        "plugin-internal"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:_diag2.py",
+      "type": "file",
+      "name": "_diag2.py",
+      "filePath": "_diag2.py",
+      "summary": "Ad-hoc deep diagnostic script: compares train/val/test per-entity SPEI-3 distributions, evaluates model step-0 predictions, applies per-entity post-hoc calibration learned from validation, and reports target_scale statistics on the enc90 checkpoint.",
+      "tags": [
+        "diagnostic",
+        "calibration",
+        "distribution-shift",
+        "tft-debug",
+        "script"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:_diag2.py:eval_split",
+      "type": "function",
+      "name": "eval_split",
+      "filePath": "_diag2.py",
+      "summary": "Runs raw model prediction per entity for a split, extracts step-0 P50 by decoder_time_idx, merges with actual SPEI_3, computes per-entity RMSE/bias, and returns the eval frame + bias dict.",
+      "tags": [
+        "evaluation",
+        "per-entity",
+        "rmse",
+        "bias",
+        "step-0"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        52,
+        86
+      ]
+    },
+    {
+      "id": "file:main.py",
+      "type": "file",
+      "name": "main.py",
+      "filePath": "main.py",
+      "summary": "Schema-v2 pipeline CLI orchestrator: validates raw schema v2 + per-city coverage, runs ingest (resume-capable), preprocess, then TFT train with optional --skip-train and configurable encoder/seed.",
+      "tags": [
+        "orchestrator",
+        "schema-v2",
+        "cli",
+        "pipeline",
+        "ingest-train"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:main.py:_is_schema_v2",
+      "type": "function",
+      "name": "_is_schema_v2",
+      "filePath": "main.py",
+      "summary": "Checks whether a parquet has schema_version == 2 and contains the required columns.",
+      "tags": [
+        "schema-guard",
+        "parquet",
+        "validation"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        20,
+        32
+      ]
+    },
+    {
+      "id": "function:main.py:_load_city_registry",
+      "type": "function",
+      "name": "_load_city_registry",
+      "filePath": "main.py",
+      "summary": "Loads city_centers.json and returns the sorted city key list; raises on missing/empty.",
+      "tags": [
+        "city-config",
+        "json",
+        "validation"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        35,
+        42
+      ]
+    },
+    {
+      "id": "function:main.py:_raw_has_required_coverage",
+      "type": "function",
+      "name": "_raw_has_required_coverage",
+      "filePath": "main.py",
+      "summary": "Verifies per-city node coverage in raw parquet: reports missing cities and below-threshold node counts.",
+      "tags": [
+        "coverage-check",
+        "ingest-guard",
+        "per-city"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        45,
+        75
+      ]
+    },
+    {
+      "id": "function:main.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "main.py",
+      "summary": "argparse-driven 3-step pipeline: ingest (with schema/coverage guards) -> preprocess -> train.",
+      "tags": [
+        "cli",
+        "pipeline",
+        "three-step"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        78,
+        170
+      ]
+    },
+    {
+      "id": "file:evaluate.py",
+      "type": "file",
+      "name": "evaluate.py",
+      "filePath": "evaluate.py",
+      "summary": "Schema-v2 aware TFT evaluation: resolves best checkpoint, generates per-entity test predictions, computes raw metrics, PICP, multi-horizon RMSE vs fair naive persistence, variable importance, and emits 4 PNGs + 2 JSON/CSV outputs.",
+      "tags": [
+        "evaluation",
+        "schema-v2",
+        "picp",
+        "horizon-metrics",
+        "tft"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:evaluate.py:_metrics",
+      "type": "function",
+      "name": "_metrics",
+      "filePath": "evaluate.py",
+      "summary": "Compute RMSE/MAE/R2/bias/pearson_r + sample count for one (actual, pred) pair.",
+      "tags": [
+        "metrics",
+        "point-metrics",
+        "python"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        36,
+        44
+      ]
+    },
+    {
+      "id": "function:evaluate.py:_entity_col",
+      "type": "function",
+      "name": "_entity_col",
+      "filePath": "evaluate.py",
+      "summary": "Pick entity grouping column (MODEL_GROUP_COL or legacy location_id).",
+      "tags": [
+        "entity-key",
+        "grouping",
+        "python"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        47,
+        52
+      ]
+    },
+    {
+      "id": "function:evaluate.py:_quantile_index_map",
+      "type": "function",
+      "name": "_quantile_index_map",
+      "filePath": "evaluate.py",
+      "summary": "Map P10/P50/P90 quantile labels to tensor indices from model.loss.quantiles.",
+      "tags": [
+        "quantiles",
+        "index-map",
+        "python"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        55,
+        60
+      ]
+    },
+    {
+      "id": "function:evaluate.py:_checkpoint_from_run_config",
+      "type": "function",
+      "name": "_checkpoint_from_run_config",
+      "filePath": "evaluate.py",
+      "summary": "Read best_model_path from logs/run_config.json if it still exists.",
+      "tags": [
+        "checkpoint",
+        "run-config",
+        "python"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        63,
+        74
+      ]
+    },
+    {
+      "id": "function:evaluate.py:evaluate_model",
+      "type": "function",
+      "name": "evaluate_model",
+      "filePath": "evaluate.py",
+      "summary": "End-to-end eval: load checkpoint + dataset, run raw prediction per entity, compute overall/per-entity/per-city/per-horizon metrics, render 4 plots, write predictions_eval.csv + evaluation_metrics_detailed.json.",
+      "tags": [
+        "evaluation",
+        "horizons",
+        "plots",
+        "tft"
+      ],
+      "complexity": "complex",
+      "lineRange": [
+        77,
+        454
+      ]
+    },
+    {
+      "id": "file:full_evaluation.py",
+      "type": "file",
+      "name": "full_evaluation.py",
+      "filePath": "full_evaluation.py",
+      "summary": "Comprehensive TFT evaluation (thesis-grade): full multi-horizon eval, per-city calibration, 9-class SPEI classification, event detection (severe + moderate), 12 plot types, and metrics_summary.json with skill scores (t+1 and pooled all-horizons).",
+      "tags": [
+        "comprehensive-eval",
+        "thesis",
+        "calibration",
+        "classification",
+        "event-detection"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:full_evaluation.py:_metrics",
+      "type": "function",
+      "name": "_metrics",
+      "filePath": "full_evaluation.py",
+      "summary": "NaN-safe metrics dict (rmse/mae/r2/bias/pearson_r/n); returns None fields when samples < 2.",
+      "tags": [
+        "metrics",
+        "nan-safe",
+        "python"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        56,
+        68
+      ]
+    },
+    {
+      "id": "function:full_evaluation.py:_log",
+      "type": "function",
+      "name": "_log",
+      "filePath": "full_evaluation.py",
+      "summary": "Print line and mirror to log file handle.",
+      "tags": [
+        "logging",
+        "tee",
+        "python"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        71,
+        75
+      ]
+    },
+    {
+      "id": "function:full_evaluation.py:_broad",
+      "type": "function",
+      "name": "_broad",
+      "filePath": "full_evaluation.py",
+      "summary": "Collapse 9-class SPEI labels to 3 broad buckets (Kekeringan / Normal / Basah).",
+      "tags": [
+        "classification",
+        "bucket",
+        "python"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        78,
+        79
+      ]
+    },
+    {
+      "id": "function:full_evaluation.py:_entity_col",
+      "type": "function",
+      "name": "_entity_col",
+      "filePath": "full_evaluation.py",
+      "summary": "Resolve entity grouping column.",
+      "tags": [
+        "entity-key",
+        "python",
+        "helper"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        82,
+        87
+      ]
+    },
+    {
+      "id": "function:full_evaluation.py:_palette",
+      "type": "function",
+      "name": "_palette",
+      "filePath": "full_evaluation.py",
+      "summary": "Tab20 color palette per category key.",
+      "tags": [
+        "plotting",
+        "color",
+        "python"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        90,
+        92
+      ]
+    },
+    {
+      "id": "function:full_evaluation.py:_grid",
+      "type": "function",
+      "name": "_grid",
+      "filePath": "full_evaluation.py",
+      "summary": "Subplot grid sizing helper (rows, cols).",
+      "tags": [
+        "plotting",
+        "layout",
+        "python"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        95,
+        98
+      ]
+    },
+    {
+      "id": "function:full_evaluation.py:_best_checkpoint",
+      "type": "function",
+      "name": "_best_checkpoint",
+      "filePath": "full_evaluation.py",
+      "summary": "Pick checkpoint with lowest val_loss= in filename under logs/checkpoints.",
+      "tags": [
+        "checkpoint",
+        "val-loss",
+        "python"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        101,
+        113
+      ]
+    },
+    {
+      "id": "function:full_evaluation.py:_checkpoint_from_run_config",
+      "type": "function",
+      "name": "_checkpoint_from_run_config",
+      "filePath": "full_evaluation.py",
+      "summary": "Read best_model_path from logs/run_config.json if it still exists.",
+      "tags": [
+        "checkpoint",
+        "run-config",
+        "python"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        116,
+        127
+      ]
+    },
+    {
+      "id": "function:full_evaluation.py:_quantile_index_map",
+      "type": "function",
+      "name": "_quantile_index_map",
+      "filePath": "full_evaluation.py",
+      "summary": "Map P10/P50/P90 quantile labels to tensor indices.",
+      "tags": [
+        "quantiles",
+        "python",
+        "helper"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        130,
+        135
+      ]
+    },
+    {
+      "id": "function:full_evaluation.py:run",
+      "type": "function",
+      "name": "run",
+      "filePath": "full_evaluation.py",
+      "summary": "Comprehensive eval pipeline: per-entity rolling-window predict, horizon preds, naive-by-horizon, calibration, classification, event detection, 12 plots, metrics_summary.json.",
+      "tags": [
+        "comprehensive-eval",
+        "thesis",
+        "plots"
+      ],
+      "complexity": "complex",
+      "lineRange": [
+        138,
+        809
+      ]
+    },
+    {
+      "id": "function:full_evaluation.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "full_evaluation.py",
+      "summary": "CLI: parse --checkpoint, timestamp output dir, run eval.",
+      "tags": [
+        "cli",
+        "python",
+        "helper"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        812,
+        835
+      ]
+    },
+    {
+      "id": "file:notebooks/TFT_SPEI_Evaluation.ipynb",
+      "type": "file",
+      "name": "TFT_SPEI_Evaluation.ipynb",
+      "filePath": "notebooks/TFT_SPEI_Evaluation.ipynb",
+      "summary": "Jupyter notebook (29 cells: 15 markdown + 14 code) walking through TFT SPEI-3 evaluation: data load, dataset build, model load, predictions, per-horizon metrics, plots.",
+      "tags": [
+        "notebook",
+        "jupyter",
+        "evaluation",
+        "tft",
+        "interactive"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:notebooks/inspect_ckpt.py",
+      "type": "file",
+      "name": "inspect_ckpt.py",
+      "filePath": "notebooks/inspect_ckpt.py",
+      "summary": "Standalone script to inspect a TFT checkpoint's hparams (encoder length, lr, dropout) and verify it matches the optimized configuration (enc=90, lr=1e-4, dropout=0.15).",
+      "tags": [
+        "notebook-script",
+        "checkpoint",
+        "hparams",
+        "verification"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:notebooks/verify_fix.py",
+      "type": "file",
+      "name": "verify_fix.py",
+      "filePath": "notebooks/verify_fix.py",
+      "summary": "Post-fix verification script: loads best ckpt, generates rolling-window predictions for one entity, applies bias+scale (with 0.9 dampening) calibration, and reports raw vs calibrated RMSE/bias/variance ratio.",
+      "tags": [
+        "notebook-script",
+        "calibration",
+        "bias-correction",
+        "variance-ratio"
+      ],
+      "complexity": "moderate"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:_diag2.py",
+      "target": "function:_diag2.py:eval_split",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:main.py",
+      "target": "function:main.py:_is_schema_v2",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:main.py",
+      "target": "function:main.py:_load_city_registry",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:main.py",
+      "target": "function:main.py:_raw_has_required_coverage",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:main.py",
+      "target": "function:main.py:main",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:evaluate.py",
+      "target": "function:evaluate.py:_metrics",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:evaluate.py",
+      "target": "function:evaluate.py:_entity_col",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:evaluate.py",
+      "target": "function:evaluate.py:_quantile_index_map",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:evaluate.py",
+      "target": "function:evaluate.py:_checkpoint_from_run_config",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:evaluate.py",
+      "target": "function:evaluate.py:evaluate_model",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:full_evaluation.py",
+      "target": "function:full_evaluation.py:_metrics",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:full_evaluation.py",
+      "target": "function:full_evaluation.py:_log",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:full_evaluation.py",
+      "target": "function:full_evaluation.py:_broad",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:full_evaluation.py",
+      "target": "function:full_evaluation.py:_entity_col",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:full_evaluation.py",
+      "target": "function:full_evaluation.py:_palette",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:full_evaluation.py",
+      "target": "function:full_evaluation.py:_grid",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:full_evaluation.py",
+      "target": "function:full_evaluation.py:_best_checkpoint",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:full_evaluation.py",
+      "target": "function:full_evaluation.py:_checkpoint_from_run_config",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:full_evaluation.py",
+      "target": "function:full_evaluation.py:_quantile_index_map",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:full_evaluation.py",
+      "target": "function:full_evaluation.py:run",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:full_evaluation.py",
+      "target": "function:full_evaluation.py:main",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    }
+  ],
+  "batchFiles": [
+    {
+      "path": ".agent/rules/agent.md",
+      "language": "markdown",
+      "sizeLines": 49,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".github/copilot-instructions.md",
+      "language": "markdown",
+      "sizeLines": 48,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".kiro/settings/lsp.json",
+      "language": "json",
+      "sizeLines": 204,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".understand-anything/.understandignore",
+      "language": "unknown",
+      "sizeLines": 67,
+      "fileCategory": "code"
+    },
+    {
+      "path": ".understand-anything/config.json",
+      "language": "json",
+      "sizeLines": 1,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".understand-anything/intermediate/batches.json",
+      "language": "json",
+      "sizeLines": 584,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".understand-anything/intermediate/scan-result.json",
+      "language": "json",
+      "sizeLines": 360,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".understand-anything/tmp/scan-project.mjs",
+      "language": "javascript",
+      "sizeLines": 802,
+      "fileCategory": "code"
+    },
+    {
+      "path": "_diag2.py",
+      "language": "python",
+      "sizeLines": 138,
+      "fileCategory": "code"
+    },
+    {
+      "path": "evaluate.py",
+      "language": "python",
+      "sizeLines": 478,
+      "fileCategory": "code"
+    },
+    {
+      "path": "full_evaluation.py",
+      "language": "python",
+      "sizeLines": 839,
+      "fileCategory": "code"
+    },
+    {
+      "path": "main.py",
+      "language": "python",
+      "sizeLines": 174,
+      "fileCategory": "code"
+    },
+    {
+      "path": "notebooks/TFT_SPEI_Evaluation.ipynb",
+      "language": "ipynb",
+      "sizeLines": 1512,
+      "fileCategory": "code"
+    },
+    {
+      "path": "notebooks/inspect_ckpt.py",
+      "language": "python",
+      "sizeLines": 45,
+      "fileCategory": "code"
+    },
+    {
+      "path": "notebooks/verify_fix.py",
+      "language": "python",
+      "sizeLines": 137,
+      "fileCategory": "code"
+    }
+  ]
+}

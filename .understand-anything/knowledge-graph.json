@@ -1,0 +1,4019 @@
+{
+  "version": "1.0.0",
+  "project": {
+    "name": "Skripsi_Nopal",
+    "languages": [
+      "python",
+      "markdown",
+      "json",
+      "txt"
+    ],
+    "frameworks": [
+      "pytorch",
+      "pytorch-lightning",
+      "pytorch-forecasting"
+    ],
+    "description": "Temporal Fusion Transformer (TFT) applied to SPEI drought index forecasting across Indonesian regencies.",
+    "analyzedAt": "2026-07-23T13:28:54.878670+00:00",
+    "gitCommitHash": "87eae914ad6e296bfc98b85939be7641139248b4"
+  },
+  "nodes": [
+    {
+      "id": "document:_tft_docx_extracted.txt",
+      "type": "document",
+      "name": "_tft_docx_extracted.txt",
+      "filePath": "_tft_docx_extracted.txt",
+      "summary": "Plain-text extract of a DOCX containing the recommended 8-variable set for the TFT drought-forecasting model, with SCOPUS-literature justification per variable (precipitation, ET0, Tmax/Tmin, soil moisture, humidity, radiation, wind).",
+      "tags": [
+        "tft",
+        "variable-selection",
+        "spei",
+        "scopus-literature",
+        "drought-forecasting"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:dataset_sample.md",
+      "type": "document",
+      "name": "dataset_sample.md",
+      "filePath": "dataset_sample.md",
+      "summary": "First 10 rows of the main weather dataset (data/raw/weather_history_east_java.parquet) with schema-version-2 metadata, showing the 8 meteorological variables actually present per node_id.",
+      "tags": [
+        "dataset",
+        "open-meteo",
+        "weather-features",
+        "spei",
+        "east-java"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:last.convo.txt",
+      "type": "document",
+      "name": "last.convo.txt",
+      "filePath": "last.convo.txt",
+      "summary": "Terminal transcript of a multi-agent debugging session diagnosing a TFT overfit-from-epoch-0 regression caused by commit b634a3c (hidden_size 48\u219264, dropout 0.35\u21920.20); documents the minimal fix and 15-epoch verification run.",
+      "tags": [
+        "conversation-log",
+        "hyperparameter-tuning",
+        "tft-regression",
+        "model-training",
+        "debugging"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:now_percentage.md",
+      "type": "document",
+      "name": "now_percentage.md",
+      "filePath": "now_percentage.md",
+      "summary": "Outdated (~42%) thesis-readiness assessment marked USANG/OUTDATED and superseded by PLAN_FIX_ROBUST.md; scores infrastructure, model quality, experiments, docs, and reproducibility with a fixed must-fix list.",
+      "tags": [
+        "thesis-readiness",
+        "project-status",
+        "outdated",
+        "assessment",
+        "blocked-by-model"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "config:requirements.txt",
+      "type": "config",
+      "name": "requirements.txt",
+      "filePath": "requirements.txt",
+      "summary": "Pinned lower-bound Python dependencies for the TFT-SPEI project: PyTorch, PyTorch Lightning, pytorch-forecasting, openmeteo-sdk, pandas/numpy/scipy, matplotlib/seaborn, requests, openpyxl, tensorboard.",
+      "tags": [
+        "python-dependencies",
+        "pytorch",
+        "pytorch-lightning",
+        "pytorch-forecasting",
+        "environment"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:sonar_evautation.txt",
+      "type": "document",
+      "name": "sonar_evautation.txt",
+      "filePath": "sonar_evautation.txt",
+      "summary": "Model audit flagging that the wrong checkpoint was evaluated (epoch=0 v1 instead of optimized v3); documents bias -0.176, variance ratio 0.74x, error ACF 0.81, and a prioritized fix list to reach production-readiness 85-90/100.",
+      "tags": [
+        "model-evaluation",
+        "bias-analysis",
+        "variance-ratio",
+        "autocorrelation",
+        "production-readiness"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:sonar_output_expectayion.txt",
+      "type": "document",
+      "name": "sonar_output_expectayion.txt",
+      "filePath": "sonar_output_expectayion.txt",
+      "summary": "Specification of expected deliverables for the TFT-SPEI skripsi: artifacts layout, 3-quantile prediction CSV, evaluation_metrics.json schema, and required figures (actual-vs-predicted, scatter, variable importance).",
+      "tags": [
+        "deliverables",
+        "output-specification",
+        "visualization",
+        "thesis-expectations",
+        "tft-spei"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:docs/ALL_IN_ONE_AUDIT_REPORT.md",
+      "type": "document",
+      "name": "ALL_IN_ONE_AUDIT_REPORT",
+      "filePath": "docs/ALL_IN_ONE_AUDIT_REPORT.md",
+      "summary": "Cross-checks Draft Nopal1 thesis (BAB I-III) against repo code, listing 0 FATAL / 4 MAJOR / 4 MINOR issues including missing conformal-style calibration docs, SPEI category mismatch, and absent web dashboard implementation.",
+      "tags": [
+        "audit",
+        "thesis-review",
+        "bab-1-3",
+        "code-vs-pdf",
+        "spei"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:docs/COMPREHENSIVE_DOCUMENTATION.md",
+      "type": "document",
+      "name": "COMPREHENSIVE_DOCUMENTATION",
+      "filePath": "docs/COMPREHENSIVE_DOCUMENTATION.md",
+      "summary": "Full project documentation covering context, data, method, pipeline, outputs, and latest per-location calibration evaluation results (RMSE 0.363, R\u00b2 0.828). Includes schema v2 normative override noting super-node as the official architecture.",
+      "tags": [
+        "documentation",
+        "pipeline",
+        "tft",
+        "spei",
+        "schema-v2"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:docs/CROSSCHECK_STATUS_SCHEMA_V2.md",
+      "type": "document",
+      "name": "CROSSCHECK_STATUS_SCHEMA_V2",
+      "filePath": "docs/CROSSCHECK_STATUS_SCHEMA_V2.md",
+      "summary": "Verified audit status (16/16 closed) of multi-node super-node schema v2 migration covering identity/leakage safety, deterministic selection, dynamic cardinality, E2E runtime, and documentation alignment.",
+      "tags": [
+        "audit",
+        "schema-v2",
+        "super-node",
+        "verified",
+        "crosscheck"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:docs/DOKUMENTASI_METODE_PENELITIAN_TFT_SPEI_SUPERNODE.md",
+      "type": "document",
+      "name": "DOKUMENTASI_METODE_PENELITIAN_TFT_SPEI_SUPERNODE",
+      "filePath": "docs/DOKUMENTASI_METODE_PENELITIAN_TFT_SPEI_SUPERNODE.md",
+      "summary": "Methodology documentation detailing research objects, data sources (Open-Meteo), end-to-end pipeline with train-only node selection and super-node aggregation, TFT configuration, mathematical SPEI formulas, and evaluation metrics.",
+      "tags": [
+        "methodology",
+        "spei",
+        "super-node",
+        "open-meteo",
+        "tft"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:docs/LIMITATIONS.md",
+      "type": "document",
+      "name": "LIMITATIONS",
+      "filePath": "docs/LIMITATIONS.md",
+      "summary": "Documents six verified research limitations: 5 spatial entities, deep-tail SPEI extrapolation, single-year temporal split, seed variance, 30-day horizon scope, and evaluation honesty protocol.",
+      "tags": [
+        "limitations",
+        "transparency",
+        "evaluation",
+        "methodology",
+        "reproducibility"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:docs/MIGRATION_CHECKLIST_STATUS_VERIFIED.md",
+      "type": "document",
+      "name": "MIGRATION_CHECKLIST_STATUS_VERIFIED",
+      "filePath": "docs/MIGRATION_CHECKLIST_STATUS_VERIFIED.md",
+      "summary": "Verified migration checklist for 5-nodes-per-city to 1-super-node transition across identity, leakage, ingest, preprocess, dataset, evaluation, testing, and pipeline robustness categories; all items closed.",
+      "tags": [
+        "migration",
+        "schema-v2",
+        "super-node",
+        "checklist",
+        "verified"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:docs/PANDUAN_SEMINAR_PROPOSAL.md",
+      "type": "document",
+      "name": "PANDUAN_SEMINAR_PROPOSAL",
+      "filePath": "docs/PANDUAN_SEMINAR_PROPOSAL.md",
+      "summary": "Seminar proposal preparation guide covering BAB I-III structure requirements, 8 supporting Mermaid/ASCII diagrams, classification/methodology tables, presentation tips, anticipated examiner questions, and schema v2 addendum.",
+      "tags": [
+        "proposal",
+        "seminar",
+        "bab-1-3",
+        "diagrams",
+        "schema-v2"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:docs/PLAN_FIX_AUDIT.md",
+      "type": "document",
+      "name": "PLAN_FIX_AUDIT",
+      "filePath": "docs/PLAN_FIX_AUDIT.md",
+      "summary": "Superseded fix plan (replaced by PLAN_FIX_ROBUST) addressing TFT underperforming naive persistence; covers completed bug fixes (double-denorm, checkpoint selection), encoder=90 retraining plan, feature engineering, and audit checklist.",
+      "tags": [
+        "plan",
+        "audit",
+        "fix",
+        "retraining",
+        "deprecated"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:docs/PLAN_FIX_ROBUST.md",
+      "type": "document",
+      "name": "PLAN_FIX_ROBUST",
+      "filePath": "docs/PLAN_FIX_ROBUST.md",
+      "summary": "Post-audit robust plan consolidating decisions Q1-Q6 (multi-horizon reporting, per-city calibration, event detection, 8 variables, super-node entity key, enc=90/h=30, GPU enforcement) with verified fixes for critical SPEI tail and checkpoint load regressions.",
+      "tags": [
+        "plan",
+        "robustness",
+        "fix",
+        "calibration",
+        "schema-v2"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:docs/THESIS_READINESS_REPORT.md",
+      "type": "document",
+      "name": "THESIS_READINESS_REPORT",
+      "filePath": "docs/THESIS_READINESS_REPORT.md",
+      "summary": "Thesis readiness assessment (overall 42%) flagging model quality as the sole blocker (TFT loses 65% to naive persistence on RMSE/MAE); reports per-location metrics, horizon degradation, classification accuracy, and a phased roadmap to defense.",
+      "tags": [
+        "thesis",
+        "readiness",
+        "evaluation",
+        "blocker",
+        "naive-baseline"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:docs/diagram_dan_tabel_penelitian.md",
+      "type": "document",
+      "name": "diagram_dan_tabel_penelitian",
+      "filePath": "docs/diagram_dan_tabel_penelitian.md",
+      "summary": "PlantUML research diagrams and tables covering the 10-stage research flow, system design (ingest \u2192 preprocess \u2192 SPEI \u2192 TFT \u2192 evaluation), multi-horizon mechanism, PICP coverage, and drought event detection workflow.",
+      "tags": [
+        "diagrams",
+        "plantuml",
+        "research-flow",
+        "system-design",
+        "spei"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:.agent/rules/agent.md",
+      "type": "document",
+      "name": "agent.md",
+      "filePath": ".agent/rules/agent.md",
+      "summary": "Agent rules (Indonesian) enforcing schema-v2 contract: city-driven config, train-only node selection, super_node_id grouping, anti-leakage constraints, and reproducibility artifacts.",
+      "tags": [
+        "agent-rules",
+        "schema-v2",
+        "anti-leakage",
+        "pipeline-contract",
+        "indonesian"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:.github/copilot-instructions.md",
+      "type": "document",
+      "name": "copilot-instructions.md",
+      "filePath": ".github/copilot-instructions.md",
+      "summary": "Copilot instructions mirroring agent.md: non-negotiable rules for raw schema v2, super_node_id grouping, config-driven cities, leakage safety, deterministic node selection, and reproducibility artifact persistence.",
+      "tags": [
+        "copilot",
+        "schema-v2",
+        "pipeline-contract",
+        "anti-leakage",
+        "reproducibility"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:.kiro/settings/lsp.json",
+      "type": "config",
+      "name": "lsp.json",
+      "filePath": ".kiro/settings/lsp.json",
+      "summary": "Kiro IDE LSP server bindings: pyright (Python), typescript-language-server, rust-analyzer, jdtls (Java), gopls (Go), solargraph (Ruby), clangd (C++).",
+      "tags": [
+        "lsp",
+        "kiro",
+        "ide-config",
+        "language-servers"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "config:.understand-anything/.understandignore",
+      "type": "config",
+      "name": ".understandignore",
+      "filePath": ".understand-anything/.understandignore",
+      "summary": "Analysis ignore patterns: excludes data/, logs/, results/, parquet, ckpt, png, jpg, pycache; preserves src/data/ as real source.",
+      "tags": [
+        "understand-ignore",
+        "gitignore-like",
+        "excludes-artifacts",
+        "scan-config"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:.understand-anything/config.json",
+      "type": "config",
+      "name": "config.json",
+      "filePath": ".understand-anything/config.json",
+      "summary": "Understand-anything project config: autoUpdate disabled, outputLanguage English.",
+      "tags": [
+        "understand-config",
+        "auto-update",
+        "output-language"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:.understand-anything/intermediate/batches.json",
+      "type": "config",
+      "name": "batches.json",
+      "filePath": ".understand-anything/intermediate/batches.json",
+      "summary": "Phase 1.5 batch assignments mapping the 62 files into 4 batches with pre-resolved import data and cross-batch neighbor info.",
+      "tags": [
+        "batches",
+        "phase-1-5",
+        "import-map",
+        "understand-internal"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "config:.understand-anything/intermediate/scan-result.json",
+      "type": "config",
+      "name": "scan-result.json",
+      "filePath": ".understand-anything/intermediate/scan-result.json",
+      "summary": "Phase 1 scan output: file inventory with detected languages, categories, line counts, and filtered-by-ignore counts.",
+      "tags": [
+        "scan-result",
+        "phase-1",
+        "file-inventory",
+        "understand-internal"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:.understand-anything/tmp/scan-project.mjs",
+      "type": "file",
+      "name": "scan-project.mjs",
+      "filePath": ".understand-anything/tmp/scan-project.mjs",
+      "summary": "ESM scanner used by Phase 1: enumerates files via git ls-files, applies .understandignore, detects language and fileCategory, counts lines, estimates project complexity. Owned by the bundled understand-anything plugin.",
+      "tags": [
+        "scan",
+        "es-module",
+        "phase-1",
+        "deterministic",
+        "plugin-internal"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:_diag2.py",
+      "type": "file",
+      "name": "_diag2.py",
+      "filePath": "_diag2.py",
+      "summary": "Ad-hoc deep diagnostic script: compares train/val/test per-entity SPEI-3 distributions, evaluates model step-0 predictions, applies per-entity post-hoc calibration learned from validation, and reports target_scale statistics on the enc90 checkpoint.",
+      "tags": [
+        "diagnostic",
+        "calibration",
+        "distribution-shift",
+        "tft-debug",
+        "script"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:_diag2.py:eval_split",
+      "type": "function",
+      "name": "eval_split",
+      "filePath": "_diag2.py",
+      "summary": "Runs raw model prediction per entity for a split, extracts step-0 P50 by decoder_time_idx, merges with actual SPEI_3, computes per-entity RMSE/bias, and returns the eval frame + bias dict.",
+      "tags": [
+        "evaluation",
+        "per-entity",
+        "rmse",
+        "bias",
+        "step-0"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        52,
+        86
+      ]
+    },
+    {
+      "id": "file:main.py",
+      "type": "file",
+      "name": "main.py",
+      "filePath": "main.py",
+      "summary": "Schema-v2 pipeline CLI orchestrator: validates raw schema v2 + per-city coverage, runs ingest (resume-capable), preprocess, then TFT train with optional --skip-train and configurable encoder/seed.",
+      "tags": [
+        "orchestrator",
+        "schema-v2",
+        "cli",
+        "pipeline",
+        "ingest-train"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:main.py:_is_schema_v2",
+      "type": "function",
+      "name": "_is_schema_v2",
+      "filePath": "main.py",
+      "summary": "Checks whether a parquet has schema_version == 2 and contains the required columns.",
+      "tags": [
+        "schema-guard",
+        "parquet",
+        "validation"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        20,
+        32
+      ]
+    },
+    {
+      "id": "function:main.py:_load_city_registry",
+      "type": "function",
+      "name": "_load_city_registry",
+      "filePath": "main.py",
+      "summary": "Loads city_centers.json and returns the sorted city key list; raises on missing/empty.",
+      "tags": [
+        "city-config",
+        "json",
+        "validation"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        35,
+        42
+      ]
+    },
+    {
+      "id": "function:main.py:_raw_has_required_coverage",
+      "type": "function",
+      "name": "_raw_has_required_coverage",
+      "filePath": "main.py",
+      "summary": "Verifies per-city node coverage in raw parquet: reports missing cities and below-threshold node counts.",
+      "tags": [
+        "coverage-check",
+        "ingest-guard",
+        "per-city"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        45,
+        75
+      ]
+    },
+    {
+      "id": "function:main.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "main.py",
+      "summary": "argparse-driven 3-step pipeline: ingest (with schema/coverage guards) -> preprocess -> train.",
+      "tags": [
+        "cli",
+        "pipeline",
+        "three-step"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        78,
+        170
+      ]
+    },
+    {
+      "id": "file:evaluate.py",
+      "type": "file",
+      "name": "evaluate.py",
+      "filePath": "evaluate.py",
+      "summary": "Schema-v2 aware TFT evaluation: resolves best checkpoint, generates per-entity test predictions, computes raw metrics, PICP, multi-horizon RMSE vs fair naive persistence, variable importance, and emits 4 PNGs + 2 JSON/CSV outputs.",
+      "tags": [
+        "evaluation",
+        "schema-v2",
+        "picp",
+        "horizon-metrics",
+        "tft"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:evaluate.py:_metrics",
+      "type": "function",
+      "name": "_metrics",
+      "filePath": "evaluate.py",
+      "summary": "Compute RMSE/MAE/R2/bias/pearson_r + sample count for one (actual, pred) pair.",
+      "tags": [
+        "metrics",
+        "point-metrics"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        36,
+        44
+      ]
+    },
+    {
+      "id": "function:evaluate.py:_entity_col",
+      "type": "function",
+      "name": "_entity_col",
+      "filePath": "evaluate.py",
+      "summary": "Pick entity grouping column (MODEL_GROUP_COL or legacy location_id).",
+      "tags": [
+        "entity-key",
+        "grouping"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        47,
+        52
+      ]
+    },
+    {
+      "id": "function:evaluate.py:_quantile_index_map",
+      "type": "function",
+      "name": "_quantile_index_map",
+      "filePath": "evaluate.py",
+      "summary": "Map P10/P50/P90 quantile labels to tensor indices from model.loss.quantiles.",
+      "tags": [
+        "quantiles",
+        "index-map"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        55,
+        60
+      ]
+    },
+    {
+      "id": "function:evaluate.py:_checkpoint_from_run_config",
+      "type": "function",
+      "name": "_checkpoint_from_run_config",
+      "filePath": "evaluate.py",
+      "summary": "Read best_model_path from logs/run_config.json if it still exists.",
+      "tags": [
+        "checkpoint",
+        "run-config"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        63,
+        74
+      ]
+    },
+    {
+      "id": "function:evaluate.py:evaluate_model",
+      "type": "function",
+      "name": "evaluate_model",
+      "filePath": "evaluate.py",
+      "summary": "End-to-end eval: load checkpoint + dataset, run raw prediction per entity, compute overall/per-entity/per-city/per-horizon metrics, render 4 plots, write predictions_eval.csv + evaluation_metrics_detailed.json.",
+      "tags": [
+        "evaluation",
+        "horizons",
+        "plots",
+        "tft"
+      ],
+      "complexity": "complex",
+      "lineRange": [
+        77,
+        454
+      ]
+    },
+    {
+      "id": "file:full_evaluation.py",
+      "type": "file",
+      "name": "full_evaluation.py",
+      "filePath": "full_evaluation.py",
+      "summary": "Comprehensive TFT evaluation (thesis-grade): full multi-horizon eval, per-city calibration, 9-class SPEI classification, event detection (severe + moderate), 12 plot types, and metrics_summary.json with skill scores (t+1 and pooled all-horizons).",
+      "tags": [
+        "comprehensive-eval",
+        "thesis",
+        "calibration",
+        "classification",
+        "event-detection"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:full_evaluation.py:_metrics",
+      "type": "function",
+      "name": "_metrics",
+      "filePath": "full_evaluation.py",
+      "summary": "NaN-safe metrics dict (rmse/mae/r2/bias/pearson_r/n); returns None fields when samples < 2.",
+      "tags": [
+        "metrics",
+        "nan-safe"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        56,
+        68
+      ]
+    },
+    {
+      "id": "function:full_evaluation.py:_log",
+      "type": "function",
+      "name": "_log",
+      "filePath": "full_evaluation.py",
+      "summary": "Print line and mirror to log file handle.",
+      "tags": [
+        "logging",
+        "tee"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        71,
+        75
+      ]
+    },
+    {
+      "id": "function:full_evaluation.py:_broad",
+      "type": "function",
+      "name": "_broad",
+      "filePath": "full_evaluation.py",
+      "summary": "Collapse 9-class SPEI labels to 3 broad buckets (Kekeringan / Normal / Basah).",
+      "tags": [
+        "classification",
+        "bucket"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        78,
+        79
+      ]
+    },
+    {
+      "id": "function:full_evaluation.py:_entity_col",
+      "type": "function",
+      "name": "_entity_col",
+      "filePath": "full_evaluation.py",
+      "summary": "Resolve entity grouping column.",
+      "tags": [
+        "entity-key"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        82,
+        87
+      ]
+    },
+    {
+      "id": "function:full_evaluation.py:_palette",
+      "type": "function",
+      "name": "_palette",
+      "filePath": "full_evaluation.py",
+      "summary": "Tab20 color palette per category key.",
+      "tags": [
+        "plotting",
+        "color"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        90,
+        92
+      ]
+    },
+    {
+      "id": "function:full_evaluation.py:_grid",
+      "type": "function",
+      "name": "_grid",
+      "filePath": "full_evaluation.py",
+      "summary": "Subplot grid sizing helper (rows, cols).",
+      "tags": [
+        "plotting",
+        "layout"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        95,
+        98
+      ]
+    },
+    {
+      "id": "function:full_evaluation.py:_best_checkpoint",
+      "type": "function",
+      "name": "_best_checkpoint",
+      "filePath": "full_evaluation.py",
+      "summary": "Pick checkpoint with lowest val_loss= in filename under logs/checkpoints.",
+      "tags": [
+        "checkpoint",
+        "val-loss"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        101,
+        113
+      ]
+    },
+    {
+      "id": "function:full_evaluation.py:_checkpoint_from_run_config",
+      "type": "function",
+      "name": "_checkpoint_from_run_config",
+      "filePath": "full_evaluation.py",
+      "summary": "Read best_model_path from logs/run_config.json if it still exists.",
+      "tags": [
+        "checkpoint",
+        "run-config"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        116,
+        127
+      ]
+    },
+    {
+      "id": "function:full_evaluation.py:_quantile_index_map",
+      "type": "function",
+      "name": "_quantile_index_map",
+      "filePath": "full_evaluation.py",
+      "summary": "Map P10/P50/P90 quantile labels to tensor indices.",
+      "tags": [
+        "quantiles"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        130,
+        135
+      ]
+    },
+    {
+      "id": "function:full_evaluation.py:run",
+      "type": "function",
+      "name": "run",
+      "filePath": "full_evaluation.py",
+      "summary": "Comprehensive eval pipeline: per-entity rolling-window predict, horizon preds, naive-by-horizon, calibration, classification, event detection, 12 plots, metrics_summary.json.",
+      "tags": [
+        "comprehensive-eval",
+        "thesis",
+        "plots"
+      ],
+      "complexity": "complex",
+      "lineRange": [
+        138,
+        809
+      ]
+    },
+    {
+      "id": "function:full_evaluation.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "full_evaluation.py",
+      "summary": "CLI: parse --checkpoint, timestamp output dir, run eval.",
+      "tags": [
+        "cli"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        812,
+        835
+      ]
+    },
+    {
+      "id": "file:notebooks/TFT_SPEI_Evaluation.ipynb",
+      "type": "file",
+      "name": "TFT_SPEI_Evaluation.ipynb",
+      "filePath": "notebooks/TFT_SPEI_Evaluation.ipynb",
+      "summary": "Jupyter notebook (29 cells: 15 markdown + 14 code) walking through TFT SPEI-3 evaluation: data load, dataset build, model load, predictions, per-horizon metrics, plots.",
+      "tags": [
+        "notebook",
+        "jupyter",
+        "evaluation",
+        "tft",
+        "interactive"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:notebooks/inspect_ckpt.py",
+      "type": "file",
+      "name": "inspect_ckpt.py",
+      "filePath": "notebooks/inspect_ckpt.py",
+      "summary": "Standalone script to inspect a TFT checkpoint's hparams (encoder length, lr, dropout) and verify it matches the optimized configuration (enc=90, lr=1e-4, dropout=0.15).",
+      "tags": [
+        "notebook-script",
+        "checkpoint",
+        "hparams",
+        "verification"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:notebooks/verify_fix.py",
+      "type": "file",
+      "name": "verify_fix.py",
+      "filePath": "notebooks/verify_fix.py",
+      "summary": "Post-fix verification script: loads best ckpt, generates rolling-window predictions for one entity, applies bias+scale (with 0.9 dampening) calibration, and reports raw vs calibrated RMSE/bias/variance ratio.",
+      "tags": [
+        "notebook-script",
+        "calibration",
+        "bias-correction",
+        "variance-ratio"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:notebooks/visualize_fix.py",
+      "type": "file",
+      "name": "visualize_fix.py",
+      "filePath": "notebooks/visualize_fix.py",
+      "summary": "Generates a 2-panel SPEI-3 forecast visualization (full series + 180-day zoom-in) for a target entity, applying moment-matching calibration with 0.95 dampening to the rolling-window ensemble.",
+      "tags": [
+        "notebook-script",
+        "visualization",
+        "calibration",
+        "ensemble"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:notebooks/visualize_fix.py:generate_visualization",
+      "type": "function",
+      "name": "generate_visualization",
+      "filePath": "notebooks/visualize_fix.py",
+      "summary": "Loads checkpoint, runs rolling-window predict on TARGET_LOCATION env (default first entity), averages ensemble per time_idx, applies bias+scale calibration, saves 2-panel PNG to results/fixed_spei_prediction.png.",
+      "tags": [
+        "visualization",
+        "ensemble",
+        "calibration",
+        "matplotlib"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        26,
+        122
+      ]
+    },
+    {
+      "id": "file:run_evaluation.py",
+      "type": "file",
+      "name": "run_evaluation.py",
+      "filePath": "run_evaluation.py",
+      "summary": "Thin wrapper that picks the best checkpoint (lowest val_loss=) under logs/checkpoints, redirects stdout/stderr through a Tee to a timestamped file, and calls evaluate.evaluate_model.",
+      "tags": [
+        "wrapper",
+        "evaluation",
+        "checkpoint-selection",
+        "tee"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:run_evaluation.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "run_evaluation.py",
+      "summary": "Resolves best checkpoint by parsing val_loss=, opens timestamped output file, redirects stdout+stderr through Tee, runs evaluate_model, prints completion path.",
+      "tags": [
+        "wrapper",
+        "tee",
+        "redirect",
+        "checkpoint"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        23,
+        53
+      ]
+    },
+    {
+      "id": "file:run_experiment.py",
+      "type": "file",
+      "name": "run_experiment.py",
+      "filePath": "run_experiment.py",
+      "summary": "Single-command experiment runner: wipes stale results, trains TFT with configurable encoder/epochs/dropout (unless --skip-train), runs full_evaluation.run() in-process on the new checkpoint, then writes REPORT_enc{N}.md with overall/per-location/per-horizon metrics + auto-interpretation.",
+      "tags": [
+        "experiment-runner",
+        "train",
+        "evaluate",
+        "markdown-report",
+        "cli"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:run_experiment.py:_banner",
+      "type": "function",
+      "name": "_banner",
+      "filePath": "run_experiment.py",
+      "summary": "Print a section banner with surrounding = bars.",
+      "tags": [
+        "logging",
+        "banner"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        36,
+        38
+      ]
+    },
+    {
+      "id": "function:run_experiment.py:_run",
+      "type": "function",
+      "name": "_run",
+      "filePath": "run_experiment.py",
+      "summary": "Run a subprocess and stream stdout in real time; raise on non-zero exit.",
+      "tags": [
+        "subprocess",
+        "streaming"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        41,
+        59
+      ]
+    },
+    {
+      "id": "function:run_experiment.py:_best_checkpoint",
+      "type": "function",
+      "name": "_best_checkpoint",
+      "filePath": "run_experiment.py",
+      "summary": "Pick checkpoint matching enc{N}- prefix with lowest val_loss=.",
+      "tags": [
+        "checkpoint",
+        "val-loss"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        62,
+        79
+      ]
+    },
+    {
+      "id": "function:run_experiment.py:_checkpoint_from_run_config",
+      "type": "function",
+      "name": "_checkpoint_from_run_config",
+      "filePath": "run_experiment.py",
+      "summary": "Read best_model_path from logs/run_config.json if it still exists.",
+      "tags": [
+        "checkpoint",
+        "run-config"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        82,
+        93
+      ]
+    },
+    {
+      "id": "function:run_experiment.py:_latest_eval_dir",
+      "type": "function",
+      "name": "_latest_eval_dir",
+      "filePath": "run_experiment.py",
+      "summary": "Return most recent results/full_eval_* directory.",
+      "tags": [
+        "results",
+        "latest"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        96,
+        100
+      ]
+    },
+    {
+      "id": "function:run_experiment.py:_load_metrics",
+      "type": "function",
+      "name": "_load_metrics",
+      "filePath": "run_experiment.py",
+      "summary": "Load metrics_summary.json from eval dir if present.",
+      "tags": [
+        "metrics",
+        "json"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        103,
+        108
+      ]
+    },
+    {
+      "id": "function:run_experiment.py:_write_md_report",
+      "type": "function",
+      "name": "_write_md_report",
+      "filePath": "run_experiment.py",
+      "summary": "Compose Markdown evaluation report (overall + per-location + horizon highlights + auto-interpretation hints).",
+      "tags": [
+        "markdown",
+        "report",
+        "auto-interpret"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        111,
+        280
+      ]
+    },
+    {
+      "id": "function:run_experiment.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "run_experiment.py",
+      "summary": "CLI: clean results -> train (optional) -> resolve ckpt -> run full_evaluation in-process -> emit MD report.",
+      "tags": [
+        "cli",
+        "experiment"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        287,
+        401
+      ]
+    },
+    {
+      "id": "file:scripts/detailed_actual_vs_predict.py",
+      "type": "file",
+      "name": "detailed_actual_vs_predict.py",
+      "filePath": "scripts/detailed_actual_vs_predict.py",
+      "summary": "Academic-style detailed analysis: PICP, interval sharpness, per-quantile calibration error, per-horizon RMSE/MAE/bias, 9-class SPEI drought classification, sample-by-sample drill-down, and full export of actual-vs-predict per (sample, horizon).",
+      "tags": [
+        "detailed-analysis",
+        "academic",
+        "picp",
+        "horizon-metrics",
+        "drought-classification"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:scripts/detailed_actual_vs_predict.py:log",
+      "type": "function",
+      "name": "log",
+      "filePath": "scripts/detailed_actual_vs_predict.py",
+      "summary": "Print and append a line to the timestamped output TXT file.",
+      "tags": [
+        "logging",
+        "tee"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        50,
+        54
+      ]
+    },
+    {
+      "id": "function:scripts/detailed_actual_vs_predict.py:_resolve_checkpoint",
+      "type": "function",
+      "name": "_resolve_checkpoint",
+      "filePath": "scripts/detailed_actual_vs_predict.py",
+      "summary": "Prefer run_config.json best_model_path; otherwise pick enc{N}-*.ckpt with lowest val_loss=.",
+      "tags": [
+        "checkpoint",
+        "resolver"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        57,
+        80
+      ]
+    },
+    {
+      "id": "function:scripts/detailed_actual_vs_predict.py:calculate_quantile_coverage",
+      "type": "function",
+      "name": "calculate_quantile_coverage",
+      "filePath": "scripts/detailed_actual_vs_predict.py",
+      "summary": "PICP: fraction of actuals inside the [q_low, q_high] quantile interval.",
+      "tags": [
+        "picp",
+        "interval"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        82,
+        93
+      ]
+    },
+    {
+      "id": "function:scripts/detailed_actual_vs_predict.py:calculate_interval_sharpness",
+      "type": "function",
+      "name": "calculate_interval_sharpness",
+      "filePath": "scripts/detailed_actual_vs_predict.py",
+      "summary": "Mean width of the [q_low, q_high] quantile interval.",
+      "tags": [
+        "sharpness",
+        "interval"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        95,
+        104
+      ]
+    },
+    {
+      "id": "function:scripts/detailed_actual_vs_predict.py:calculate_calibration_error",
+      "type": "function",
+      "name": "calculate_calibration_error",
+      "filePath": "scripts/detailed_actual_vs_predict.py",
+      "summary": "Per-quantile observed-vs-expected coverage error.",
+      "tags": [
+        "calibration",
+        "quantile"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        106,
+        120
+      ]
+    },
+    {
+      "id": "function:scripts/detailed_actual_vs_predict.py:calculate_metrics_per_horizon",
+      "type": "function",
+      "name": "calculate_metrics_per_horizon",
+      "filePath": "scripts/detailed_actual_vs_predict.py",
+      "summary": "Per-horizon RMSE/MAE/bias/correlation over the multi-step prediction window.",
+      "tags": [
+        "horizon-metrics"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        122,
+        148
+      ]
+    },
+    {
+      "id": "function:scripts/detailed_actual_vs_predict.py:analyze_drought_classification",
+      "type": "function",
+      "name": "analyze_drought_classification",
+      "filePath": "scripts/detailed_actual_vs_predict.py",
+      "summary": "Classify actual + pred P50 via canonical SPEI thresholds; per-class precision/recall.",
+      "tags": [
+        "drought-classification",
+        "spei"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        150,
+        187
+      ]
+    },
+    {
+      "id": "function:scripts/detailed_actual_vs_predict.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "scripts/detailed_actual_vs_predict.py",
+      "summary": "Run the full 10-step academic analysis: data, model, predict, metrics, quantiles, horizons, classification, sample drill-down, full export.",
+      "tags": [
+        "main",
+        "academic-analysis"
+      ],
+      "complexity": "complex",
+      "lineRange": [
+        189,
+        491
+      ]
+    },
+    {
+      "id": "file:scripts/generate_leaflet_final_grid.py",
+      "type": "file",
+      "name": "generate_leaflet_final_grid.py",
+      "filePath": "scripts/generate_leaflet_final_grid.py",
+      "summary": "Generates a self-contained Leaflet HTML map (results/maps/final_grid_leaflet.html) plotting 8 km square overlays per selected node, colored by city (Bojonegoro/Lamongan/Nganjuk/Ngawi/Tuban) on Esri imagery tiles.",
+      "tags": [
+        "leaflet",
+        "html-map",
+        "grid-selection",
+        "visualization"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:scripts/generate_leaflet_final_grid.py:_square_bounds",
+      "type": "function",
+      "name": "_square_bounds",
+      "filePath": "scripts/generate_leaflet_final_grid.py",
+      "summary": "Compute Leaflet rectangle bounds [[S,W],[N,E]] from center lat/lon + side_km using metric deg/km conversion.",
+      "tags": [
+        "leaflet",
+        "geo-math"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        26,
+        38
+      ]
+    },
+    {
+      "id": "function:scripts/generate_leaflet_final_grid.py:_build_payload",
+      "type": "function",
+      "name": "_build_payload",
+      "filePath": "scripts/generate_leaflet_final_grid.py",
+      "summary": "Build JSON payload (rows + map_center) from node_selection_v2.parquet with per-city color lookup.",
+      "tags": [
+        "payload",
+        "geojson-ish"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        41,
+        72
+      ]
+    },
+    {
+      "id": "function:scripts/generate_leaflet_final_grid.py:_html",
+      "type": "function",
+      "name": "_html",
+      "filePath": "scripts/generate_leaflet_final_grid.py",
+      "summary": "Render Leaflet HTML template with embedded payload (map setup, Esri imagery tile layer, per-square polygon overlays).",
+      "tags": [
+        "html",
+        "leaflet",
+        "template"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        75,
+        214
+      ]
+    },
+    {
+      "id": "function:scripts/generate_leaflet_final_grid.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "scripts/generate_leaflet_final_grid.py",
+      "summary": "Implicit entrypoint; writes results/maps/final_grid_leaflet.html.",
+      "tags": [
+        "entrypoint"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        214,
+        214
+      ]
+    },
+    {
+      "id": "file:scripts/plot_final_grid_cartopy_google.py",
+      "type": "file",
+      "name": "plot_final_grid_cartopy_google.py",
+      "filePath": "scripts/plot_final_grid_cartopy_google.py",
+      "summary": "Renders final grid selection as square-only overlays on Google street tiles using cartopy's GoogleTiles and shapely unions: overview map + per-city maps at zoom 13.",
+      "tags": [
+        "cartopy",
+        "google-tiles",
+        "grid-selection",
+        "map"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:scripts/plot_final_grid_cartopy_google.py:_cell_half_deltas_deg",
+      "type": "function",
+      "name": "_cell_half_deltas_deg",
+      "filePath": "scripts/plot_final_grid_cartopy_google.py",
+      "summary": "Convert half side length (km) to (dlat, dlon) deltas with cos(lat) longitude correction.",
+      "tags": [
+        "geo-math",
+        "projection"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        35,
+        39
+      ]
+    },
+    {
+      "id": "function:scripts/plot_final_grid_cartopy_google.py:_extent_for_points",
+      "type": "function",
+      "name": "_extent_for_points",
+      "filePath": "scripts/plot_final_grid_cartopy_google.py",
+      "summary": "Compute padded map extent (west, east, south, north) around selected points.",
+      "tags": [
+        "extent",
+        "geo"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        42,
+        47
+      ]
+    },
+    {
+      "id": "function:scripts/plot_final_grid_cartopy_google.py:_draw_squares",
+      "type": "function",
+      "name": "_draw_squares",
+      "filePath": "scripts/plot_final_grid_cartopy_google.py",
+      "summary": "Union all selected cell squares into a single shapely geometry and add as a filled overlay to the cartopy axis.",
+      "tags": [
+        "shapely",
+        "overlay"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        50,
+        71
+      ]
+    },
+    {
+      "id": "function:scripts/plot_final_grid_cartopy_google.py:_render_map",
+      "type": "function",
+      "name": "_render_map",
+      "filePath": "scripts/plot_final_grid_cartopy_google.py",
+      "summary": "Setup cartopy GeoAxes with GoogleTiles, set extent, draw squares, save figure.",
+      "tags": [
+        "render",
+        "cartopy"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        74,
+        90
+      ]
+    },
+    {
+      "id": "function:scripts/plot_final_grid_cartopy_google.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "scripts/plot_final_grid_cartopy_google.py",
+      "summary": "Read node_selection_v2.parquet, render overview + per-city maps.",
+      "tags": [
+        "entrypoint"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        93,
+        109
+      ]
+    },
+    {
+      "id": "file:scripts/plot_final_grid_map.py",
+      "type": "file",
+      "name": "plot_final_grid_map.py",
+      "filePath": "scripts/plot_final_grid_map.py",
+      "summary": "Matplotlib-based map-style visualization of final selected grid: overview (all cities) + per-city plot showing candidate nodes (open circles) and selected nodes (filled stars) + city center (X marker).",
+      "tags": [
+        "matplotlib",
+        "grid-selection",
+        "map",
+        "visualization"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:scripts/plot_final_grid_map.py:_build_candidates_df",
+      "type": "function",
+      "name": "_build_candidates_df",
+      "filePath": "scripts/plot_final_grid_map.py",
+      "summary": "Build candidate nodes DataFrame via src.data.ingest.build_city_nodes + load_city_centers.",
+      "tags": [
+        "candidates",
+        "ingest"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        23,
+        39
+      ]
+    },
+    {
+      "id": "function:scripts/plot_final_grid_map.py:_plot_overview",
+      "type": "function",
+      "name": "_plot_overview",
+      "filePath": "scripts/plot_final_grid_map.py",
+      "summary": "Plot all cities: candidate circles + selected stars + center X marker.",
+      "tags": [
+        "matplotlib",
+        "overview"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        42,
+        80
+      ]
+    },
+    {
+      "id": "function:scripts/plot_final_grid_map.py:_plot_per_city",
+      "type": "function",
+      "name": "_plot_per_city",
+      "filePath": "scripts/plot_final_grid_map.py",
+      "summary": "Render per-city subplot with detailed node annotations (file path truncated here, function exists in source).",
+      "tags": [
+        "matplotlib",
+        "per-city"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        81,
+        177
+      ]
+    },
+    {
+      "id": "function:scripts/plot_final_grid_map.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "scripts/plot_final_grid_map.py",
+      "summary": "Implicit entrypoint for the matplotlib-based grid map script.",
+      "tags": [
+        "entrypoint"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        177,
+        177
+      ]
+    },
+    {
+      "id": "file:scripts/resume_8var_pipeline.py",
+      "type": "file",
+      "name": "resume_8var_pipeline.py",
+      "filePath": "scripts/resume_8var_pipeline.py",
+      "summary": "Resume script after Open-Meteo quota reset: ingest remaining nodes (resume mode), preprocess, train enc=90 on GPU with bf16 + full evaluation + MD report, then run test_pipeline.py.",
+      "tags": [
+        "resume",
+        "ingest",
+        "pipeline",
+        "quota-recovery"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:scripts/resume_8var_pipeline.py:_run",
+      "type": "function",
+      "name": "_run",
+      "filePath": "scripts/resume_8var_pipeline.py",
+      "summary": "Print and subprocess.run a command from project root, fail-fast on non-zero.",
+      "tags": [
+        "subprocess"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        26,
+        28
+      ]
+    },
+    {
+      "id": "function:scripts/resume_8var_pipeline.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "scripts/resume_8var_pipeline.py",
+      "summary": "Drive the 4-step resume pipeline (ingest, preprocess, train+eval, test) with coverage assertions.",
+      "tags": [
+        "main",
+        "pipeline"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        31,
+        64
+      ]
+    },
+    {
+      "id": "file:scripts/run_full_pipeline.py",
+      "type": "file",
+      "name": "run_full_pipeline.py",
+      "filePath": "scripts/run_full_pipeline.py",
+      "summary": "End-to-end 8-variable production pipeline (CUDA-required) with quota-aware retry: ingest -> preprocess -> train+eval -> test. Supports --wait-on-quota to sleep until Open-Meteo daily quota resets instead of exiting.",
+      "tags": [
+        "full-pipeline",
+        "quota-retry",
+        "ingest",
+        "train",
+        "cuda"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:scripts/run_full_pipeline.py:_run",
+      "type": "function",
+      "name": "_run",
+      "filePath": "scripts/run_full_pipeline.py",
+      "summary": "Print and subprocess.run a command from project root, fail-fast on non-zero.",
+      "tags": [
+        "subprocess"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        30,
+        32
+      ]
+    },
+    {
+      "id": "function:scripts/run_full_pipeline.py:_quota_blocked",
+      "type": "function",
+      "name": "_quota_blocked",
+      "filePath": "scripts/run_full_pipeline.py",
+      "summary": "Probe Open-Meteo daily archive with a tiny request; return True if HTTP 429.",
+      "tags": [
+        "open-meteo",
+        "quota-check"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        35,
+        47
+      ]
+    },
+    {
+      "id": "function:scripts/run_full_pipeline.py:_coverage_complete",
+      "type": "function",
+      "name": "_coverage_complete",
+      "filePath": "scripts/run_full_pipeline.py",
+      "summary": "True when raw parquet contains the 3 new vars and every city has >=5 unique raw_node_ids.",
+      "tags": [
+        "coverage",
+        "validation"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        50,
+        58
+      ]
+    },
+    {
+      "id": "function:scripts/run_full_pipeline.py:ingest_until_complete",
+      "type": "function",
+      "name": "ingest_until_complete",
+      "filePath": "scripts/run_full_pipeline.py",
+      "summary": "Loop ingest with quota-aware retry; respects --wait-on-quota, retries with retry_minutes sleep.",
+      "tags": [
+        "resume",
+        "quota-retry",
+        "loop"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        61,
+        91
+      ]
+    },
+    {
+      "id": "function:scripts/run_full_pipeline.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "scripts/run_full_pipeline.py",
+      "summary": "argparse-driven 4-step pipeline with coverage checks (NEW_VARS, super_node == city count).",
+      "tags": [
+        "main",
+        "pipeline"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        97,
+        128
+      ]
+    },
+    {
+      "id": "file:scripts/smoke_e2e_v2.py",
+      "type": "file",
+      "name": "smoke_e2e_v2.py",
+      "filePath": "scripts/smoke_e2e_v2.py",
+      "summary": "Schema-v2 smoke test: generates synthetic 8-city raw fixture, runs preprocess, validates (raw_node_id,time) uniqueness, (super_node,time) uniqueness, top_k==5, entity_count > 5; optionally runs 1-epoch training; emits smoke_report.json.",
+      "tags": [
+        "smoke-test",
+        "schema-v2",
+        "synthetic",
+        "validation"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:scripts/smoke_e2e_v2.py:generate_synthetic_raw",
+      "type": "function",
+      "name": "generate_synthetic_raw",
+      "filePath": "scripts/smoke_e2e_v2.py",
+      "summary": "Build a synthetic 8-city raw parquet with all 8 weather variables (incl. 3 new vars).",
+      "tags": [
+        "synthetic-data",
+        "fixture"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        29,
+        74
+      ]
+    },
+    {
+      "id": "function:scripts/smoke_e2e_v2.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "scripts/smoke_e2e_v2.py",
+      "summary": "Generate fixture -> preprocess -> validate (uniqueness, top_k, entity_count, sequence_count, meta) -> optional 1-epoch train -> emit smoke_report.json.",
+      "tags": [
+        "smoke",
+        "validation"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        77,
+        138
+      ]
+    },
+    {
+      "id": "file:scripts/visualize_predictions.py",
+      "type": "file",
+      "name": "visualize_predictions.py",
+      "filePath": "scripts/visualize_predictions.py",
+      "summary": "Dynamic matplotlib visualization for predictions_full.csv. Generates per-group time series, scatter, error distribution, confusion matrix, monthly RMSE heatmap, and PICP plots without assuming fixed 5-location structure.",
+      "tags": [
+        "python",
+        "visualization",
+        "matplotlib",
+        "spei-forecast",
+        "script"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:scripts/visualize_predictions.py:_resolve_csv_path",
+      "type": "function",
+      "name": "_resolve_csv_path",
+      "filePath": "scripts/visualize_predictions.py",
+      "summary": "Resolves --csv arg or falls back to the most recent results/full_eval_*/predictions_full.csv file.",
+      "tags": [
+        "python",
+        "path-resolution",
+        "cli",
+        "visualization"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        14,
+        26
+      ]
+    },
+    {
+      "id": "document:sonar_audit/reports/audit_report.txt",
+      "type": "document",
+      "name": "audit_report.txt",
+      "filePath": "sonar_audit/reports/audit_report.txt",
+      "summary": "Static audit report (2026-01-19) from run_audit.py covering 11 sections: config, data shape, bias/RMSE, lag, variance, shocks, smoothness, visuals, production scorecard, regression check, final recommendation. Score: 66/100 (CONCERNS, RE-TRAIN).",
+      "tags": [
+        "audit-report",
+        "model-evaluation",
+        "drought-forecast",
+        "txt"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:sonar_audit/run_audit.py",
+      "type": "file",
+      "name": "run_audit.py",
+      "filePath": "sonar_audit/run_audit.py",
+      "summary": "All-in-one static Sonar audit framework. Loads TFT checkpoint + processed data, runs 11 audit sections (config, data, bias/RMSE, lag, variance, shocks, smoothness, visuals, scorecard, regression, recommendation) and produces reports + diagnostic plots.",
+      "tags": [
+        "python",
+        "audit",
+        "model-evaluation",
+        "tft",
+        "diagnostics"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:sonar_audit/run_audit.py:AuditResult",
+      "type": "class",
+      "name": "AuditResult",
+      "filePath": "sonar_audit/run_audit.py",
+      "summary": "Container for a single audit section's outcome: status (PASS/WARN/FAIL), metrics dict, notes list, timestamp.",
+      "tags": [
+        "python",
+        "audit",
+        "dataclass",
+        "result-container"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        39,
+        53
+      ]
+    },
+    {
+      "id": "class:sonar_audit/run_audit.py:SonarAudit",
+      "type": "class",
+      "name": "SonarAudit",
+      "filePath": "sonar_audit/run_audit.py",
+      "summary": "Comprehensive audit framework orchestrating 11 sections (config, data, bias/RMSE, lag, variance, shock, smoothness, visuals, scorecard, regression, recommendation). Holds model, data, predictions and writes report + plots.",
+      "tags": [
+        "python",
+        "audit",
+        "framework",
+        "orchestration",
+        "tft"
+      ],
+      "complexity": "complex",
+      "lineRange": [
+        55,
+        990
+      ]
+    },
+    {
+      "id": "function:sonar_audit/run_audit.py:load_model_and_data",
+      "type": "function",
+      "name": "SonarAudit.load_model_and_data",
+      "filePath": "sonar_audit/run_audit.py",
+      "summary": "Loads processed parquet, restores TFT checkpoint, runs inference on test dataloader, flattens predictions to populate actual_test/predicted_test arrays.",
+      "tags": [
+        "python",
+        "inference",
+        "tft",
+        "checkpoint-loading"
+      ],
+      "complexity": "complex",
+      "lineRange": [
+        65,
+        123
+      ]
+    },
+    {
+      "id": "file:src/__init__.py",
+      "type": "file",
+      "name": "src/__init__.py",
+      "filePath": "src/__init__.py",
+      "summary": "Empty package marker for src. No symbols exported.",
+      "tags": [
+        "python",
+        "package-marker",
+        "src"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/data/__init__.py",
+      "type": "file",
+      "name": "src/data/__init__.py",
+      "filePath": "src/data/__init__.py",
+      "summary": "Empty package marker for src.data (ingest, preprocess, spei modules).",
+      "tags": [
+        "python",
+        "package-marker",
+        "data"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/data/ingest.py",
+      "type": "file",
+      "name": "ingest.py",
+      "filePath": "src/data/ingest.py",
+      "summary": "Pulls daily weather from Open-Meteo archive for 9-node grids around East Java city centers (2005-2025), applies retry+backoff for rate limits, writes schema-v2 raw parquet with resume support and strict per-city coverage validation.",
+      "tags": [
+        "python",
+        "ingest",
+        "open-meteo",
+        "etl",
+        "schema-v2",
+        "tested"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/data/ingest.py:load_city_centers",
+      "type": "function",
+      "name": "load_city_centers",
+      "filePath": "src/data/ingest.py",
+      "summary": "Loads city_centers.json mapping city_id -> {lat, lon}, validates non-empty dict and presence of lat/lon.",
+      "tags": [
+        "python",
+        "config-loading",
+        "validation"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        44,
+        57
+      ]
+    },
+    {
+      "id": "function:src/data/ingest.py:haversine_km",
+      "type": "function",
+      "name": "haversine_km",
+      "filePath": "src/data/ingest.py",
+      "summary": "Great-circle distance between two lat/lon pairs in km (R=6371).",
+      "tags": [
+        "python",
+        "geo",
+        "math"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        60,
+        68
+      ]
+    },
+    {
+      "id": "function:src/data/ingest.py:build_city_nodes",
+      "type": "function",
+      "name": "build_city_nodes",
+      "filePath": "src/data/ingest.py",
+      "summary": "Generates 9 candidate sampling nodes around a city center via DEFAULT_NODE_OFFSETS, producing collision-safe deterministic node_id = city__nXX__sha1coord8.",
+      "tags": [
+        "python",
+        "geo",
+        "node-generation",
+        "hashing"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        71,
+        95
+      ]
+    },
+    {
+      "id": "function:src/data/ingest.py:fetch_node_data",
+      "type": "function",
+      "name": "fetch_node_data",
+      "filePath": "src/data/ingest.py",
+      "summary": "Calls Open-Meteo archive API for a single node with retry+backoff on HTTP 429/5xx, normalizes daily payload into schema-v2 DataFrame with city/node/lat/lon metadata.",
+      "tags": [
+        "python",
+        "http",
+        "open-meteo",
+        "retry",
+        "ingest"
+      ],
+      "complexity": "complex",
+      "lineRange": [
+        98,
+        178
+      ]
+    },
+    {
+      "id": "function:src/data/ingest.py:_validate_city_coverage",
+      "type": "function",
+      "name": "_validate_city_coverage",
+      "filePath": "src/data/ingest.py",
+      "summary": "Internal: returns (missing_cities, insufficient_nodes) per min_nodes_per_city threshold.",
+      "tags": [
+        "python",
+        "validation",
+        "coverage-check"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        181,
+        198
+      ]
+    },
+    {
+      "id": "function:src/data/ingest.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "src/data/ingest.py",
+      "summary": "Orchestrator: builds node grid, fetches missing nodes with resume, validates schema-v2 columns, enforces per-city node count, writes raw parquet.",
+      "tags": [
+        "python",
+        "orchestration",
+        "etl",
+        "ingest"
+      ],
+      "complexity": "complex",
+      "lineRange": [
+        201,
+        333
+      ]
+    },
+    {
+      "id": "file:src/data/preprocess.py",
+      "type": "file",
+      "name": "preprocess.py",
+      "filePath": "src/data/preprocess.py",
+      "summary": "Schema-v2 preprocess pipeline: validates raw parquet, forward-fills weather NaNs, runs train-only (<=2022-12-31) leave-one-out hybrid node selection (behavior 0.7 + distance 0.3), aggregates selected nodes into city super-nodes, computes SPEI-3 + temporal features, writes processed parquet + selection metadata.",
+      "tags": [
+        "python",
+        "preprocess",
+        "node-selection",
+        "spei",
+        "aggregation",
+        "tested"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/data/preprocess.py:haversine_km",
+      "type": "function",
+      "name": "haversine_km",
+      "filePath": "src/data/preprocess.py",
+      "summary": "Great-circle distance in km (R=6371). Duplicate of src/data/ingest.py version, kept local for module independence.",
+      "tags": [
+        "python",
+        "geo",
+        "math"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        28,
+        36
+      ]
+    },
+    {
+      "id": "function:src/data/preprocess.py:_validate_raw_schema",
+      "type": "function",
+      "name": "_validate_raw_schema",
+      "filePath": "src/data/preprocess.py",
+      "summary": "Raises ValueError if required schema-v2 columns missing or schema_version != 2.",
+      "tags": [
+        "python",
+        "validation",
+        "schema"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        39,
+        60
+      ]
+    },
+    {
+      "id": "function:src/data/preprocess.py:_interpolate_per_node",
+      "type": "function",
+      "name": "_interpolate_per_node",
+      "filePath": "src/data/preprocess.py",
+      "summary": "Forward-fills WEATHER_COLS per raw_node_id with limit=7 (no future leakage), warns on remaining NaNs.",
+      "tags": [
+        "python",
+        "imputation",
+        "ffill",
+        "leakage-safe"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        63,
+        77
+      ]
+    },
+    {
+      "id": "function:src/data/preprocess.py:_compute_similarity",
+      "type": "function",
+      "name": "_compute_similarity",
+      "filePath": "src/data/preprocess.py",
+      "summary": "Per-city leave-one-out correlation vs city mean profile (behavior_score) + 1/(1+distance_km) (distance_score), blended 0.7/0.3 into hybrid_score.",
+      "tags": [
+        "python",
+        "similarity",
+        "leave-one-out",
+        "selection"
+      ],
+      "complexity": "complex",
+      "lineRange": [
+        80,
+        128
+      ]
+    },
+    {
+      "id": "function:src/data/preprocess.py:_select_top_k_nodes",
+      "type": "function",
+      "name": "_select_top_k_nodes",
+      "filePath": "src/data/preprocess.py",
+      "summary": "Sorts per-city by hybrid/behavior/distance desc + raw_node_id asc (deterministic mergesort), picks top-K with rank.",
+      "tags": [
+        "python",
+        "selection",
+        "sort",
+        "deterministic"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        131,
+        149
+      ]
+    },
+    {
+      "id": "function:src/data/preprocess.py:preprocess_pipeline",
+      "type": "function",
+      "name": "preprocess_pipeline",
+      "filePath": "src/data/preprocess.py",
+      "summary": "Main orchestrator: load raw -> validate schema -> impute -> train-only similarity+selection -> aggregate super-nodes -> compute SPEI/water_deficit -> engineer time features -> write processed parquet + selection meta.",
+      "tags": [
+        "python",
+        "pipeline",
+        "orchestration",
+        "preprocess"
+      ],
+      "complexity": "complex",
+      "lineRange": [
+        152,
+        321
+      ]
+    },
+    {
+      "id": "file:src/data/spei.py",
+      "type": "file",
+      "name": "spei.py",
+      "filePath": "src/data/spei.py",
+      "summary": "Standardized Precipitation-Evapotranspiration Index (SPEI) implementation per Vicente-Serrano 2010: water deficit (P-PET), per-month Log-Logistic (fisk) fitting with train-only fit_mask, deep-tail linear extrapolation below fitted support, plus Indonesian SPEI classification labels.",
+      "tags": [
+        "python",
+        "spei",
+        "drought-index",
+        "fisk-distribution",
+        "climatology",
+        "tested"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/data/spei.py:calculate_water_deficit",
+      "type": "function",
+      "name": "calculate_water_deficit",
+      "filePath": "src/data/spei.py",
+      "summary": "D = precipitation_sum - et0_fao_evapotranspiration (Vicente-Serrano et al. 2010).",
+      "tags": [
+        "python",
+        "spei",
+        "water-balance"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        8,
+        14
+      ]
+    },
+    {
+      "id": "function:src/data/spei.py:calculate_spei",
+      "type": "function",
+      "name": "calculate_spei",
+      "filePath": "src/data/spei.py",
+      "summary": "Daily-resolution SPEI via 3-month rolling sum of water deficit, per-month fisk CDF -> norm.ppf z-score, with linear extrapolation below fitted support to preserve ordering of unprecedented droughts.",
+      "tags": [
+        "python",
+        "spei",
+        "fisk-distribution",
+        "deep-tail-extrapolation"
+      ],
+      "complexity": "complex",
+      "lineRange": [
+        17,
+        111
+      ]
+    },
+    {
+      "id": "function:src/data/spei.py:classify_spei",
+      "type": "function",
+      "name": "classify_spei",
+      "filePath": "src/data/spei.py",
+      "summary": "McKee/WMO 9-tier SPEI classifier returning Indonesian drought labels (Kekeringan Ekstrem .. Basah Ekstrem).",
+      "tags": [
+        "python",
+        "spei",
+        "classification"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        114,
+        127
+      ]
+    },
+    {
+      "id": "file:src/evaluation/__init__.py",
+      "type": "file",
+      "name": "src/evaluation/__init__.py",
+      "filePath": "src/evaluation/__init__.py",
+      "summary": "Empty package marker for src.evaluation (calibration, metrics modules).",
+      "tags": [
+        "python",
+        "package-marker",
+        "evaluation"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/evaluation/calibration.py",
+      "type": "file",
+      "name": "calibration.py",
+      "filePath": "src/evaluation/calibration.py",
+      "summary": "Per-city conformal-style interval calibration: fits multiplicative widening factors on validation predictions so that scaled P10-P90 intervals achieve ~80% nominal PICP. Includes factor floor (0.5) to prevent extreme shrinkage.",
+      "tags": [
+        "python",
+        "calibration",
+        "conformal",
+        "interval",
+        "picp",
+        "tested"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/evaluation/calibration.py:fit_per_city_interval_calibration",
+      "type": "function",
+      "name": "fit_per_city_interval_calibration",
+      "filePath": "src/evaluation/calibration.py",
+      "summary": "Per-city: factor = quantile_nominal(|actual - p50| / half_width) on validation data, floored at 0.5.",
+      "tags": [
+        "python",
+        "conformal",
+        "calibration",
+        "quantile"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        9,
+        33
+      ]
+    },
+    {
+      "id": "function:src/evaluation/calibration.py:apply_calibration",
+      "type": "function",
+      "name": "apply_calibration",
+      "filePath": "src/evaluation/calibration.py",
+      "summary": "Scales per-city pred_p10/pred_p90 half-width by calibration factor (p50 unchanged).",
+      "tags": [
+        "python",
+        "calibration",
+        "interval"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        36,
+        48
+      ]
+    },
+    {
+      "id": "function:src/evaluation/calibration.py:compute_picp",
+      "type": "function",
+      "name": "compute_picp",
+      "filePath": "src/evaluation/calibration.py",
+      "summary": "Returns (overall, per-city) prediction-interval coverage probability.",
+      "tags": [
+        "python",
+        "picp",
+        "coverage"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        51,
+        59
+      ]
+    },
+    {
+      "id": "file:src/evaluation/metrics.py",
+      "type": "file",
+      "name": "metrics.py",
+      "filePath": "src/evaluation/metrics.py",
+      "summary": "Evaluation utilities for trained TFT: checkpoint loading helper, RMSE/MAE on median quantile, variable-importance and attention-weight extraction + plotting.",
+      "tags": [
+        "python",
+        "metrics",
+        "tft",
+        "interpretability",
+        "evaluation",
+        "tested"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/evaluation/metrics.py:load_model",
+      "type": "function",
+      "name": "load_model",
+      "filePath": "src/evaluation/metrics.py",
+      "summary": "Loads TFT checkpoint to cuda/cpu and sets eval mode.",
+      "tags": [
+        "python",
+        "inference",
+        "checkpoint-loading"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        9,
+        14
+      ]
+    },
+    {
+      "id": "function:src/evaluation/metrics.py:calculate_metrics",
+      "type": "function",
+      "name": "calculate_metrics",
+      "filePath": "src/evaluation/metrics.py",
+      "summary": "Computes RMSE and MAE on quantile-1 (P50) of the predictions tensor.",
+      "tags": [
+        "python",
+        "metrics",
+        "rmse",
+        "mae",
+        "tft"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        16,
+        32
+      ]
+    },
+    {
+      "id": "function:src/evaluation/metrics.py:get_variable_importance",
+      "type": "function",
+      "name": "get_variable_importance",
+      "filePath": "src/evaluation/metrics.py",
+      "summary": "Returns (encoder_variables, decoder_variables) importance dicts from model.interpret_output.",
+      "tags": [
+        "python",
+        "interpretability",
+        "variable-importance",
+        "tft"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        34,
+        41
+      ]
+    },
+    {
+      "id": "function:src/evaluation/metrics.py:plot_variable_importance",
+      "type": "function",
+      "name": "plot_variable_importance",
+      "filePath": "src/evaluation/metrics.py",
+      "summary": "Bar-charts encoder and decoder variable importance to results/variable_importance.png.",
+      "tags": [
+        "python",
+        "matplotlib",
+        "interpretability",
+        "plot"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        44,
+        91
+      ]
+    },
+    {
+      "id": "function:src/evaluation/metrics.py:plot_attention_weights",
+      "type": "function",
+      "name": "plot_attention_weights",
+      "filePath": "src/evaluation/metrics.py",
+      "summary": "Heatmap of TFT temporal attention weights for a single sample to results/attention_weights.png.",
+      "tags": [
+        "python",
+        "matplotlib",
+        "interpretability",
+        "attention"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        94,
+        134
+      ]
+    },
+    {
+      "id": "file:src/models/__init__.py",
+      "type": "file",
+      "name": "src/models/__init__.py",
+      "filePath": "src/models/__init__.py",
+      "summary": "Empty package marker for src.models (dataset, tft modules).",
+      "tags": [
+        "python",
+        "package-marker",
+        "models"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/models/dataset.py",
+      "type": "file",
+      "name": "dataset.py",
+      "filePath": "src/models/dataset.py",
+      "summary": "Builds PyTorch Forecasting TimeSeriesDataSet from schema-v2 processed data with 90-day encoder / 30-day prediction, super_node_id grouping, per-feature ArrayStandardScaler, and full schema validation guard.",
+      "tags": [
+        "python",
+        "pytorch-forecasting",
+        "timeseries-dataset",
+        "tft",
+        "preprocessing",
+        "tested"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/models/dataset.py:ArrayStandardScaler",
+      "type": "class",
+      "name": "ArrayStandardScaler",
+      "filePath": "src/models/dataset.py",
+      "summary": "sklearn StandardScaler subclass that always fits/transforms on ndarray to avoid feature-name warnings when mixing DataFrame fit with ndarray batch transform.",
+      "tags": [
+        "python",
+        "sklearn",
+        "scaler",
+        "subclass"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        12,
+        37
+      ]
+    },
+    {
+      "id": "function:src/models/dataset.py:_validate_schema",
+      "type": "function",
+      "name": "_validate_schema",
+      "filePath": "src/models/dataset.py",
+      "summary": "Raises ValueError if processed schema-v2 columns are missing before TimeSeriesDataSet construction.",
+      "tags": [
+        "python",
+        "validation",
+        "schema"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        40,
+        69
+      ]
+    },
+    {
+      "id": "function:src/models/dataset.py:create_dataset",
+      "type": "function",
+      "name": "create_dataset",
+      "filePath": "src/models/dataset.py",
+      "summary": "Constructs TimeSeriesDataSet: dropna, validate schema, configure static/known/unknown reals, set EncoderNormalizer + per-feature scalers, return training dataset.",
+      "tags": [
+        "python",
+        "pytorch-forecasting",
+        "timeseries-dataset",
+        "encoder-decoder"
+      ],
+      "complexity": "complex",
+      "lineRange": [
+        72,
+        147
+      ]
+    },
+    {
+      "id": "file:src/models/tft.py",
+      "type": "file",
+      "name": "tft.py",
+      "filePath": "src/models/tft.py",
+      "summary": "TFT model factory: robust load_from_checkpoint (torch>=2.6 weights_only fallback) and build_tft_model with validated defaults (hidden=48, dropout=0.40, head=1, QuantileLoss[0.1,0.5,0.9]).",
+      "tags": [
+        "python",
+        "tft",
+        "pytorch-forecasting",
+        "model-builder",
+        "tested"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/models/tft.py:load_tft_checkpoint",
+      "type": "function",
+      "name": "load_tft_checkpoint",
+      "filePath": "src/models/tft.py",
+      "summary": "Loads TemporalFusionTransformer checkpoint, falling back to weights_only=False on torch>=2.6 to allow EncoderNormalizer unpickling.",
+      "tags": [
+        "python",
+        "tft",
+        "checkpoint-loading",
+        "torch-2-6-compat"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        7,
+        32
+      ]
+    },
+    {
+      "id": "function:src/models/tft.py:build_tft_model",
+      "type": "function",
+      "name": "build_tft_model",
+      "filePath": "src/models/tft.py",
+      "summary": "Constructs TemporalFusionTransformer.from_dataset with QuantileLoss([0.1,0.5,0.9]), validated hyperparameters, and ablation-friendly kwargs.",
+      "tags": [
+        "python",
+        "tft",
+        "model-builder",
+        "quantile-loss"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        34,
+        86
+      ]
+    },
+    {
+      "id": "file:src/training/__init__.py",
+      "type": "file",
+      "name": "src/training/__init__.py",
+      "filePath": "src/training/__init__.py",
+      "summary": "Empty package marker for src.training (train module).",
+      "tags": [
+        "python",
+        "package-marker",
+        "training"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/training/train.py",
+      "type": "file",
+      "name": "train.py",
+      "filePath": "src/training/train.py",
+      "summary": "Lightning-based TFT training pipeline: schema-v2 validation, deterministic seeding, bf16-mixed precision (fp16 overflow fix), EarlyStopping/LRMonitor/ModelCheckpoint callbacks, one-line-per-epoch summary, writes run_config.json with best model path.",
+      "tags": [
+        "python",
+        "training",
+        "lightning",
+        "tft",
+        "pipeline",
+        "tested"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:src/training/train.py:EpochSummaryCallback",
+      "type": "class",
+      "name": "EpochSummaryCallback",
+      "filePath": "src/training/train.py",
+      "summary": "Lightning Callback printing one clean line per epoch (train/val/lr/elapsed) instead of per-batch progress bars; skips sanity-check phase to avoid false NaN logs.",
+      "tags": [
+        "python",
+        "lightning",
+        "callback",
+        "logging"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        26,
+        49
+      ]
+    },
+    {
+      "id": "function:src/training/train.py:_validate_training_schema",
+      "type": "function",
+      "name": "_validate_training_schema",
+      "filePath": "src/training/train.py",
+      "summary": "Validates schema-version=2, required columns, top_k consistency vs node_selection_v2.meta.json, and uniqueness of (super_node_id, time).",
+      "tags": [
+        "python",
+        "validation",
+        "schema",
+        "training"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        52,
+        92
+      ]
+    },
+    {
+      "id": "function:src/training/train.py:train_pipeline",
+      "type": "function",
+      "name": "train_pipeline",
+      "filePath": "src/training/train.py",
+      "summary": "End-to-end Lightning training: load parquet -> validate schema -> build train/val TimeSeriesDataSets -> build_tft_model -> trainer.fit with EarlyStopping + ModelCheckpoint + TensorBoardLogger -> write run_config.json.",
+      "tags": [
+        "python",
+        "lightning",
+        "training",
+        "tft",
+        "pipeline"
+      ],
+      "complexity": "complex",
+      "lineRange": [
+        95,
+        281
+      ]
+    },
+    {
+      "id": "file:src/visualization/__init__.py",
+      "type": "file",
+      "name": "src/visualization/__init__.py",
+      "filePath": "src/visualization/__init__.py",
+      "summary": "Empty package marker for src.visualization (generate_visualizations module).",
+      "tags": [
+        "python",
+        "package-marker",
+        "visualization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/visualization/generate_visualizations.py",
+      "type": "file",
+      "name": "generate_visualizations.py",
+      "filePath": "src/visualization/generate_visualizations.py",
+      "summary": "Generates 6 diagnostic plots from a trained TFT: prediction scatter, residual histogram, time-series sample, variable importance, lag cross-correlation, and shock-detection zoom window.",
+      "tags": [
+        "python",
+        "visualization",
+        "tft",
+        "matplotlib",
+        "diagnostics",
+        "tested"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/visualization/generate_visualizations.py:load_data",
+      "type": "function",
+      "name": "load_data",
+      "filePath": "src/visualization/generate_visualizations.py",
+      "summary": "Loads processed SPEI parquet from DATA_PATH with fallback to ../.. relative path.",
+      "tags": [
+        "python",
+        "io",
+        "parquet"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        29,
+        36
+      ]
+    },
+    {
+      "id": "function:src/visualization/generate_visualizations.py:find_checkpoint",
+      "type": "function",
+      "name": "find_checkpoint",
+      "filePath": "src/visualization/generate_visualizations.py",
+      "summary": "Selects checkpoint with lowest val_loss from logs/checkpoints/ by parsing filename val_loss= token.",
+      "tags": [
+        "python",
+        "checkpoint-selection",
+        "filesystem"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        38,
+        55
+      ]
+    },
+    {
+      "id": "function:src/visualization/generate_visualizations.py:generate_visualizations",
+      "type": "function",
+      "name": "generate_visualizations",
+      "filePath": "src/visualization/generate_visualizations.py",
+      "summary": "Loads best checkpoint, runs test inference, produces scatter, residuals, time-series, variable importance, lag-correlation, and shock-detection plots under results/.",
+      "tags": [
+        "python",
+        "visualization",
+        "tft",
+        "inference",
+        "diagnostics"
+      ],
+      "complexity": "complex",
+      "lineRange": [
+        57,
+        207
+      ]
+    },
+    {
+      "id": "file:test_pipeline.py",
+      "type": "file",
+      "name": "test_pipeline.py",
+      "filePath": "test_pipeline.py",
+      "summary": "End-to-end pipeline test (no retraining): validates src imports, SPEI thresholds, processed dataset schema/integrity/splits, TimeSeriesDataSet creation, model loading + inference metrics, and evaluate.py end-to-end run.",
+      "tags": [
+        "python",
+        "test",
+        "integration",
+        "validation",
+        "tft"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:test_pipeline.py:_is_schema_v2",
+      "type": "function",
+      "name": "_is_schema_v2",
+      "filePath": "test_pipeline.py",
+      "summary": "Returns True if parquet exists and its schema_version column unique set == [2].",
+      "tags": [
+        "python",
+        "validation",
+        "schema"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        28,
+        36
+      ]
+    },
+    {
+      "id": "function:test_pipeline.py:_resolve_processed_data_path",
+      "type": "function",
+      "name": "_resolve_processed_data_path",
+      "filePath": "test_pipeline.py",
+      "summary": "Prefers data/processed/spei_dataset.parquet, falls back to results/smoke_v2/processed_schema_v2.parquet.",
+      "tags": [
+        "python",
+        "path-resolution",
+        "fallback"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        39,
+        50
+      ]
+    },
+    {
+      "id": "function:test_pipeline.py:_resolve_checkpoint_path",
+      "type": "function",
+      "name": "_resolve_checkpoint_path",
+      "filePath": "test_pipeline.py",
+      "summary": "Resolves checkpoint from run_config.json -> smoke_report.json -> lowest val_loss in logs/checkpoints/.",
+      "tags": [
+        "python",
+        "checkpoint-selection",
+        "fallback"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        53,
+        88
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "document:_tft_docx_extracted.txt",
+      "target": "document:dataset_sample.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:last.convo.txt",
+      "target": "document:_tft_docx_extracted.txt",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:last.convo.txt",
+      "target": "document:sonar_evautation.txt",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:sonar_evautation.txt",
+      "target": "document:sonar_output_expectayion.txt",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:sonar_output_expectayion.txt",
+      "target": "config:requirements.txt",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "document:now_percentage.md",
+      "target": "document:sonar_evautation.txt",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:now_percentage.md",
+      "target": "document:sonar_output_expectayion.txt",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:now_percentage.md",
+      "target": "config:requirements.txt",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/ALL_IN_ONE_AUDIT_REPORT.md",
+      "target": "document:docs/THESIS_READINESS_REPORT.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/ALL_IN_ONE_AUDIT_REPORT.md",
+      "target": "document:docs/PLAN_FIX_AUDIT.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/ALL_IN_ONE_AUDIT_REPORT.md",
+      "target": "document:docs/PLAN_FIX_ROBUST.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/ALL_IN_ONE_AUDIT_REPORT.md",
+      "target": "document:docs/COMPREHENSIVE_DOCUMENTATION.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/COMPREHENSIVE_DOCUMENTATION.md",
+      "target": "document:docs/DOKUMENTASI_METODE_PENELITIAN_TFT_SPEI_SUPERNODE.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/COMPREHENSIVE_DOCUMENTATION.md",
+      "target": "document:docs/PANDUAN_SEMINAR_PROPOSAL.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/COMPREHENSIVE_DOCUMENTATION.md",
+      "target": "document:docs/LIMITATIONS.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/COMPREHENSIVE_DOCUMENTATION.md",
+      "target": "document:docs/THESIS_READINESS_REPORT.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/COMPREHENSIVE_DOCUMENTATION.md",
+      "target": "document:docs/diagram_dan_tabel_penelitian.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/CROSSCHECK_STATUS_SCHEMA_V2.md",
+      "target": "document:docs/MIGRATION_CHECKLIST_STATUS_VERIFIED.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/CROSSCHECK_STATUS_SCHEMA_V2.md",
+      "target": "document:docs/DOKUMENTASI_METODE_PENELITIAN_TFT_SPEI_SUPERNODE.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/CROSSCHECK_STATUS_SCHEMA_V2.md",
+      "target": "document:docs/PANDUAN_SEMINAR_PROPOSAL.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/DOKUMENTASI_METODE_PENELITIAN_TFT_SPEI_SUPERNODE.md",
+      "target": "document:docs/PANDUAN_SEMINAR_PROPOSAL.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/DOKUMENTASI_METODE_PENELITIAN_TFT_SPEI_SUPERNODE.md",
+      "target": "document:docs/LIMITATIONS.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/DOKUMENTASI_METODE_PENELITIAN_TFT_SPEI_SUPERNODE.md",
+      "target": "document:docs/diagram_dan_tabel_penelitian.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/MIGRATION_CHECKLIST_STATUS_VERIFIED.md",
+      "target": "document:docs/DOKUMENTASI_METODE_PENELITIAN_TFT_SPEI_SUPERNODE.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/MIGRATION_CHECKLIST_STATUS_VERIFIED.md",
+      "target": "document:docs/PANDUAN_SEMINAR_PROPOSAL.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/PLAN_FIX_AUDIT.md",
+      "target": "document:docs/PLAN_FIX_ROBUST.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/PLAN_FIX_AUDIT.md",
+      "target": "document:docs/THESIS_READINESS_REPORT.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/PLAN_FIX_ROBUST.md",
+      "target": "document:docs/THESIS_READINESS_REPORT.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/PLAN_FIX_ROBUST.md",
+      "target": "document:docs/MIGRATION_CHECKLIST_STATUS_VERIFIED.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/PLAN_FIX_ROBUST.md",
+      "target": "document:docs/CROSSCHECK_STATUS_SCHEMA_V2.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/PLAN_FIX_ROBUST.md",
+      "target": "document:docs/COMPREHENSIVE_DOCUMENTATION.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/PLAN_FIX_ROBUST.md",
+      "target": "document:docs/DOKUMENTASI_METODE_PENELITIAN_TFT_SPEI_SUPERNODE.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/PANDUAN_SEMINAR_PROPOSAL.md",
+      "target": "document:docs/diagram_dan_tabel_penelitian.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/THESIS_READINESS_REPORT.md",
+      "target": "document:docs/diagram_dan_tabel_penelitian.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/LIMITATIONS.md",
+      "target": "document:docs/PLAN_FIX_ROBUST.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:_diag2.py",
+      "target": "function:_diag2.py:eval_split",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:main.py",
+      "target": "function:main.py:_is_schema_v2",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:main.py",
+      "target": "function:main.py:_load_city_registry",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:main.py",
+      "target": "function:main.py:_raw_has_required_coverage",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:main.py",
+      "target": "function:main.py:main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:evaluate.py",
+      "target": "function:evaluate.py:_metrics",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:evaluate.py",
+      "target": "function:evaluate.py:_entity_col",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:evaluate.py",
+      "target": "function:evaluate.py:_quantile_index_map",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:evaluate.py",
+      "target": "function:evaluate.py:_checkpoint_from_run_config",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:evaluate.py",
+      "target": "function:evaluate.py:evaluate_model",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:full_evaluation.py",
+      "target": "function:full_evaluation.py:_metrics",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:full_evaluation.py",
+      "target": "function:full_evaluation.py:_log",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:full_evaluation.py",
+      "target": "function:full_evaluation.py:_broad",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:full_evaluation.py",
+      "target": "function:full_evaluation.py:_entity_col",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:full_evaluation.py",
+      "target": "function:full_evaluation.py:_palette",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:full_evaluation.py",
+      "target": "function:full_evaluation.py:_grid",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:full_evaluation.py",
+      "target": "function:full_evaluation.py:_best_checkpoint",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:full_evaluation.py",
+      "target": "function:full_evaluation.py:_checkpoint_from_run_config",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:full_evaluation.py",
+      "target": "function:full_evaluation.py:_quantile_index_map",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:full_evaluation.py",
+      "target": "function:full_evaluation.py:run",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:full_evaluation.py",
+      "target": "function:full_evaluation.py:main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:notebooks/visualize_fix.py",
+      "target": "function:notebooks/visualize_fix.py:generate_visualization",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:run_evaluation.py",
+      "target": "function:run_evaluation.py:main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:run_evaluation.py",
+      "target": "file:evaluate.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:run_experiment.py",
+      "target": "function:run_experiment.py:_banner",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:run_experiment.py",
+      "target": "function:run_experiment.py:_run",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:run_experiment.py",
+      "target": "function:run_experiment.py:_best_checkpoint",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:run_experiment.py",
+      "target": "function:run_experiment.py:_checkpoint_from_run_config",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:run_experiment.py",
+      "target": "function:run_experiment.py:_latest_eval_dir",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:run_experiment.py",
+      "target": "function:run_experiment.py:_load_metrics",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:run_experiment.py",
+      "target": "function:run_experiment.py:_write_md_report",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:run_experiment.py",
+      "target": "function:run_experiment.py:main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:run_experiment.py",
+      "target": "file:full_evaluation.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:scripts/detailed_actual_vs_predict.py",
+      "target": "function:scripts/detailed_actual_vs_predict.py:log",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/detailed_actual_vs_predict.py",
+      "target": "function:scripts/detailed_actual_vs_predict.py:_resolve_checkpoint",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/detailed_actual_vs_predict.py",
+      "target": "function:scripts/detailed_actual_vs_predict.py:calculate_quantile_coverage",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/detailed_actual_vs_predict.py",
+      "target": "function:scripts/detailed_actual_vs_predict.py:calculate_interval_sharpness",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/detailed_actual_vs_predict.py",
+      "target": "function:scripts/detailed_actual_vs_predict.py:calculate_calibration_error",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/detailed_actual_vs_predict.py",
+      "target": "function:scripts/detailed_actual_vs_predict.py:calculate_metrics_per_horizon",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/detailed_actual_vs_predict.py",
+      "target": "function:scripts/detailed_actual_vs_predict.py:analyze_drought_classification",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/detailed_actual_vs_predict.py",
+      "target": "function:scripts/detailed_actual_vs_predict.py:main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/generate_leaflet_final_grid.py",
+      "target": "function:scripts/generate_leaflet_final_grid.py:_square_bounds",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/generate_leaflet_final_grid.py",
+      "target": "function:scripts/generate_leaflet_final_grid.py:_build_payload",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/generate_leaflet_final_grid.py",
+      "target": "function:scripts/generate_leaflet_final_grid.py:_html",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/generate_leaflet_final_grid.py",
+      "target": "function:scripts/generate_leaflet_final_grid.py:main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/plot_final_grid_cartopy_google.py",
+      "target": "function:scripts/plot_final_grid_cartopy_google.py:_cell_half_deltas_deg",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/plot_final_grid_cartopy_google.py",
+      "target": "function:scripts/plot_final_grid_cartopy_google.py:_extent_for_points",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/plot_final_grid_cartopy_google.py",
+      "target": "function:scripts/plot_final_grid_cartopy_google.py:_draw_squares",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/plot_final_grid_cartopy_google.py",
+      "target": "function:scripts/plot_final_grid_cartopy_google.py:_render_map",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/plot_final_grid_cartopy_google.py",
+      "target": "function:scripts/plot_final_grid_cartopy_google.py:main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/plot_final_grid_map.py",
+      "target": "function:scripts/plot_final_grid_map.py:_build_candidates_df",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/plot_final_grid_map.py",
+      "target": "function:scripts/plot_final_grid_map.py:_plot_overview",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/plot_final_grid_map.py",
+      "target": "function:scripts/plot_final_grid_map.py:_plot_per_city",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/plot_final_grid_map.py",
+      "target": "function:scripts/plot_final_grid_map.py:main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/resume_8var_pipeline.py",
+      "target": "function:scripts/resume_8var_pipeline.py:_run",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/resume_8var_pipeline.py",
+      "target": "function:scripts/resume_8var_pipeline.py:main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/run_full_pipeline.py",
+      "target": "function:scripts/run_full_pipeline.py:_run",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/run_full_pipeline.py",
+      "target": "function:scripts/run_full_pipeline.py:_quota_blocked",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/run_full_pipeline.py",
+      "target": "function:scripts/run_full_pipeline.py:_coverage_complete",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/run_full_pipeline.py",
+      "target": "function:scripts/run_full_pipeline.py:ingest_until_complete",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/run_full_pipeline.py",
+      "target": "function:scripts/run_full_pipeline.py:main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/smoke_e2e_v2.py",
+      "target": "function:scripts/smoke_e2e_v2.py:generate_synthetic_raw",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/smoke_e2e_v2.py",
+      "target": "function:scripts/smoke_e2e_v2.py:main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/visualize_predictions.py",
+      "target": "function:scripts/visualize_predictions.py:_resolve_csv_path",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:sonar_audit/run_audit.py",
+      "target": "class:sonar_audit/run_audit.py:AuditResult",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:sonar_audit/run_audit.py",
+      "target": "class:sonar_audit/run_audit.py:SonarAudit",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "class:sonar_audit/run_audit.py:SonarAudit",
+      "target": "function:sonar_audit/run_audit.py:load_model_and_data",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/data/ingest.py",
+      "target": "function:src/data/ingest.py:load_city_centers",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/data/ingest.py",
+      "target": "function:src/data/ingest.py:haversine_km",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/data/ingest.py",
+      "target": "function:src/data/ingest.py:build_city_nodes",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/data/ingest.py",
+      "target": "function:src/data/ingest.py:fetch_node_data",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/data/ingest.py",
+      "target": "function:src/data/ingest.py:_validate_city_coverage",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/data/ingest.py",
+      "target": "function:src/data/ingest.py:main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/data/preprocess.py",
+      "target": "function:src/data/preprocess.py:haversine_km",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/data/preprocess.py",
+      "target": "function:src/data/preprocess.py:_validate_raw_schema",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/data/preprocess.py",
+      "target": "function:src/data/preprocess.py:_interpolate_per_node",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/data/preprocess.py",
+      "target": "function:src/data/preprocess.py:_compute_similarity",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/data/preprocess.py",
+      "target": "function:src/data/preprocess.py:_select_top_k_nodes",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/data/preprocess.py",
+      "target": "function:src/data/preprocess.py:preprocess_pipeline",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/data/spei.py",
+      "target": "function:src/data/spei.py:calculate_water_deficit",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/data/spei.py",
+      "target": "function:src/data/spei.py:calculate_spei",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/data/spei.py",
+      "target": "function:src/data/spei.py:classify_spei",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/evaluation/calibration.py",
+      "target": "function:src/evaluation/calibration.py:fit_per_city_interval_calibration",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/evaluation/calibration.py",
+      "target": "function:src/evaluation/calibration.py:apply_calibration",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/evaluation/calibration.py",
+      "target": "function:src/evaluation/calibration.py:compute_picp",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "function:src/data/ingest.py:main",
+      "target": "function:src/data/ingest.py:load_city_centers",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/data/ingest.py:main",
+      "target": "function:src/data/ingest.py:build_city_nodes",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/data/ingest.py:main",
+      "target": "function:src/data/ingest.py:fetch_node_data",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/data/ingest.py:main",
+      "target": "function:src/data/ingest.py:_validate_city_coverage",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/data/ingest.py:build_city_nodes",
+      "target": "function:src/data/ingest.py:haversine_km",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/data/preprocess.py:preprocess_pipeline",
+      "target": "function:src/data/preprocess.py:_validate_raw_schema",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/data/preprocess.py:preprocess_pipeline",
+      "target": "function:src/data/preprocess.py:_interpolate_per_node",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/data/preprocess.py:preprocess_pipeline",
+      "target": "function:src/data/preprocess.py:_compute_similarity",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/data/preprocess.py:preprocess_pipeline",
+      "target": "function:src/data/preprocess.py:_select_top_k_nodes",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/data/preprocess.py:preprocess_pipeline",
+      "target": "function:src/data/spei.py:calculate_spei",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/data/preprocess.py:preprocess_pipeline",
+      "target": "function:src/data/spei.py:calculate_water_deficit",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/data/preprocess.py:_compute_similarity",
+      "target": "function:src/data/preprocess.py:haversine_km",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/evaluation/calibration.py:apply_calibration",
+      "target": "function:src/evaluation/calibration.py:compute_picp",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/data/ingest.py",
+      "target": "file:test_pipeline.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:src/data/preprocess.py",
+      "target": "file:test_pipeline.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:src/data/spei.py",
+      "target": "file:test_pipeline.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:src/evaluation/calibration.py",
+      "target": "file:test_pipeline.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:sonar_audit/reports/audit_report.txt",
+      "target": "file:sonar_audit/run_audit.py",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:src/evaluation/metrics.py",
+      "target": "function:src/evaluation/metrics.py:load_model",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/evaluation/metrics.py",
+      "target": "function:src/evaluation/metrics.py:calculate_metrics",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/evaluation/metrics.py",
+      "target": "function:src/evaluation/metrics.py:get_variable_importance",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/evaluation/metrics.py",
+      "target": "function:src/evaluation/metrics.py:plot_variable_importance",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/evaluation/metrics.py",
+      "target": "function:src/evaluation/metrics.py:plot_attention_weights",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/models/dataset.py",
+      "target": "class:src/models/dataset.py:ArrayStandardScaler",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/models/dataset.py",
+      "target": "function:src/models/dataset.py:_validate_schema",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/models/dataset.py",
+      "target": "function:src/models/dataset.py:create_dataset",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/models/tft.py",
+      "target": "function:src/models/tft.py:load_tft_checkpoint",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/models/tft.py",
+      "target": "function:src/models/tft.py:build_tft_model",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/training/train.py",
+      "target": "class:src/training/train.py:EpochSummaryCallback",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/training/train.py",
+      "target": "function:src/training/train.py:_validate_training_schema",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/training/train.py",
+      "target": "function:src/training/train.py:train_pipeline",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/visualization/generate_visualizations.py",
+      "target": "function:src/visualization/generate_visualizations.py:load_data",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/visualization/generate_visualizations.py",
+      "target": "function:src/visualization/generate_visualizations.py:find_checkpoint",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/visualization/generate_visualizations.py",
+      "target": "function:src/visualization/generate_visualizations.py:generate_visualizations",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:test_pipeline.py",
+      "target": "function:test_pipeline.py:_is_schema_v2",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:test_pipeline.py",
+      "target": "function:test_pipeline.py:_resolve_processed_data_path",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:test_pipeline.py",
+      "target": "function:test_pipeline.py:_resolve_checkpoint_path",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "function:src/evaluation/metrics.py:load_model",
+      "target": "function:src/models/tft.py:load_tft_checkpoint",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/evaluation/metrics.py:get_variable_importance",
+      "target": "function:src/evaluation/metrics.py:load_model",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/training/train.py:train_pipeline",
+      "target": "function:src/models/dataset.py:create_dataset",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/training/train.py:train_pipeline",
+      "target": "function:src/models/tft.py:build_tft_model",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/training/train.py:train_pipeline",
+      "target": "function:src/training/train.py:_validate_training_schema",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/visualization/generate_visualizations.py:generate_visualizations",
+      "target": "function:src/visualization/generate_visualizations.py:load_data",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/visualization/generate_visualizations.py:generate_visualizations",
+      "target": "function:src/visualization/generate_visualizations.py:find_checkpoint",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/visualization/generate_visualizations.py:generate_visualizations",
+      "target": "function:src/models/tft.py:load_tft_checkpoint",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/visualization/generate_visualizations.py:generate_visualizations",
+      "target": "function:src/models/dataset.py:create_dataset",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/evaluation/metrics.py",
+      "target": "file:test_pipeline.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:src/models/dataset.py",
+      "target": "file:test_pipeline.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:src/models/tft.py",
+      "target": "file:test_pipeline.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:src/training/train.py",
+      "target": "file:test_pipeline.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:src/visualization/generate_visualizations.py",
+      "target": "file:test_pipeline.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    }
+  ],
+  "layers": [
+    {
+      "id": "layer:documentation",
+      "name": "Documentation & Research Notes",
+      "description": "Thesis proposals, audit reports, research documentation, markdown notes, and extracted literature text.",
+      "nodeIds": [
+        "document:_tft_docx_extracted.txt",
+        "document:dataset_sample.md",
+        "document:last.convo.txt",
+        "document:now_percentage.md",
+        "config:requirements.txt",
+        "document:sonar_evautation.txt",
+        "document:sonar_output_expectayion.txt",
+        "document:docs/ALL_IN_ONE_AUDIT_REPORT.md",
+        "document:docs/COMPREHENSIVE_DOCUMENTATION.md",
+        "document:docs/CROSSCHECK_STATUS_SCHEMA_V2.md",
+        "document:docs/DOKUMENTASI_METODE_PENELITIAN_TFT_SPEI_SUPERNODE.md",
+        "document:docs/LIMITATIONS.md",
+        "document:docs/MIGRATION_CHECKLIST_STATUS_VERIFIED.md",
+        "document:docs/PANDUAN_SEMINAR_PROPOSAL.md",
+        "document:docs/PLAN_FIX_AUDIT.md",
+        "document:docs/PLAN_FIX_ROBUST.md",
+        "document:docs/THESIS_READINESS_REPORT.md",
+        "document:docs/diagram_dan_tabel_penelitian.md",
+        "document:.agent/rules/agent.md",
+        "document:.github/copilot-instructions.md",
+        "document:sonar_audit/reports/audit_report.txt"
+      ]
+    },
+    {
+      "id": "layer:configuration",
+      "name": "Configuration & Workspace Settings",
+      "description": "Project dependencies, environment configurations, IDE settings, and agent rule specifications.",
+      "nodeIds": [
+        "config:.kiro/settings/lsp.json",
+        "config:.understand-anything/.understandignore"
+      ]
+    },
+    {
+      "id": "layer:data-pipeline",
+      "name": "Data Ingestion & Preprocessing",
+      "description": "Data loading, feature engineering, SPEI index calculation, and temporal alignment modules.",
+      "nodeIds": [
+        "file:src/data/__init__.py",
+        "file:src/data/ingest.py",
+        "file:src/data/preprocess.py",
+        "file:src/data/spei.py"
+      ]
+    },
+    {
+      "id": "layer:model-training",
+      "name": "TFT Model & Training Architecture",
+      "description": "Temporal Fusion Transformer neural network definition, dataset wrappers, and PyTorch Lightning training loops.",
+      "nodeIds": [
+        "file:src/models/__init__.py",
+        "file:src/models/dataset.py",
+        "file:src/models/tft.py",
+        "file:src/training/__init__.py",
+        "file:src/training/train.py"
+      ]
+    },
+    {
+      "id": "layer:evaluation-audit",
+      "name": "Evaluation, Calibration & Code Audit",
+      "description": "Quantile loss evaluation, SPEI drought metrics, prediction calibration, and Sonar static code quality audits.",
+      "nodeIds": [
+        "file:evaluate.py",
+        "file:full_evaluation.py",
+        "file:run_evaluation.py",
+        "file:sonar_audit/run_audit.py",
+        "file:src/evaluation/__init__.py",
+        "file:src/evaluation/calibration.py",
+        "file:src/evaluation/metrics.py"
+      ]
+    },
+    {
+      "id": "layer:execution-visualization",
+      "name": "Experiment Execution & Spatial Visualization",
+      "description": "Pipeline execution entry points, multi-seed experiments, spatial map generation, and prediction plotting scripts.",
+      "nodeIds": [
+        "config:.understand-anything/config.json",
+        "config:.understand-anything/intermediate/batches.json",
+        "config:.understand-anything/intermediate/scan-result.json",
+        "file:.understand-anything/tmp/scan-project.mjs",
+        "file:_diag2.py",
+        "file:main.py",
+        "file:notebooks/TFT_SPEI_Evaluation.ipynb",
+        "file:notebooks/inspect_ckpt.py",
+        "file:notebooks/verify_fix.py",
+        "file:notebooks/visualize_fix.py",
+        "file:run_experiment.py",
+        "file:scripts/detailed_actual_vs_predict.py",
+        "file:scripts/generate_leaflet_final_grid.py",
+        "file:scripts/plot_final_grid_cartopy_google.py",
+        "file:scripts/plot_final_grid_map.py",
+        "file:scripts/resume_8var_pipeline.py",
+        "file:scripts/run_full_pipeline.py",
+        "file:scripts/smoke_e2e_v2.py",
+        "file:scripts/visualize_predictions.py",
+        "file:src/__init__.py",
+        "file:src/visualization/__init__.py",
+        "file:src/visualization/generate_visualizations.py",
+        "file:test_pipeline.py"
+      ]
+    }
+  ],
+  "tour": [
+    {
+      "order": 1,
+      "title": "1. Research Overview & Domain Documentation",
+      "description": "Explore the project documentation detailing Temporal Fusion Transformer (TFT) applied to SPEI drought index forecasting across Indonesian regencies.",
+      "nodeIds": [
+        "document:docs/COMPREHENSIVE_DOCUMENTATION.md",
+        "document:dataset_sample.md",
+        "document:docs/DOKUMENTASI_METODE_PENELITIAN_TFT_SPEI_SUPERNODE.md"
+      ]
+    },
+    {
+      "order": 2,
+      "title": "2. Data Ingestion & SPEI Drought Calculation",
+      "description": "Understand how raw meteorological variables (OpenMeteo SDK) are ingested, converted into SPEI drought scale, and preprocessed into regular time-series arrays.",
+      "nodeIds": [
+        "file:src/data/ingest.py",
+        "file:src/data/spei.py",
+        "file:src/data/preprocess.py"
+      ]
+    },
+    {
+      "order": 3,
+      "title": "3. Temporal Fusion Transformer Architecture",
+      "description": "Examine the PyTorch Forecasting TFT network model wrapper, custom TimeSeriesDataSet construction, and static/dynamic covariate definitions.",
+      "nodeIds": [
+        "file:src/models/tft.py",
+        "file:src/models/dataset.py"
+      ]
+    },
+    {
+      "order": 4,
+      "title": "4. Model Training & Experiment Execution",
+      "description": "Trace the PyTorch Lightning trainer configuration, multi-horizon loss minimization, learning rate optimization, and training entry point.",
+      "nodeIds": [
+        "file:src/training/train.py",
+        "file:run_experiment.py",
+        "file:main.py"
+      ]
+    },
+    {
+      "order": 5,
+      "title": "5. Multi-Horizon Evaluation & Calibration",
+      "description": "Inspect evaluation metrics (Quantile Loss, RMSE, MAE), prediction calibration checks, and full multi-seed evaluation runners.",
+      "nodeIds": [
+        "file:src/evaluation/metrics.py",
+        "file:src/evaluation/calibration.py",
+        "file:evaluate.py",
+        "file:full_evaluation.py"
+      ]
+    },
+    {
+      "order": 6,
+      "title": "6. Prediction Visualization & Map Generation",
+      "description": "View scripts that plot predicted vs actual SPEI time-series and generate spatial Leaflet/Cartopy map grids of drought severity.",
+      "nodeIds": [
+        "file:scripts/visualize_predictions.py",
+        "file:scripts/plot_final_grid_map.py",
+        "file:src/visualization/generate_visualizations.py"
+      ]
+    },
+    {
+      "order": 7,
+      "title": "7. Static Code Audit & End-to-End Pipeline QA",
+      "description": "Review the custom Sonar code audit runner and end-to-end smoke test script ensuring pipeline integrity.",
+      "nodeIds": [
+        "file:sonar_audit/run_audit.py",
+        "file:test_pipeline.py"
+      ]
+    }
+  ]
+}

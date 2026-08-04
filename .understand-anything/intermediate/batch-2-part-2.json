@@ -1,0 +1,1187 @@
+{
+  "nodes": [
+    {
+      "id": "file:notebooks/visualize_fix.py",
+      "type": "file",
+      "name": "visualize_fix.py",
+      "filePath": "notebooks/visualize_fix.py",
+      "summary": "Generates a 2-panel SPEI-3 forecast visualization (full series + 180-day zoom-in) for a target entity, applying moment-matching calibration with 0.95 dampening to the rolling-window ensemble.",
+      "tags": [
+        "notebook-script",
+        "visualization",
+        "calibration",
+        "ensemble"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:notebooks/visualize_fix.py:generate_visualization",
+      "type": "function",
+      "name": "generate_visualization",
+      "filePath": "notebooks/visualize_fix.py",
+      "summary": "Loads checkpoint, runs rolling-window predict on TARGET_LOCATION env (default first entity), averages ensemble per time_idx, applies bias+scale calibration, saves 2-panel PNG to results/fixed_spei_prediction.png.",
+      "tags": [
+        "visualization",
+        "ensemble",
+        "calibration",
+        "matplotlib"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        26,
+        122
+      ]
+    },
+    {
+      "id": "file:run_evaluation.py",
+      "type": "file",
+      "name": "run_evaluation.py",
+      "filePath": "run_evaluation.py",
+      "summary": "Thin wrapper that picks the best checkpoint (lowest val_loss=) under logs/checkpoints, redirects stdout/stderr through a Tee to a timestamped file, and calls evaluate.evaluate_model.",
+      "tags": [
+        "wrapper",
+        "evaluation",
+        "checkpoint-selection",
+        "tee"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:run_evaluation.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "run_evaluation.py",
+      "summary": "Resolves best checkpoint by parsing val_loss=, opens timestamped output file, redirects stdout+stderr through Tee, runs evaluate_model, prints completion path.",
+      "tags": [
+        "wrapper",
+        "tee",
+        "redirect",
+        "checkpoint"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        23,
+        53
+      ]
+    },
+    {
+      "id": "file:run_experiment.py",
+      "type": "file",
+      "name": "run_experiment.py",
+      "filePath": "run_experiment.py",
+      "summary": "Single-command experiment runner: wipes stale results, trains TFT with configurable encoder/epochs/dropout (unless --skip-train), runs full_evaluation.run() in-process on the new checkpoint, then writes REPORT_enc{N}.md with overall/per-location/per-horizon metrics + auto-interpretation.",
+      "tags": [
+        "experiment-runner",
+        "train",
+        "evaluate",
+        "markdown-report",
+        "cli"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:run_experiment.py:_banner",
+      "type": "function",
+      "name": "_banner",
+      "filePath": "run_experiment.py",
+      "summary": "Print a section banner with surrounding = bars.",
+      "tags": [
+        "logging",
+        "banner",
+        "python"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        36,
+        38
+      ]
+    },
+    {
+      "id": "function:run_experiment.py:_run",
+      "type": "function",
+      "name": "_run",
+      "filePath": "run_experiment.py",
+      "summary": "Run a subprocess and stream stdout in real time; raise on non-zero exit.",
+      "tags": [
+        "subprocess",
+        "streaming",
+        "python"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        41,
+        59
+      ]
+    },
+    {
+      "id": "function:run_experiment.py:_best_checkpoint",
+      "type": "function",
+      "name": "_best_checkpoint",
+      "filePath": "run_experiment.py",
+      "summary": "Pick checkpoint matching enc{N}- prefix with lowest val_loss=.",
+      "tags": [
+        "checkpoint",
+        "val-loss",
+        "python"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        62,
+        79
+      ]
+    },
+    {
+      "id": "function:run_experiment.py:_checkpoint_from_run_config",
+      "type": "function",
+      "name": "_checkpoint_from_run_config",
+      "filePath": "run_experiment.py",
+      "summary": "Read best_model_path from logs/run_config.json if it still exists.",
+      "tags": [
+        "checkpoint",
+        "run-config",
+        "python"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        82,
+        93
+      ]
+    },
+    {
+      "id": "function:run_experiment.py:_latest_eval_dir",
+      "type": "function",
+      "name": "_latest_eval_dir",
+      "filePath": "run_experiment.py",
+      "summary": "Return most recent results/full_eval_* directory.",
+      "tags": [
+        "results",
+        "latest",
+        "python"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        96,
+        100
+      ]
+    },
+    {
+      "id": "function:run_experiment.py:_load_metrics",
+      "type": "function",
+      "name": "_load_metrics",
+      "filePath": "run_experiment.py",
+      "summary": "Load metrics_summary.json from eval dir if present.",
+      "tags": [
+        "metrics",
+        "json",
+        "python"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        103,
+        108
+      ]
+    },
+    {
+      "id": "function:run_experiment.py:_write_md_report",
+      "type": "function",
+      "name": "_write_md_report",
+      "filePath": "run_experiment.py",
+      "summary": "Compose Markdown evaluation report (overall + per-location + horizon highlights + auto-interpretation hints).",
+      "tags": [
+        "markdown",
+        "report",
+        "auto-interpret"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        111,
+        280
+      ]
+    },
+    {
+      "id": "function:run_experiment.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "run_experiment.py",
+      "summary": "CLI: clean results -> train (optional) -> resolve ckpt -> run full_evaluation in-process -> emit MD report.",
+      "tags": [
+        "cli",
+        "experiment",
+        "python"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        287,
+        401
+      ]
+    },
+    {
+      "id": "file:scripts/detailed_actual_vs_predict.py",
+      "type": "file",
+      "name": "detailed_actual_vs_predict.py",
+      "filePath": "scripts/detailed_actual_vs_predict.py",
+      "summary": "Academic-style detailed analysis: PICP, interval sharpness, per-quantile calibration error, per-horizon RMSE/MAE/bias, 9-class SPEI drought classification, sample-by-sample drill-down, and full export of actual-vs-predict per (sample, horizon).",
+      "tags": [
+        "detailed-analysis",
+        "academic",
+        "picp",
+        "horizon-metrics",
+        "drought-classification"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:scripts/detailed_actual_vs_predict.py:log",
+      "type": "function",
+      "name": "log",
+      "filePath": "scripts/detailed_actual_vs_predict.py",
+      "summary": "Print and append a line to the timestamped output TXT file.",
+      "tags": [
+        "logging",
+        "tee",
+        "python"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        50,
+        54
+      ]
+    },
+    {
+      "id": "function:scripts/detailed_actual_vs_predict.py:_resolve_checkpoint",
+      "type": "function",
+      "name": "_resolve_checkpoint",
+      "filePath": "scripts/detailed_actual_vs_predict.py",
+      "summary": "Prefer run_config.json best_model_path; otherwise pick enc{N}-*.ckpt with lowest val_loss=.",
+      "tags": [
+        "checkpoint",
+        "resolver",
+        "python"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        57,
+        80
+      ]
+    },
+    {
+      "id": "function:scripts/detailed_actual_vs_predict.py:calculate_quantile_coverage",
+      "type": "function",
+      "name": "calculate_quantile_coverage",
+      "filePath": "scripts/detailed_actual_vs_predict.py",
+      "summary": "PICP: fraction of actuals inside the [q_low, q_high] quantile interval.",
+      "tags": [
+        "picp",
+        "interval",
+        "python"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        82,
+        93
+      ]
+    },
+    {
+      "id": "function:scripts/detailed_actual_vs_predict.py:calculate_interval_sharpness",
+      "type": "function",
+      "name": "calculate_interval_sharpness",
+      "filePath": "scripts/detailed_actual_vs_predict.py",
+      "summary": "Mean width of the [q_low, q_high] quantile interval.",
+      "tags": [
+        "sharpness",
+        "interval",
+        "python"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        95,
+        104
+      ]
+    },
+    {
+      "id": "function:scripts/detailed_actual_vs_predict.py:calculate_calibration_error",
+      "type": "function",
+      "name": "calculate_calibration_error",
+      "filePath": "scripts/detailed_actual_vs_predict.py",
+      "summary": "Per-quantile observed-vs-expected coverage error.",
+      "tags": [
+        "calibration",
+        "quantile",
+        "python"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        106,
+        120
+      ]
+    },
+    {
+      "id": "function:scripts/detailed_actual_vs_predict.py:calculate_metrics_per_horizon",
+      "type": "function",
+      "name": "calculate_metrics_per_horizon",
+      "filePath": "scripts/detailed_actual_vs_predict.py",
+      "summary": "Per-horizon RMSE/MAE/bias/correlation over the multi-step prediction window.",
+      "tags": [
+        "horizon-metrics",
+        "python",
+        "helper"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        122,
+        148
+      ]
+    },
+    {
+      "id": "function:scripts/detailed_actual_vs_predict.py:analyze_drought_classification",
+      "type": "function",
+      "name": "analyze_drought_classification",
+      "filePath": "scripts/detailed_actual_vs_predict.py",
+      "summary": "Classify actual + pred P50 via canonical SPEI thresholds; per-class precision/recall.",
+      "tags": [
+        "drought-classification",
+        "spei",
+        "python"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        150,
+        187
+      ]
+    },
+    {
+      "id": "function:scripts/detailed_actual_vs_predict.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "scripts/detailed_actual_vs_predict.py",
+      "summary": "Run the full 10-step academic analysis: data, model, predict, metrics, quantiles, horizons, classification, sample drill-down, full export.",
+      "tags": [
+        "main",
+        "academic-analysis",
+        "python"
+      ],
+      "complexity": "complex",
+      "lineRange": [
+        189,
+        491
+      ]
+    },
+    {
+      "id": "file:scripts/generate_leaflet_final_grid.py",
+      "type": "file",
+      "name": "generate_leaflet_final_grid.py",
+      "filePath": "scripts/generate_leaflet_final_grid.py",
+      "summary": "Generates a self-contained Leaflet HTML map (results/maps/final_grid_leaflet.html) plotting 8 km square overlays per selected node, colored by city (Bojonegoro/Lamongan/Nganjuk/Ngawi/Tuban) on Esri imagery tiles.",
+      "tags": [
+        "leaflet",
+        "html-map",
+        "grid-selection",
+        "visualization"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:scripts/generate_leaflet_final_grid.py:_square_bounds",
+      "type": "function",
+      "name": "_square_bounds",
+      "filePath": "scripts/generate_leaflet_final_grid.py",
+      "summary": "Compute Leaflet rectangle bounds [[S,W],[N,E]] from center lat/lon + side_km using metric deg/km conversion.",
+      "tags": [
+        "leaflet",
+        "geo-math",
+        "python"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        26,
+        38
+      ]
+    },
+    {
+      "id": "function:scripts/generate_leaflet_final_grid.py:_build_payload",
+      "type": "function",
+      "name": "_build_payload",
+      "filePath": "scripts/generate_leaflet_final_grid.py",
+      "summary": "Build JSON payload (rows + map_center) from node_selection_v2.parquet with per-city color lookup.",
+      "tags": [
+        "payload",
+        "geojson-ish",
+        "python"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        41,
+        72
+      ]
+    },
+    {
+      "id": "function:scripts/generate_leaflet_final_grid.py:_html",
+      "type": "function",
+      "name": "_html",
+      "filePath": "scripts/generate_leaflet_final_grid.py",
+      "summary": "Render Leaflet HTML template with embedded payload (map setup, Esri imagery tile layer, per-square polygon overlays).",
+      "tags": [
+        "html",
+        "leaflet",
+        "template"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        75,
+        214
+      ]
+    },
+    {
+      "id": "function:scripts/generate_leaflet_final_grid.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "scripts/generate_leaflet_final_grid.py",
+      "summary": "Implicit entrypoint; writes results/maps/final_grid_leaflet.html.",
+      "tags": [
+        "entrypoint",
+        "python",
+        "helper"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        214,
+        214
+      ]
+    },
+    {
+      "id": "file:scripts/plot_final_grid_cartopy_google.py",
+      "type": "file",
+      "name": "plot_final_grid_cartopy_google.py",
+      "filePath": "scripts/plot_final_grid_cartopy_google.py",
+      "summary": "Renders final grid selection as square-only overlays on Google street tiles using cartopy's GoogleTiles and shapely unions: overview map + per-city maps at zoom 13.",
+      "tags": [
+        "cartopy",
+        "google-tiles",
+        "grid-selection",
+        "map"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:scripts/plot_final_grid_cartopy_google.py:_cell_half_deltas_deg",
+      "type": "function",
+      "name": "_cell_half_deltas_deg",
+      "filePath": "scripts/plot_final_grid_cartopy_google.py",
+      "summary": "Convert half side length (km) to (dlat, dlon) deltas with cos(lat) longitude correction.",
+      "tags": [
+        "geo-math",
+        "projection",
+        "python"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        35,
+        39
+      ]
+    },
+    {
+      "id": "function:scripts/plot_final_grid_cartopy_google.py:_extent_for_points",
+      "type": "function",
+      "name": "_extent_for_points",
+      "filePath": "scripts/plot_final_grid_cartopy_google.py",
+      "summary": "Compute padded map extent (west, east, south, north) around selected points.",
+      "tags": [
+        "extent",
+        "geo",
+        "python"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        42,
+        47
+      ]
+    },
+    {
+      "id": "function:scripts/plot_final_grid_cartopy_google.py:_draw_squares",
+      "type": "function",
+      "name": "_draw_squares",
+      "filePath": "scripts/plot_final_grid_cartopy_google.py",
+      "summary": "Union all selected cell squares into a single shapely geometry and add as a filled overlay to the cartopy axis.",
+      "tags": [
+        "shapely",
+        "overlay",
+        "python"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        50,
+        71
+      ]
+    },
+    {
+      "id": "function:scripts/plot_final_grid_cartopy_google.py:_render_map",
+      "type": "function",
+      "name": "_render_map",
+      "filePath": "scripts/plot_final_grid_cartopy_google.py",
+      "summary": "Setup cartopy GeoAxes with GoogleTiles, set extent, draw squares, save figure.",
+      "tags": [
+        "render",
+        "cartopy",
+        "python"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        74,
+        90
+      ]
+    },
+    {
+      "id": "function:scripts/plot_final_grid_cartopy_google.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "scripts/plot_final_grid_cartopy_google.py",
+      "summary": "Read node_selection_v2.parquet, render overview + per-city maps.",
+      "tags": [
+        "entrypoint",
+        "python",
+        "helper"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        93,
+        109
+      ]
+    },
+    {
+      "id": "file:scripts/plot_final_grid_map.py",
+      "type": "file",
+      "name": "plot_final_grid_map.py",
+      "filePath": "scripts/plot_final_grid_map.py",
+      "summary": "Matplotlib-based map-style visualization of final selected grid: overview (all cities) + per-city plot showing candidate nodes (open circles) and selected nodes (filled stars) + city center (X marker).",
+      "tags": [
+        "matplotlib",
+        "grid-selection",
+        "map",
+        "visualization"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:scripts/plot_final_grid_map.py:_build_candidates_df",
+      "type": "function",
+      "name": "_build_candidates_df",
+      "filePath": "scripts/plot_final_grid_map.py",
+      "summary": "Build candidate nodes DataFrame via src.data.ingest.build_city_nodes + load_city_centers.",
+      "tags": [
+        "candidates",
+        "ingest",
+        "python"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        23,
+        39
+      ]
+    },
+    {
+      "id": "function:scripts/plot_final_grid_map.py:_plot_overview",
+      "type": "function",
+      "name": "_plot_overview",
+      "filePath": "scripts/plot_final_grid_map.py",
+      "summary": "Plot all cities: candidate circles + selected stars + center X marker.",
+      "tags": [
+        "matplotlib",
+        "overview",
+        "python"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        42,
+        80
+      ]
+    },
+    {
+      "id": "function:scripts/plot_final_grid_map.py:_plot_per_city",
+      "type": "function",
+      "name": "_plot_per_city",
+      "filePath": "scripts/plot_final_grid_map.py",
+      "summary": "Render per-city subplot with detailed node annotations (file path truncated here, function exists in source).",
+      "tags": [
+        "matplotlib",
+        "per-city",
+        "python"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        81,
+        177
+      ]
+    },
+    {
+      "id": "function:scripts/plot_final_grid_map.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "scripts/plot_final_grid_map.py",
+      "summary": "Implicit entrypoint for the matplotlib-based grid map script.",
+      "tags": [
+        "entrypoint",
+        "python",
+        "helper"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        177,
+        177
+      ]
+    },
+    {
+      "id": "file:scripts/resume_8var_pipeline.py",
+      "type": "file",
+      "name": "resume_8var_pipeline.py",
+      "filePath": "scripts/resume_8var_pipeline.py",
+      "summary": "Resume script after Open-Meteo quota reset: ingest remaining nodes (resume mode), preprocess, train enc=90 on GPU with bf16 + full evaluation + MD report, then run test_pipeline.py.",
+      "tags": [
+        "resume",
+        "ingest",
+        "pipeline",
+        "quota-recovery"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:scripts/resume_8var_pipeline.py:_run",
+      "type": "function",
+      "name": "_run",
+      "filePath": "scripts/resume_8var_pipeline.py",
+      "summary": "Print and subprocess.run a command from project root, fail-fast on non-zero.",
+      "tags": [
+        "subprocess",
+        "python",
+        "helper"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        26,
+        28
+      ]
+    },
+    {
+      "id": "function:scripts/resume_8var_pipeline.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "scripts/resume_8var_pipeline.py",
+      "summary": "Drive the 4-step resume pipeline (ingest, preprocess, train+eval, test) with coverage assertions.",
+      "tags": [
+        "main",
+        "pipeline",
+        "python"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        31,
+        64
+      ]
+    },
+    {
+      "id": "file:scripts/run_full_pipeline.py",
+      "type": "file",
+      "name": "run_full_pipeline.py",
+      "filePath": "scripts/run_full_pipeline.py",
+      "summary": "End-to-end 8-variable production pipeline (CUDA-required) with quota-aware retry: ingest -> preprocess -> train+eval -> test. Supports --wait-on-quota to sleep until Open-Meteo daily quota resets instead of exiting.",
+      "tags": [
+        "full-pipeline",
+        "quota-retry",
+        "ingest",
+        "train",
+        "cuda"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:scripts/run_full_pipeline.py:_run",
+      "type": "function",
+      "name": "_run",
+      "filePath": "scripts/run_full_pipeline.py",
+      "summary": "Print and subprocess.run a command from project root, fail-fast on non-zero.",
+      "tags": [
+        "subprocess",
+        "python",
+        "helper"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        30,
+        32
+      ]
+    },
+    {
+      "id": "function:scripts/run_full_pipeline.py:_quota_blocked",
+      "type": "function",
+      "name": "_quota_blocked",
+      "filePath": "scripts/run_full_pipeline.py",
+      "summary": "Probe Open-Meteo daily archive with a tiny request; return True if HTTP 429.",
+      "tags": [
+        "open-meteo",
+        "quota-check",
+        "python"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        35,
+        47
+      ]
+    },
+    {
+      "id": "function:scripts/run_full_pipeline.py:_coverage_complete",
+      "type": "function",
+      "name": "_coverage_complete",
+      "filePath": "scripts/run_full_pipeline.py",
+      "summary": "True when raw parquet contains the 3 new vars and every city has >=5 unique raw_node_ids.",
+      "tags": [
+        "coverage",
+        "validation",
+        "python"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        50,
+        58
+      ]
+    },
+    {
+      "id": "function:scripts/run_full_pipeline.py:ingest_until_complete",
+      "type": "function",
+      "name": "ingest_until_complete",
+      "filePath": "scripts/run_full_pipeline.py",
+      "summary": "Loop ingest with quota-aware retry; respects --wait-on-quota, retries with retry_minutes sleep.",
+      "tags": [
+        "resume",
+        "quota-retry",
+        "loop"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        61,
+        91
+      ]
+    },
+    {
+      "id": "function:scripts/run_full_pipeline.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "scripts/run_full_pipeline.py",
+      "summary": "argparse-driven 4-step pipeline with coverage checks (NEW_VARS, super_node == city count).",
+      "tags": [
+        "main",
+        "pipeline",
+        "python"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        97,
+        128
+      ]
+    },
+    {
+      "id": "file:scripts/smoke_e2e_v2.py",
+      "type": "file",
+      "name": "smoke_e2e_v2.py",
+      "filePath": "scripts/smoke_e2e_v2.py",
+      "summary": "Schema-v2 smoke test: generates synthetic 8-city raw fixture, runs preprocess, validates (raw_node_id,time) uniqueness, (super_node,time) uniqueness, top_k==5, entity_count > 5; optionally runs 1-epoch training; emits smoke_report.json.",
+      "tags": [
+        "smoke-test",
+        "schema-v2",
+        "synthetic",
+        "validation"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:scripts/smoke_e2e_v2.py:generate_synthetic_raw",
+      "type": "function",
+      "name": "generate_synthetic_raw",
+      "filePath": "scripts/smoke_e2e_v2.py",
+      "summary": "Build a synthetic 8-city raw parquet with all 8 weather variables (incl. 3 new vars).",
+      "tags": [
+        "synthetic-data",
+        "fixture",
+        "python"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        29,
+        74
+      ]
+    },
+    {
+      "id": "function:scripts/smoke_e2e_v2.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "scripts/smoke_e2e_v2.py",
+      "summary": "Generate fixture -> preprocess -> validate (uniqueness, top_k, entity_count, sequence_count, meta) -> optional 1-epoch train -> emit smoke_report.json.",
+      "tags": [
+        "smoke",
+        "validation",
+        "python"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        77,
+        138
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:notebooks/visualize_fix.py",
+      "target": "function:notebooks/visualize_fix.py:generate_visualization",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:run_evaluation.py",
+      "target": "function:run_evaluation.py:main",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:run_evaluation.py",
+      "target": "file:evaluate.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:run_experiment.py",
+      "target": "function:run_experiment.py:_banner",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:run_experiment.py",
+      "target": "function:run_experiment.py:_run",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:run_experiment.py",
+      "target": "function:run_experiment.py:_best_checkpoint",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:run_experiment.py",
+      "target": "function:run_experiment.py:_checkpoint_from_run_config",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:run_experiment.py",
+      "target": "function:run_experiment.py:_latest_eval_dir",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:run_experiment.py",
+      "target": "function:run_experiment.py:_load_metrics",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:run_experiment.py",
+      "target": "function:run_experiment.py:_write_md_report",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:run_experiment.py",
+      "target": "function:run_experiment.py:main",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:run_experiment.py",
+      "target": "file:full_evaluation.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:scripts/detailed_actual_vs_predict.py",
+      "target": "function:scripts/detailed_actual_vs_predict.py:log",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/detailed_actual_vs_predict.py",
+      "target": "function:scripts/detailed_actual_vs_predict.py:_resolve_checkpoint",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/detailed_actual_vs_predict.py",
+      "target": "function:scripts/detailed_actual_vs_predict.py:calculate_quantile_coverage",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/detailed_actual_vs_predict.py",
+      "target": "function:scripts/detailed_actual_vs_predict.py:calculate_interval_sharpness",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/detailed_actual_vs_predict.py",
+      "target": "function:scripts/detailed_actual_vs_predict.py:calculate_calibration_error",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/detailed_actual_vs_predict.py",
+      "target": "function:scripts/detailed_actual_vs_predict.py:calculate_metrics_per_horizon",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/detailed_actual_vs_predict.py",
+      "target": "function:scripts/detailed_actual_vs_predict.py:analyze_drought_classification",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/detailed_actual_vs_predict.py",
+      "target": "function:scripts/detailed_actual_vs_predict.py:main",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/generate_leaflet_final_grid.py",
+      "target": "function:scripts/generate_leaflet_final_grid.py:_square_bounds",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/generate_leaflet_final_grid.py",
+      "target": "function:scripts/generate_leaflet_final_grid.py:_build_payload",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/generate_leaflet_final_grid.py",
+      "target": "function:scripts/generate_leaflet_final_grid.py:_html",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/generate_leaflet_final_grid.py",
+      "target": "function:scripts/generate_leaflet_final_grid.py:main",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/plot_final_grid_cartopy_google.py",
+      "target": "function:scripts/plot_final_grid_cartopy_google.py:_cell_half_deltas_deg",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/plot_final_grid_cartopy_google.py",
+      "target": "function:scripts/plot_final_grid_cartopy_google.py:_extent_for_points",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/plot_final_grid_cartopy_google.py",
+      "target": "function:scripts/plot_final_grid_cartopy_google.py:_draw_squares",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/plot_final_grid_cartopy_google.py",
+      "target": "function:scripts/plot_final_grid_cartopy_google.py:_render_map",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/plot_final_grid_cartopy_google.py",
+      "target": "function:scripts/plot_final_grid_cartopy_google.py:main",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/plot_final_grid_map.py",
+      "target": "function:scripts/plot_final_grid_map.py:_build_candidates_df",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/plot_final_grid_map.py",
+      "target": "function:scripts/plot_final_grid_map.py:_plot_overview",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/plot_final_grid_map.py",
+      "target": "function:scripts/plot_final_grid_map.py:_plot_per_city",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/plot_final_grid_map.py",
+      "target": "function:scripts/plot_final_grid_map.py:main",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/resume_8var_pipeline.py",
+      "target": "function:scripts/resume_8var_pipeline.py:_run",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/resume_8var_pipeline.py",
+      "target": "function:scripts/resume_8var_pipeline.py:main",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/run_full_pipeline.py",
+      "target": "function:scripts/run_full_pipeline.py:_run",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/run_full_pipeline.py",
+      "target": "function:scripts/run_full_pipeline.py:_quota_blocked",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/run_full_pipeline.py",
+      "target": "function:scripts/run_full_pipeline.py:_coverage_complete",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/run_full_pipeline.py",
+      "target": "function:scripts/run_full_pipeline.py:ingest_until_complete",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/run_full_pipeline.py",
+      "target": "function:scripts/run_full_pipeline.py:main",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/smoke_e2e_v2.py",
+      "target": "function:scripts/smoke_e2e_v2.py:generate_synthetic_raw",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/smoke_e2e_v2.py",
+      "target": "function:scripts/smoke_e2e_v2.py:main",
+      "type": "contains",
+      "direction": "down",
+      "weight": 1.0
+    }
+  ],
+  "batchFiles": [
+    {
+      "path": "notebooks/visualize_fix.py",
+      "language": "python",
+      "sizeLines": 125,
+      "fileCategory": "code"
+    },
+    {
+      "path": "run_evaluation.py",
+      "language": "python",
+      "sizeLines": 57,
+      "fileCategory": "code"
+    },
+    {
+      "path": "run_experiment.py",
+      "language": "python",
+      "sizeLines": 405,
+      "fileCategory": "code"
+    },
+    {
+      "path": "scripts/detailed_actual_vs_predict.py",
+      "language": "python",
+      "sizeLines": 493,
+      "fileCategory": "code"
+    },
+    {
+      "path": "scripts/generate_leaflet_final_grid.py",
+      "language": "python",
+      "sizeLines": 214,
+      "fileCategory": "code"
+    },
+    {
+      "path": "scripts/plot_final_grid_cartopy_google.py",
+      "language": "python",
+      "sizeLines": 113,
+      "fileCategory": "code"
+    },
+    {
+      "path": "scripts/plot_final_grid_map.py",
+      "language": "python",
+      "sizeLines": 177,
+      "fileCategory": "code"
+    },
+    {
+      "path": "scripts/resume_8var_pipeline.py",
+      "language": "python",
+      "sizeLines": 65,
+      "fileCategory": "code"
+    },
+    {
+      "path": "scripts/run_full_pipeline.py",
+      "language": "python",
+      "sizeLines": 132,
+      "fileCategory": "code"
+    },
+    {
+      "path": "scripts/smoke_e2e_v2.py",
+      "language": "python",
+      "sizeLines": 142,
+      "fileCategory": "code"
+    }
+  ]
+}

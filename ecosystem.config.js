@@ -1,0 +1,42 @@
+module.exports = {
+  apps: [
+    {
+      name: 'tft-fastapi-backend',
+      script: 'python3',
+      args: '-u -m uvicorn app.main:app --host 0.0.0.0 --port 8005 --workers 2',
+      cwd: '/media/DiskE/SKRIPSI/Skripsi_Nopal',
+      interpreter: 'bash',
+      instances: 1,
+      exec_mode: 'fork',
+      max_memory_restart: '1500M',
+      autorestart: true,
+      env: {
+        NODE_ENV: 'production',
+        PORT: '8005',
+      },
+      error_file: './logs/backend-error.log',
+      out_file: './logs/backend-out.log',
+      merge_logs: true,
+      time: true,
+    },
+    {
+      name: 'tft-vite-frontend',
+      script: './node_modules/.bin/vite',
+      args: 'preview --host 0.0.0.0 --port 3005',
+      cwd: '/media/DiskE/SKRIPSI/Skripsi_Nopal/frontend',
+      interpreter: 'bash',
+      instances: 1,
+      exec_mode: 'fork',
+      max_memory_restart: '1500M',
+      autorestart: true,
+      env: {
+        NODE_ENV: 'production',
+        PORT: '3005',
+      },
+      error_file: './logs/frontend-error.log',
+      out_file: './logs/frontend-out.log',
+      merge_logs: true,
+      time: true,
+    },
+  ],
+};
